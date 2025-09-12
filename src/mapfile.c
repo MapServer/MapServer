@@ -3822,6 +3822,21 @@ static void writeClass(FILE *stream, int indent, classObj *class) {
   writeBlockEnd(stream, indent, "CLASS");
 }
 
+static void writeIdentify(FILE *stream, int indent, layerObj *layer) {
+  if (layer->identificationclassauto || layer->identificationclassgroup) {
+    indent++;
+    writeBlockBegin(stream, indent, "IDENTIFY");
+    if (layer->identificationclassauto) {
+      writeIndent(stream, indent + 1);
+      msIO_fprintf(stream, "CLASSAUTO\n");
+    }
+    if (layer->identificationclassgroup)
+      writeString(stream, indent, "CLASSGROUP", NULL,
+                  layer->identificationclassgroup);
+    writeBlockEnd(stream, indent, "IDENTIFY");
+  }
+}
+
 char *msWriteClassToString(classObj *class) {
   msIOContext context;
   msIOBuffer buffer;
@@ -3907,6 +3922,8 @@ int initLayer(layerObj *layer, mapObj *map) {
   layer->toleranceunits = MS_PIXELS;
   layer->tolerance =
       -1; /* perhaps this should have a different value based on type */
+  layer->identificationclassauto = MS_FALSE;
+  layer->identificationclassgroup = NULL;
 
   layer->symbolscaledenom = -1.0; /* -1 means nothing is set */
   layer->scalefactor = 1.0;
@@ -4117,6 +4134,8 @@ int freeLayer(layerObj *layer) {
     cleanupResultCache(layer->resultcache);
     msFree(layer->resultcache);
   }
+
+  msFree(layer->identificationclassgroup);
 
   msFree(layer->styleitem);
 
@@ -4396,6 +4415,42 @@ int loadLayerCompositer(LayerCompositer *compositer) {
     }
   }
 }
+
+static int loadIdentification(layerObj *layer) {
+  for (;;) {
+    switch (msyylex()) {
+    case TOLERANCE:
+      if (getDouble(&(layer->tolerance), MS_NUM_CHECK_GTE, 0, -1) == -1)
+        return (-1);
+      break;
+
+    case TOLERANCEUNITS:
+      if ((layer->toleranceunits = getSymbol(
+               8, MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS,
+               MS_NAUTICALMILES, MS_DD, MS_PIXELS)) == -1)
+        return (-1);
+      break;
+
+    case CLASSGROUP:
+      if (getString(&layer->identificationclassgroup) == MS_FAILURE)
+        return (-1);
+      break;
+
+    case CLASSAUTO:
+      layer->identificationclassauto = MS_TRUE;
+      break;
+
+    case END:
+      return MS_SUCCESS;
+
+    default:
+      msSetError(MS_IDENTERR, "Parsing error 2 near (%s):(line %d)",
+                 "loadIdentification()", msyystring_buffer, msyylineno);
+      return (MS_FAILURE);
+    }
+  }
+}
+
 int loadLayer(layerObj *layer, mapObj *map) {
   int type;
 
@@ -4758,6 +4813,10 @@ int loadLayer(layerObj *layer, mapObj *map) {
       if (getString(&layer->tilesrs) == MS_FAILURE)
         return (-1); /* getString() cleans up previously allocated string */
       break;
+    case (IDENTIFY):
+      if (loadIdentification(layer) == MS_FAILURE)
+        return (-1);
+      break;
     case (TOLERANCE):
       if (getDouble(&(layer->tolerance), MS_NUM_CHECK_GTE, 0, -1) == -1)
         return (-1);
@@ -4973,6 +5032,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer) {
                MS_INCHES, "INCHES", MS_FEET, "FEET", MS_MILES, "MILES",
                MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS",
                MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD");
+  writeIdentify(stream, indent, layer);
   writeKeyword(stream, indent, "TRANSFORM", layer->transform, 10, MS_FALSE,
                "FALSE", MS_UL, "UL", MS_UC, "UC", MS_UR, "UR", MS_CL, "CL",
                MS_CC, "CC", MS_CR, "CR", MS_LL, "LL", MS_LC, "LC", MS_LR, "LR");

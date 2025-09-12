@@ -29,8 +29,14 @@
 
 #include "mapserver.h"
 #include "mapows.h"
+#include "mapquery.h"
+#include "maprendering.h"
 
 #include "limits.h"
+
+#include <algorithm>
+#include <memory>
+#include <vector>
 
 /* This object is used by the various mapQueryXXXXX() functions. It stores
  * the total amount of shapes and their RAM footprint, when they are cached
@@ -80,6 +86,8 @@ int msInitQuery(queryObj *query) {
   query->max_cached_shape_count = 0;
   query->max_cached_shape_ram_amount = 0;
 
+  query->getFeatureInfo = new getFeatureInfoObj();
+
   return MS_SUCCESS;
 }
 
@@ -92,6 +100,9 @@ void msFreeQuery(queryObj *query) {
   if (query->filteritem)
     free(query->filteritem);
   msFreeExpression(&query->filter);
+
+  delete query->getFeatureInfo;
+  query->getFeatureInfo = nullptr;
 }
 
 /*
@@ -146,11 +157,11 @@ int msIsLayerQueryable(layerObj *lp) {
   if (lp->type == MS_LAYER_TILEINDEX)
     return MS_FALSE;
 
-  if (lp->template && strlen(lp->template) > 0)
+  if (lp->_template && strlen(lp->_template) > 0)
     return MS_TRUE;
 
   for (i = 0; i < lp->numclasses; i++) {
-    if (lp->class[i] -> template &&strlen(lp->class[i] -> template) > 0)
+    if (lp->_class[i]->_template && strlen(lp->_class[i]->_template) > 0)
       return MS_TRUE;
   }
 
@@ -646,7 +657,7 @@ int msQueryByIndex(mapObj *map) {
   lp = (GET_LAYER(map, map->query.layer));
 
   if (!msIsLayerQueryable(lp)) {
-    msSetError(MS_QUERYERR, "Requested layer has no templates defined.",
+    msSetError(MS_QUERYERR, "Requested layer has no _templates defined.",
                "msQueryByIndex()");
     return (MS_FAILURE);
   }
@@ -721,22 +732,22 @@ int msQueryByIndex(mapObj *map) {
   }
 
   shape.classindex = msShapeGetClass(lp, map, &shape, NULL, 0);
-  if (!(lp->template) &&
-      ((shape.classindex == -1) ||
-       (lp->class[shape.classindex] -> status ==
-                                           MS_OFF))) { /* not a valid shape */
-    msSetError(MS_QUERYERR,
-               "Requested shape not valid against layer classification scheme.",
-               "msQueryByIndex()");
+  if (!(lp->_template) &&
+      ((shape.classindex == -1) || (lp->_class[shape.classindex]->status ==
+                                    MS_OFF))) { /* not a valid shape */
+    msSetError(
+        MS_QUERYERR,
+        "Requested shape not valid against layer _classification scheme.",
+        "msQueryByIndex()");
     msFreeShape(&shape);
     msLayerClose(lp);
     return (MS_FAILURE);
   }
 
-  if (!(lp->template) &&
-      !(lp->class[shape.classindex] -> template)) { /* no valid template */
+  if (!(lp->_template) &&
+      !(lp->_class[shape.classindex]->_template)) { /* no valid _template */
     msSetError(MS_QUERYERR,
-               "Requested shape does not have a valid template, no way to "
+               "Requested shape does not have a valid _template, no way to "
                "present results.",
                "msQueryByIndex()");
     msFreeShape(&shape);
@@ -954,7 +965,7 @@ int msQueryByFilter(mapObj *map) {
     /* If only result count is needed, we can use msLayerGetShapeCount() */
     /* that has optimizations to avoid retrieving individual features */
     if (map->query.only_cache_result_count &&
-        lp->template != NULL && /* always TRUE for WFS case */
+        lp->_template != NULL && /* always TRUE for WFS case */
         lp->minfeaturesize <= 0) {
       int bUseLayerSRS = MS_FALSE;
       int numFeatures = -1;
@@ -1056,15 +1067,15 @@ int msQueryByFilter(mapObj *map) {
       }
 
       shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
-      if (!(lp->template) && ((shape.classindex == -1) ||
-                              (lp->class[shape.classindex]
-                               -> status == MS_OFF))) { /* not a valid shape */
+      if (!(lp->_template) &&
+          ((shape.classindex == -1) || (lp->_class[shape.classindex]->status ==
+                                        MS_OFF))) { /* not a valid shape */
         msFreeShape(&shape);
         continue;
       }
 
-      if (!(lp->template) &&
-          !(lp->class[shape.classindex] -> template)) { /* no valid template */
+      if (!(lp->_template) &&
+          !(lp->_class[shape.classindex]->_template)) { /* no valid _template */
         msFreeShape(&shape);
         continue;
       }
@@ -1274,7 +1285,7 @@ int msQueryByRect(mapObj *map) {
     /* If only result count is needed, we can use msLayerGetShapeCount() */
     /* that has optimizations to avoid retrieving individual features */
     if (map->query.only_cache_result_count &&
-        lp->template != NULL && /* always TRUE for WFS case */
+        lp->_template != NULL && /* always TRUE for WFS case */
         lp->minfeaturesize <= 0) {
       int bUseLayerSRS = MS_FALSE;
       int numFeatures = -1;
@@ -1372,15 +1383,15 @@ int msQueryByRect(mapObj *map) {
       }
 
       shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
-      if (!(lp->template) && ((shape.classindex == -1) ||
-                              (lp->class[shape.classindex]
-                               -> status == MS_OFF))) { /* not a valid shape */
+      if (!(lp->_template) &&
+          ((shape.classindex == -1) || (lp->_class[shape.classindex]->status ==
+                                        MS_OFF))) { /* not a valid shape */
         msFreeShape(&shape);
         continue;
       }
 
-      if (!(lp->template) &&
-          !(lp->class[shape.classindex] -> template)) { /* no valid template */
+      if (!(lp->_template) &&
+          !(lp->_class[shape.classindex]->_template)) { /* no valid _template */
         msFreeShape(&shape);
         continue;
       }
@@ -1699,16 +1710,15 @@ int msQueryByFeatures(mapObj *map) {
 
         shape.classindex =
             msShapeGetClass(lp, map, &shape, classgroup, nclasses);
-        if (!(lp->template) &&
-            ((shape.classindex == -1) ||
-             (lp->class[shape.classindex]
-              -> status == MS_OFF))) { /* not a valid shape */
+        if (!(lp->_template) && ((shape.classindex == -1) ||
+                                 (lp->_class[shape.classindex]->status ==
+                                  MS_OFF))) { /* not a valid shape */
           msFreeShape(&shape);
           continue;
         }
 
-        if (!(lp->template) && !(lp->class[shape.classindex]
-                                 -> template)) { /* no valid template */
+        if (!(lp->_template) && !(lp->_class[shape.classindex]
+                                      ->_template)) { /* no valid _template */
           msFreeShape(&shape);
           continue;
         }
@@ -1870,25 +1880,6 @@ int msQueryByFeatures(mapObj *map) {
  *     the closest ones).
  */
 int msQueryByPoint(mapObj *map) {
-  int l;
-  int start, stop = 0;
-
-  double d, t;
-  double layer_tolerance;
-
-  layerObj *lp;
-
-  int paging;
-  char status;
-  rectObj rect, searchrect;
-  shapeObj shape;
-  int nclasses = 0;
-  int *classgroup = NULL;
-  double minfeaturesize = -1;
-
-  queryCacheObj queryCache;
-
-  initQueryCache(&queryCache);
 
   if (map->query.type != MS_QUERY_BY_POINT) {
     msSetError(MS_QUERYERR, "The query is not properly defined.",
@@ -1896,16 +1887,26 @@ int msQueryByPoint(mapObj *map) {
     return (MS_FAILURE);
   }
 
-  msInitShape(&shape);
+  queryCacheObj queryCache;
+  initQueryCache(&queryCache);
 
+  int start, stop = 0;
   if (map->query.layer < 0 || map->query.layer >= map->numlayers)
     start = map->numlayers - 1;
   else
     start = stop = map->query.layer;
 
-  for (l = start; l >= stop; l--) {
-    reprojectionObj *reprojector = NULL;
-    lp = (GET_LAYER(map, l));
+  const double cellx =
+      MS_CELLSIZE(map->extent.minx, map->extent.maxx, map->width);
+  const double celly =
+      MS_CELLSIZE(map->extent.miny, map->extent.maxy, map->height);
+
+  const double resolutionfactor = map->resolution / map->defresolution;
+
+  for (int l = start; l >= stop; l--) {
+    std::unique_ptr<reprojectionObj, decltype(&msProjectDestroyReprojector)>
+        reprojector{nullptr, msProjectDestroyReprojector};
+    layerObj *lp = (GET_LAYER(map, l));
     if (map->query.maxfeatures == 0)
       break; /* nothing else to do */
     else if (map->query.maxfeatures > 0)
@@ -1960,35 +1961,226 @@ int msQueryByPoint(mapObj *map) {
 
     /* Get the layer tolerance default is 3 for point and line layers, 0 for
      * others */
+    double layer_tolerance = 0;
     if (lp->tolerance == -1) {
       if (lp->type == MS_LAYER_POINT || lp->type == MS_LAYER_LINE)
         layer_tolerance = 3;
-      else
-        layer_tolerance = 0;
-    } else
+    } else {
       layer_tolerance = lp->tolerance;
+    }
 
+    struct SearchSymbol {
+      mapObj *m_map = nullptr;
+      shapeObj shape{};
+      int classindex = -1;
+      styleObj *style = nullptr;
+      imageObj *cachedImage = nullptr;
+
+      SearchSymbol(mapObj *map) : m_map(map) {}
+      ~SearchSymbol() {
+        if (cachedImage) {
+          /*
+           * hack to work around bug #3834: if we have use an alternate
+           * renderer, the symbolset may contain symbols that reference it. We
+           * want to remove those references before the altFormat is destroyed
+           * to avoid a segfault and/or a leak, and so the the main renderer
+           * doesn't pick the cache up thinking it's for him.
+           */
+          for (int i = 0; i < m_map->symbolset.numsymbols; i++) {
+            if (m_map->symbolset.symbol[i] != NULL) {
+              symbolObj *s = m_map->symbolset.symbol[i];
+              if (s->renderer == MS_IMAGE_RENDERER(cachedImage)) {
+                MS_IMAGE_RENDERER(cachedImage)->freeSymbol(s);
+                s->renderer = NULL;
+              }
+            }
+          }
+
+          msFreeImage(cachedImage);
+        }
+      }
+
+      SearchSymbol(const SearchSymbol &) = delete;
+      SearchSymbol &operator=(const SearchSymbol &) = delete;
+      SearchSymbol(SearchSymbol &&other) {
+        m_map = other.m_map;
+        shape = std::move(other.shape);
+        classindex = other.classindex;
+        std::swap(style, other.style);
+        std::swap(cachedImage, other.cachedImage);
+      }
+      SearchSymbol &operator=(SearchSymbol &&other) {
+        m_map = other.m_map;
+        shape = std::move(other.shape);
+        classindex = other.classindex;
+        std::swap(style, other.style);
+        std::swap(cachedImage, other.cachedImage);
+        return *this;
+      }
+    };
+    std::vector<SearchSymbol> searchSymbols;
+
+    rectObj rect = {HUGE_VAL, HUGE_VAL, -HUGE_VAL, -HUGE_VAL};
+    double t = 0;
     if (map->query.buffer <= 0) { /* use layer tolerance */
+
       if (lp->toleranceunits == MS_PIXELS)
-        t = layer_tolerance *
-            MS_MAX(
-                MS_CELLSIZE(map->extent.minx, map->extent.maxx, map->width),
-                MS_CELLSIZE(map->extent.miny, map->extent.maxy, map->height));
+        t = layer_tolerance * MS_MAX(cellx, celly);
       else
         t = layer_tolerance * (msInchesPerUnit(lp->toleranceunits, 0) /
                                msInchesPerUnit(map->units, 0));
-    } else /* use buffer distance */
-      t = map->query.buffer;
 
-    rect.minx = map->query.point.x - t;
-    rect.maxx = map->query.point.x + t;
-    rect.miny = map->query.point.y - t;
-    rect.maxy = map->query.point.y + t;
+      const auto takeIntoAccountClass = [map, lp, t, cellx, celly,
+                                         resolutionfactor, &rect,
+                                         &searchSymbols](int classindex) {
+        classObj *klass = lp->_class[classindex];
+        if (!msScaleInBounds(map->scaledenom, klass->minscaledenom,
+                             klass->maxscaledenom)) {
+          return;
+        }
+
+        for (int s = 0; s < klass->numstyles; s++) {
+          auto *style = klass->styles[s];
+          if (msScaleInBounds(map->scaledenom, style->minscaledenom,
+                              style->maxscaledenom)) {
+            if (style->symbol >= map->symbolset.numsymbols ||
+                style->symbol <= 0)
+              continue;
+            symbolObj *symbol = map->symbolset.symbol[style->symbol];
+
+            double symbol_width = 0;
+            double symbol_height = 0;
+            if (msGetMarkerSize(map, style, &symbol_width, &symbol_height,
+                                style->scalefactor) != MS_SUCCESS) {
+              continue;
+            }
+
+            symbolStyleObj s;
+
+            computeSymbolStyle(&s, style, symbol, style->scalefactor,
+                               resolutionfactor);
+
+            double center_x =
+                MS_MAP2IMAGE_X(map->query.point.x, map->extent.minx, cellx);
+            double center_y =
+                MS_MAP2IMAGE_Y(map->query.point.y, map->extent.maxy, celly);
+
+            if (msAdjustMarkerPos(map, style, symbol, &center_x, &center_y,
+                                  style->scalefactor,
+                                  s.rotation) != MS_SUCCESS) {
+              continue;
+            }
+
+            center_x = MS_IMAGE2MAP_X(center_x, map->extent.minx, cellx);
+            center_y = MS_IMAGE2MAP_Y(center_y, map->extent.maxy, celly);
+
+            const auto applyRotationAndScaling = [cellx, celly, &s](double &x,
+                                                                    double &y) {
+              double sina = sin(s.rotation), cosa = cos(s.rotation);
+              double out_x = x * cosa - y * sina;
+              double out_y = x * sina + y * cosa;
+              x = out_x * cellx;
+              y = out_y * celly;
+            };
+
+            double P1_X = -symbol_width / 2;
+            double P1_Y = -symbol_height / 2;
+            applyRotationAndScaling(P1_X, P1_Y);
+            P1_X -= t;
+            P1_Y -= t;
+
+            double P2_X = symbol_width / 2;
+            double P2_Y = -symbol_height / 2;
+            applyRotationAndScaling(P2_X, P2_Y);
+            P2_X += t;
+            P2_Y -= t;
+
+            double P3_X = symbol_width / 2;
+            double P3_Y = symbol_height / 2;
+            applyRotationAndScaling(P3_X, P3_Y);
+            P3_X += t;
+            P3_Y += t;
+
+            double P4_X = -symbol_width / 2;
+            double P4_Y = symbol_height / 2;
+            applyRotationAndScaling(P4_X, P4_Y);
+            P4_X -= t;
+            P4_Y += t;
+
+            SearchSymbol searchSymbol(map);
+            searchSymbol.style = style;
+            searchSymbol.classindex = classindex;
+
+            lineObj line = {0, NULL};
+            line.numpoints = 5;
+            line.point =
+                (pointObj *)msSmallMalloc(sizeof(pointObj) * line.numpoints);
+            line.point[0].x = center_x + P1_X;
+            line.point[0].y = center_y + P1_Y;
+            line.point[1].x = center_x + P2_X;
+            line.point[1].y = center_y + P2_Y;
+            line.point[2].x = center_x + P3_X;
+            line.point[2].y = center_y + P3_Y;
+            line.point[3].x = center_x + P4_X;
+            line.point[3].y = center_y + P4_Y;
+            line.point[4].x = center_x + P1_X;
+            line.point[4].y = center_y + P1_Y;
+            msAddLineDirectly(&(searchSymbol.shape), &line);
+
+            searchSymbols.push_back(std::move(searchSymbol));
+
+            rect.minx = MIN(rect.minx,
+                            center_x + MIN(MIN(P1_X, P2_X), MIN(P3_X, P4_X)));
+            rect.miny = MIN(rect.miny,
+                            center_y + MIN(MIN(P1_Y, P2_Y), MIN(P3_Y, P4_Y)));
+            rect.maxx = MAX(rect.maxx,
+                            center_x + MAX(MAX(P1_X, P2_X), MAX(P3_X, P4_X)));
+            rect.maxy = MAX(rect.maxy,
+                            center_y + MAX(MAX(P1_Y, P2_Y), MAX(P3_Y, P4_Y)));
+          }
+        }
+      };
+
+      if (lp->type == MS_LAYER_POINT && lp->identificationclassgroup) {
+        for (int i = 0; i < lp->numclasses; i++) {
+          if (lp->_class[i]->group &&
+              strcasecmp(lp->_class[i]->group, lp->identificationclassgroup) ==
+                  0) {
+            takeIntoAccountClass(i);
+            break;
+          }
+        }
+      } else if (lp->type == MS_LAYER_POINT && lp->identificationclassauto) {
+
+        for (int i = 0; i < lp->numclasses; i++) {
+          auto it =
+              map->query.getFeatureInfo->mapLayerIndexToStyleNames.find(i);
+          if (it ==
+                  map->query.getFeatureInfo->mapLayerIndexToStyleNames.end() ||
+              it->second.empty()) {
+            takeIntoAccountClass(i);
+          } else if (lp->_class[i]->group &&
+                     std::find(it->second.begin(), it->second.end(),
+                               lp->_class[i]->group) != it->second.end()) {
+            takeIntoAccountClass(i);
+          }
+        }
+      }
+    } else { /* use buffer distance */
+      t = map->query.buffer;
+    }
+
+    if (rect.minx == HUGE_VAL) {
+      rect.minx = map->query.point.x - t;
+      rect.maxx = map->query.point.x + t;
+      rect.miny = map->query.point.y - t;
+      rect.maxy = map->query.point.y + t;
+    }
 
     /* Paging could have been disabled before */
-    paging = msLayerGetPaging(lp);
+    int paging = msLayerGetPaging(lp);
     msLayerClose(lp); /* reset */
-    status = msLayerOpen(lp);
+    int status = msLayerOpen(lp);
     if (status != MS_SUCCESS)
       return (MS_FAILURE);
     msLayerEnablePaging(lp, paging);
@@ -1999,7 +2191,7 @@ int msQueryByPoint(mapObj *map) {
       return (MS_FAILURE);
 
     /* identify target shapes */
-    searchrect = rect;
+    rectObj searchrect = rect;
     lp->project = msProjectionsDiffer(&(lp->projection), &(map->projection));
     if (lp->project)
       msProjectRect(&(map->projection), &(lp->projection),
@@ -2019,16 +2211,27 @@ int msQueryByPoint(mapObj *map) {
     MS_CHECK_ALLOC(lp->resultcache, sizeof(resultCacheObj), MS_FAILURE);
     initResultCache(lp->resultcache);
 
-    nclasses = 0;
-    classgroup = NULL;
-    if (lp->classgroup && lp->numclasses > 0)
+    int nclasses = 0;
+    int *classgroup = NULL;
+    if (lp->type == MS_LAYER_POINT && lp->identificationclassgroup &&
+        lp->numclasses > 0) {
+      char *lp_classgroup_backup = lp->classgroup;
+      lp->classgroup = lp->identificationclassgroup;
       classgroup = msAllocateValidClassGroups(lp, &nclasses);
+      lp->classgroup = lp_classgroup_backup;
+    } else if (lp->classgroup && lp->numclasses > 0) {
+      classgroup = msAllocateValidClassGroups(lp, &nclasses);
+    }
 
-    if (lp->minfeaturesize > 0)
-      minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
+    const double minfeaturesize =
+        (lp->minfeaturesize > 0) ? Pix2LayerGeoref(map, lp, lp->minfeaturesize)
+                                 : -1;
 
-    while ((status = msLayerNextShape(lp, &shape)) ==
-           MS_SUCCESS) { /* step through the shapes */
+    while (true) { /* step through the shapes */
+
+      shapeObj shape;
+      if ((status = msLayerNextShape(lp, &shape)) != MS_SUCCESS)
+        break;
 
       /* Check if the shape size is ok to be drawn */
       if ((shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) &&
@@ -2038,45 +2241,170 @@ int msQueryByPoint(mapObj *map) {
             msDebug("msQueryByPoint(): Skipping shape (%ld) because "
                     "LAYER::MINFEATURESIZE is bigger than shape size\n",
                     shape.index);
-          msFreeShape(&shape);
           continue;
         }
       }
 
-      shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
-      if (!(lp->template) && ((shape.classindex == -1) ||
-                              (lp->class[shape.classindex]
-                               -> status == MS_OFF))) { /* not a valid shape */
-        msFreeShape(&shape);
-        continue;
+      bool reprojectionDone = false;
+      bool matchFound = false;
+
+      if (!(lp->type == MS_LAYER_POINT &&
+            (lp->identificationclassgroup || lp->identificationclassauto))) {
+        shape.classindex =
+            msShapeGetClass(lp, map, &shape, classgroup, nclasses);
+        if (!(lp->_template) && ((shape.classindex == -1) ||
+                                 (lp->_class[shape.classindex]->status ==
+                                  MS_OFF))) { /* not a valid shape */
+          continue;
+        }
+
+        if (!(lp->_template) && !(lp->_class[shape.classindex]
+                                      ->_template)) { /* no valid _template */
+          continue;
+        }
+      } else {
+        int classindex = -1;
+        while ((classindex = msShapeGetNextClass(classindex, lp, map, &shape,
+                                                 classgroup, nclasses)) != -1) {
+          if (lp->_class[classindex]->status == MS_OFF) {
+            continue;
+          }
+          if (searchSymbols.empty() || shape.type != MS_SHAPE_POINT) {
+            break;
+          }
+
+          if (!reprojectionDone) {
+            reprojectionDone = true;
+            if (lp->project) {
+              if (reprojector == NULL) {
+                reprojector.reset(msProjectCreateReprojector(
+                    &(lp->projection), &(map->projection)));
+                if (reprojector == NULL) {
+                  status = MS_FAILURE;
+                  break;
+                }
+              }
+              msProjectShapeEx(reprojector.get(), &shape);
+            }
+          }
+
+          for (auto &searchSymbol : searchSymbols) {
+            if (searchSymbol.classindex == classindex &&
+                msPointInPolygon(&(shape.line[0].point[0]),
+                                 &(searchSymbol.shape.line[0]))) {
+              if (!searchSymbol.cachedImage) {
+                outputFormatObj *altFormat = msSelectOutputFormat(map, "png");
+                msInitializeRendererVTable(altFormat);
+
+                double symbol_width = 0;
+                double symbol_height = 0;
+                if (msGetMarkerSize(
+                        map, searchSymbol.style, &symbol_width, &symbol_height,
+                        searchSymbol.style->scalefactor) != MS_SUCCESS) {
+                  assert(false);
+                }
+
+                // Takes into account potential rotation of up to 45 deg: 1.5 >
+                // sqrt(2)
+                symbol_width *= 1.5;
+                symbol_height *= 1.5;
+
+                searchSymbol.cachedImage = msImageCreate(
+                    symbol_width, symbol_height, altFormat, nullptr, nullptr,
+                    map->resolution, map->defresolution, nullptr);
+                if (!searchSymbol.cachedImage) {
+                  msSetError(MS_MISCERR, "Unable to initialize symbol image.",
+                             "msQueryByPoint()");
+                  return (MS_FAILURE);
+                }
+
+                pointObj imCenter;
+                imCenter.x = searchSymbol.cachedImage->width / 2;
+                imCenter.y = searchSymbol.cachedImage->height / 2;
+                if (msDrawMarkerSymbol(map, searchSymbol.cachedImage, &imCenter,
+                                       searchSymbol.style,
+                                       searchSymbol.style->scalefactor) !=
+                    MS_SUCCESS) {
+                  msSetError(MS_MISCERR, "Unable to draw symbol image.",
+                             "msQueryByPoint()");
+                  return (MS_FAILURE);
+                }
+              }
+
+              rasterBufferObj rb;
+              memset(&rb, 0, sizeof(rasterBufferObj));
+
+              if (MS_IMAGE_RENDERER(searchSymbol.cachedImage)
+                          ->getRasterBufferHandle(searchSymbol.cachedImage,
+                                                  &rb) == MS_SUCCESS &&
+                  rb.type == MS_BUFFER_BYTE_RGBA) {
+
+                const int test_x = static_cast<int>(std::round(
+                    searchSymbol.cachedImage->width / 2 +
+                    (map->query.point.x - shape.line[0].point[0].x) / cellx));
+                const int test_y = static_cast<int>(std::round(
+                    searchSymbol.cachedImage->height / 2 -
+                    (map->query.point.y - shape.line[0].point[0].y) / celly));
+
+                // Check that the queried pixel hits a non-transparent pixel of
+                // the symbol
+                const int tolerancePixel =
+                    static_cast<int>(std::ceil(t / MS_MAX(cellx, celly)));
+                for (int y = -tolerancePixel;
+                     !matchFound && y <= tolerancePixel; ++y) {
+                  for (int x = -tolerancePixel; x <= tolerancePixel; ++x) {
+                    if (test_y + y >= 0 &&
+                        test_y + y < searchSymbol.cachedImage->height &&
+                        test_x + x >= 0 &&
+                        test_x + x < searchSymbol.cachedImage->width) {
+                      if (rb.data.rgba
+                              .a[(test_y + y) * rb.data.rgba.row_step +
+                                 (test_x + x) * rb.data.rgba.pixel_step]) {
+                        matchFound = true;
+                        break;
+                      }
+                    }
+                  }
+                }
+              }
+
+              break;
+            }
+          }
+
+          break;
+        }
+        if (status == MS_FAILURE) {
+          break;
+        }
+        if (classindex == -1)
+          continue;
       }
 
-      if (!(lp->template) &&
-          !(lp->class[shape.classindex] -> template)) { /* no valid template */
-        msFreeShape(&shape);
-        continue;
-      }
-
-      if (lp->project) {
+      if (!reprojectionDone && lp->project) {
         if (reprojector == NULL) {
-          reprojector =
-              msProjectCreateReprojector(&(lp->projection), &(map->projection));
+          reprojector.reset(msProjectCreateReprojector(&(lp->projection),
+                                                       &(map->projection)));
           if (reprojector == NULL) {
-            msFreeShape(&shape);
             status = MS_FAILURE;
             break;
           }
         }
-        msProjectShapeEx(reprojector, &shape);
+        msProjectShapeEx(reprojector.get(), &shape);
       }
 
-      d = msDistancePointToShape(&(map->query.point), &shape);
-      if (d <= t) { /* found one */
+      double d = 0;
+
+      if (searchSymbols.empty() || shape.type != MS_SHAPE_POINT) {
+        d = msDistancePointToShape(&(map->query.point), &shape);
+        matchFound = d <= t;
+      }
+
+      if (matchFound) { /* found one */
 
         /* Should we skip this feature? */
         if (!paging && map->query.startindex > 1) {
           --map->query.startindex;
-          msFreeShape(&shape);
           continue;
         }
 
@@ -2090,8 +2418,6 @@ int msQueryByPoint(mapObj *map) {
         }
       }
 
-      msFreeShape(&shape);
-
       if (map->query.mode == MS_QUERY_MULTIPLE && map->query.maxresults > 0 &&
           lp->resultcache->numresults == map->query.maxresults) {
         status = MS_DONE; /* got enough results for this layer */
@@ -2104,12 +2430,11 @@ int msQueryByPoint(mapObj *map) {
         status = MS_DONE;
         break;
       }
+
     } /* next shape */
 
     if (classgroup)
       msFree(classgroup);
-
-    msProjectDestroyReprojector(reprojector);
 
     if (status != MS_DONE)
       return (MS_FAILURE);
@@ -2123,7 +2448,7 @@ int msQueryByPoint(mapObj *map) {
   }          /* next layer */
 
   /* was anything found? */
-  for (l = start; l >= stop; l--) {
+  for (int l = start; l >= stop; l--) {
     if (GET_LAYER(map, l)->resultcache &&
         GET_LAYER(map, l)->resultcache->numresults > 0)
       return (MS_SUCCESS);
@@ -2312,15 +2637,15 @@ int msQueryByShape(mapObj *map) {
       }
 
       shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
-      if (!(lp->template) && ((shape.classindex == -1) ||
-                              (lp->class[shape.classindex]
-                               -> status == MS_OFF))) { /* not a valid shape */
+      if (!(lp->_template) &&
+          ((shape.classindex == -1) || (lp->_class[shape.classindex]->status ==
+                                        MS_OFF))) { /* not a valid shape */
         msFreeShape(&shape);
         continue;
       }
 
-      if (!(lp->template) &&
-          !(lp->class[shape.classindex] -> template)) { /* no valid template */
+      if (!(lp->_template) &&
+          !(lp->_class[shape.classindex]->_template)) { /* no valid _template */
         msFreeShape(&shape);
         continue;
       }
