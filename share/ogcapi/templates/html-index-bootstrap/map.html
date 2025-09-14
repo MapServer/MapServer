@@ -1,0 +1,43 @@
+{% include "header.html" %}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb bg-light">
+        <li class="breadcrumb-item active" aria-current="page"><a href="../?f=html">Home</a></li>
+        <li class="ms-auto json-link"><a target="_blank" href="api-catalog.json">JSON</a></li>
+    </ol>
+</nav>
+
+<h1>MapServer Mapfile Landing Page</h1>
+<p>
+    This page lists all available services for the Mapfile.
+</p>
+
+<h2>Links</h2>
+
+<div class="table-responsive">
+    <table class="table" style="width:100%;">
+        <thead class="thead-light">
+            <tr>
+                <th>#</th>
+                <th>Title</th>
+                <th>Service</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% set index = 1 %}
+            {% for link in linkset %}
+            {% for service in link.service-desc %}
+            <tr>
+                <td>{{ index }}</td>
+                <td><a href="{{ service.href }}">{{ service.title }}</a></td>
+                <td>{{ service.service }}</td>
+            </tr>
+            {% set index = index + 1 %}
+            {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% include "footer.html" %}
+

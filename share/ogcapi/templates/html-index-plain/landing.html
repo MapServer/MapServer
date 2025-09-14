@@ -1,0 +1,15 @@
+{% include "header.html" %}
+
+<h1>{{ response.title }}</h1>
+<p>
+  MapServer Mapfiles available on this server are listed below
+</p>
+
+<h2>Links</h2>
+<ul>
+{% for link in response.links %}
+  <li> <a href="{{ link.href }}">{{ link.title }}</a></li>
+{% endfor %}
+</ul>
+
+{% include "footer.html" %}
