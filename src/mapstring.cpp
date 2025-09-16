@@ -2528,3 +2528,24 @@ int msStringBufferAppend(msStringBuffer *sb, const char *pszAppendedString) {
   sb->length += nAppendLen;
   return MS_SUCCESS;
 }
+
+/************************************************************************/
+/*                           msStringUnescape()                         */
+/************************************************************************/
+
+/** Modify in place pszString such that a sequence of two consecutive
+ * chEscapeChar is replaced by a single one.
+ * Does the reverse of FLTEscapePropertyName()
+ */
+void msStringUnescape(char *pszString, char chEscapeChar) {
+  char *pszDest = pszString;
+  for (; *pszString; ++pszString, ++pszDest) {
+    if (pszString[0] == chEscapeChar && pszString[1] == chEscapeChar) {
+      *pszDest = chEscapeChar;
+      ++pszString;
+    } else {
+      *pszDest = *pszString;
+    }
+  }
+  *pszDest = 0;
+}

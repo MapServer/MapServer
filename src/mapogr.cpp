@@ -1981,7 +1981,7 @@ static char *msOGRGetToken(layerObj *layer, tokenListNodeObjPtr *node) {
     break;
   }
   case MS_TOKEN_BINDING_INTEGER: {
-    char *stresc = msOGRGetQuotedItem(layer, n->tokenval.bindval.item);
+    char *stresc = msLayerEscapePropertyName(layer, n->tokenval.bindval.item);
     nOutSize = strlen(stresc) + 20;
     out = (char *)msSmallMalloc(nOutSize);
 
@@ -1989,15 +1989,15 @@ static char *msOGRGetToken(layerObj *layer, tokenListNodeObjPtr *node) {
     // Do not cast if the variable is of the appropriate type as it can
     // prevent using database indexes, such as for SQlite
     if (bIsNumeric) {
-      snprintf(out, nOutSize, "%s", stresc);
+      snprintf(out, nOutSize, "\"%s\"", stresc);
     } else {
-      snprintf(out, nOutSize, "CAST(%s AS integer)", stresc);
+      snprintf(out, nOutSize, "CAST(\"%s\" AS integer)", stresc);
     }
     msFree(stresc);
     break;
   }
   case MS_TOKEN_BINDING_STRING: {
-    char *stresc = msOGRGetQuotedItem(layer, n->tokenval.bindval.item);
+    char *stresc = msLayerEscapePropertyName(layer, n->tokenval.bindval.item);
     nOutSize = strlen(stresc) + 30;
     out = (char *)msSmallMalloc(nOutSize);
 
@@ -2006,24 +2006,24 @@ static char *msOGRGetToken(layerObj *layer, tokenListNodeObjPtr *node) {
     // Do not cast if the variable is of the appropriate type as it can
     // prevent using database indexes, such as for SQlite
     if (bIsCharacter) {
-      snprintf(out, nOutSize, "%s", stresc);
+      snprintf(out, nOutSize, "\"%s\"", stresc);
     } else {
-      snprintf(out, nOutSize, "CAST(%s AS text)", stresc);
+      snprintf(out, nOutSize, "CAST(\"%s\" AS text)", stresc);
     }
     msFree(stresc);
     break;
   }
   case MS_TOKEN_BINDING_TIME: {
     // won't get here unless col is parsed as time and they are not
-    char *stresc = msOGRGetQuotedItem(layer, n->tokenval.bindval.item);
+    char *stresc = msLayerEscapePropertyName(layer, n->tokenval.bindval.item);
     nOutSize = strlen(stresc) + 10;
     out = (char *)msSmallMalloc(nOutSize);
-    snprintf(out, nOutSize, "%s", stresc);
+    snprintf(out, nOutSize, "\"%s\"", stresc);
     msFree(stresc);
     break;
   }
   case MS_TOKEN_BINDING_SHAPE: {
-    char *stresc = msOGRGetQuotedItem(
+    char *stresc = msLayerEscapePropertyName(
         layer, OGR_L_GetGeometryColumn(info->hLayer)); // which geom field??
     nOutSize = strlen(stresc) + 10;
     out = (char *)msSmallMalloc(nOutSize);
@@ -3600,8 +3600,11 @@ msOGRTranslatePartialInternal(layerObj *layer, const msExprNode *expr,
   case MS_TOKEN_BINDING_INTEGER:
   case MS_TOKEN_BINDING_STRING:
   case MS_TOKEN_BINDING_TIME: {
-    char *pszTmp = msOGRGetQuotedItem(layer, expr->m_osVal.c_str());
-    std::string osRet(pszTmp);
+    char *pszTmp = msLayerEscapePropertyName(layer, expr->m_osVal.c_str());
+    std::string osRet;
+    osRet += '"';
+    osRet += pszTmp;
+    osRet += '"';
     msFree(pszTmp);
     return osRet;
   }
