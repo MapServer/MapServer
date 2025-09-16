@@ -539,31 +539,33 @@ char path[MS_MAXPATHLEN];
   /* attribute binding - data cellsize */
   return(MS_TOKEN_BINDING_DATA_CELLSIZE);
 }
-<EXPRESSION_STRING>\[[^\]]*\] {
+<EXPRESSION_STRING>\[(?:\]\]|[^\]])*\] {
   /* attribute binding - numeric (no quotes) */
   msyytext++;
   msyytext[msyyleng-1-1] = '\0';
   MS_LEXER_STRING_REALLOC(msyystring_buffer, msyyleng, 
                           msyystring_buffer_size);
   strcpy(msyystring_buffer, msyytext);
+  msStringUnescape(msyystring_buffer, ']');
   return(MS_TOKEN_BINDING_DOUBLE);
 }
-<EXPRESSION_STRING>\"\[[^\"]*\]\"|\'\[[^\']*\]\' {
+<EXPRESSION_STRING>\"\[(?:\"\"|[^\"])*\]\"|\'\[(?:\'\'|[^\'])*\]\' {
   /* attribute binding - string (single or double quotes) */
-  msyytext+=2;
-  msyytext[msyyleng-2-2] = '\0';
+  msyytext[msyyleng-2] = '\0';
   MS_LEXER_STRING_REALLOC(msyystring_buffer, msyyleng, 
                           msyystring_buffer_size);
-  strcpy(msyystring_buffer, msyytext);
+  strcpy(msyystring_buffer, msyytext + 2);
+  msStringUnescape(msyystring_buffer, msyytext[0]);
   return(MS_TOKEN_BINDING_STRING);
 }
-<EXPRESSION_STRING>\`\[[^\`]*\]\` {
+<EXPRESSION_STRING>\`\[(?:\`\`|[^\`])*\]\` {
   /* attribute binding - time */
   msyytext+=2;
   msyytext[msyyleng-2-2] = '\0';
   MS_LEXER_STRING_REALLOC(msyystring_buffer, msyyleng,
                           msyystring_buffer_size);
   strcpy(msyystring_buffer, msyytext);
+  msStringUnescape(msyystring_buffer, '`');
   return(MS_TOKEN_BINDING_TIME);
 }
 
