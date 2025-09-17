@@ -312,12 +312,12 @@ int main(int argc, char *argv[]) {
             goto end_request;
           }
         }
-      } else {
-        // Other cases
-        if (msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
-          msCGIWriteError(mapserv);
-          goto end_request;
-        }
+      }
+    } else {
+      // Other cases
+      if (msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
+        msCGIWriteError(mapserv);
+        goto end_request;
       }
     }
 
