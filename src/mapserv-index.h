@@ -34,6 +34,7 @@
 extern "C" {
 #endif
 
+int msOGCAPIDispatchMapIndexRequest(mapservObj *mapserv, configObj *config);
 int msOGCAPIDispatchIndexRequest(mapservObj *mapserv, configObj *config);
 
 #ifdef __cplusplus

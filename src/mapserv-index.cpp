@@ -30,6 +30,7 @@
 #include "mapserv-index.h"
 #include "maptemplate.h"
 #include "mapows.h"
+#include "mapserv-config.h"
 
 #include "cpl_conv.h"
 
@@ -43,174 +44,366 @@ using json = nlohmann::json;
 ** HTML Templates
 */
 #define TEMPLATE_HTML_INDEX "landing.html"
+#define TEMPLATE_HTML_MAP_INDEX "map.html"
 
-static std::vector<json> processWMS(mapObj *map) {
+static json processCGI(mapObj *map) {
 
-  std::vector<json> serviceDescs; // List of JSON objects
+  json response;
 
-  // Create the first JSON object
-  json serviceDesc1;
+  // check if CGI modes have been disabled
+  const char *enable_modes =
+      msLookupHashTable(&(map->web.metadata), "ms_enable_modes");
+
+  int disabled = MS_FALSE;
+  msOWSParseRequestMetadata(enable_modes, "BROWSE", &disabled);
+
+  if (disabled == MS_FALSE) {
+
+    response["title"] = map->name;
+
+    json serviceDocs =
+        json::array({{{"href", "./?template=openlayers&mode=browse&layers=all"},
+                      {"title", "OpenLayers Viewer"},
+                      {"service", "CGI"},
+                      {"type", "text/html"}}});
+    response["service-doc"] = serviceDocs;
+  }
+
+  return response;
+}
+
+static json processOGCAPI(mapObj *map) {
+
+  json response;
+
+  const char *title = msOWSLookupMetadata(&(map->web.metadata), "AO", "title");
+  if (!title) {
+    title = map->name;
+  }
+
+  int status = msOWSRequestIsEnabled(map, NULL, "AO", "OGCAPI", MS_FALSE);
+  if (status == MS_TRUE) {
+    response["title"] = title;
+
+    json serviceDescriptions = json::array({{{"href", "./ogcapi/?f=json"},
+                                             {"title", "OGC API Root Service"},
+                                             {"service", "OGC API"},
+                                             {"type", "application/json"}}});
+    json serviceDocs = json::array({{{"href", "./ogcapi/?f=html"},
+                                     {"title", "OGC API Landing Page"},
+                                     {"service", "OGC API"},
+                                     {"type", "text/html"}}});
+    response["service-desc"] = serviceDescriptions;
+    response["service-doc"] = serviceDocs;
+  }
+  return response;
+}
+
+static json processWMS(mapObj *map, const char *onlineResource) {
+
+  json response;
+
   const char *title = msOWSLookupMetadata(&(map->web.metadata), "MO", "title");
   if (!title) {
     title = map->name;
   }
 
-  std::string api_root = getApiRootUrl(map, "MO");
+  int globally_enabled = MS_FALSE;
+  int disabled = MS_FALSE;
 
-  serviceDesc1["title"] = title;
-  serviceDesc1["type"] = "WMS";
-  serviceDesc1["url"] = api_root;
+  const char *enable_request =
+      msOWSLookupMetadata(&map->web.metadata, "OM", "enable_request");
 
-  serviceDescs.push_back(serviceDesc1); // Add to the list
+  globally_enabled =
+      msOWSParseRequestMetadata(enable_request, "GetCapabilities", &disabled);
 
-  json serviceDesc2;
-  serviceDesc2["title"] = title;
-  serviceDesc2["type"] = "WMS";
-  serviceDesc1["url"] = api_root;
+  if (globally_enabled == MS_TRUE) {
+    response["title"] = title;
 
-  serviceDescs.push_back(serviceDesc2); // Add to the list
+    std::vector<std::string> versions = {"1.0.0", "1.1.0", "1.1.1", "1.3.0"};
+    json serviceDescriptions = json::array();
 
-  return serviceDescs; // Return the list of JSON objects
-}
-
-static json processMap(mapObj *map) {
-  json mapJson;
-  mapJson["name"] = map->name;
-  mapJson["title"] = "title";
-  // object getTitle(map)
-
-  // service-meta intended for machine consumption
-  //
-  // Create the "service-desc" array
-  mapJson["service-desc"] = json::array();
-
-  // json serviceDesc;
-  // serviceDesc["href"] =
-  //     "https://demo.mapserver.org/cgi-bin/"
-  //     "msautotest?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities";
-  // serviceDesc["title"] = "World WMS service";
-  // serviceDesc["type"] = "text/xml";
-
-#ifdef USE_WMS_SVR
-
-  // WMS services
-  std::vector<json> wmsServiceDescs = processWMS(map);
-
-  // Add each JSON object to the "service-desc" array
-  for (const auto &serviceDesc : wmsServiceDescs) {
-    mapJson["service-desc"].push_back(serviceDesc);
+    for (const auto &ver : versions) {
+      serviceDescriptions.push_back(
+          {{"href", std::string(onlineResource) + "version=" + ver +
+                        "&request=GetCapabilities&service=WMS"},
+           {"title", "WMS GetCapabilities URL (version " + ver + ")"},
+           {"service", "WMS"},
+           {"type", "text/xml"}});
+    }
+    response["service-desc"] = serviceDescriptions;
   }
 
-#endif /* USE_WMS_SVR */
+  return response;
+}
 
-  // Append the nested object to the "service-desc" array
-  // mapJson["service-desc"].push_back(serviceDesc);
+static json processWFS(mapObj *map) {
+
+  json response;
+
+  const char *title = msOWSLookupMetadata(&(map->web.metadata), "FO", "title");
+  if (!title) {
+    title = map->name;
+  }
+
+  int globally_enabled = MS_FALSE;
+  int disabled = MS_FALSE;
+
+  const char *enable_request =
+      msOWSLookupMetadata(&map->web.metadata, "OF", "enable_request");
+
+  globally_enabled =
+      msOWSParseRequestMetadata(enable_request, "GetCapabilities", &disabled);
+
+  if (globally_enabled == MS_TRUE) {
+
+    response["title"] = title;
+
+    std::vector<std::string> versions = {"1.0.0", "1.1.0", "2.0.0"};
+    json serviceDescriptions = json::array();
+
+    for (const auto &ver : versions) {
+      serviceDescriptions.push_back(
+          {{"href",
+            "./?version=" + ver + "&request=GetCapabilities&service=WFS"},
+           {"title", "WFS GetCapabilities URL (version " + ver + ")"},
+           {"service", "WFS"},
+           {"type", "text/xml"}});
+    }
+    response["service-desc"] = serviceDescriptions;
+  }
+
+  return response;
+}
+
+static json processWCS(mapObj *map) {
+
+  json response;
+
+  const char *title = msOWSLookupMetadata(&(map->web.metadata), "CO", "title");
+  if (!title) {
+    title = map->name;
+  }
+
+  int globally_enabled = MS_FALSE;
+  int disabled = MS_FALSE;
+
+  const char *enable_request =
+      msOWSLookupMetadata(&map->web.metadata, "OC", "enable_request");
+
+  globally_enabled =
+      msOWSParseRequestMetadata(enable_request, "GetCapabilities", &disabled);
+
+  if (globally_enabled == MS_TRUE) {
+    response["title"] = title;
+
+    std::vector<std::string> versions = {"1.0.0", "1.1.0", "2.0.0", "2.0.1"};
+    json serviceDescriptions = json::array();
+
+    for (auto &ver : versions) {
+      serviceDescriptions.push_back(
+          {{"href",
+            "./?version=" + ver + "&request=GetCapabilities&service=WCS"},
+           {"title", "WCS GetCapabilities URL (version " + ver + ")"},
+           {"service", "WCS"},
+           {"type", "text/xml"}});
+    }
+    response["service-desc"] = serviceDescriptions;
+  }
+  return response;
+}
+
+static json createMapDetails(mapObj *map, const char *onlineResource) {
+
+  json links = json::array();
+  json result;
+
+  result = processCGI(map);
+  if (!result.empty()) {
+    links.push_back(result);
+  }
+
+#ifdef USE_OGCAPI_SVR
+  result = processOGCAPI(map);
+  if (!result.empty()) {
+    links.push_back(result);
+  }
+#endif
+#ifdef USE_WMS_SVR
+  result = processWMS(map, onlineResource);
+  if (!result.empty()) {
+    links.push_back(result);
+  }
+#endif
+#ifdef USE_WFS_SVR
+  result = processWFS(map);
+  if (!result.empty()) {
+    links.push_back(result);
+  }
+#endif
+#ifdef USE_WCS_SVR
+  result = processWCS(map);
+  if (!result.empty()) {
+    links.push_back(result);
+  }
+#endif
+
+  return {{"linkset", links}};
+}
+
+/**
+ * Create a JSON object with a summary of the Mapfile
+ **/
+static json createMapSummary(mapObj *map, const char *key,
+                             const char *onlineResource) {
+  json mapJson;
+  const char *value =
+      msOWSLookupMetadata(&(map->web.metadata), "MCFGO", "title");
+
+  mapJson["key"] = key;
+  mapJson["has-error"] = 0;
+
+  if (value) {
+    mapJson["title"] = value;
+  } else {
+    mapJson["title"] = map->name;
+  }
+
+  mapJson["layer-count"] = map->numlayers;
+  mapJson["name"] = map->name;
+
+  mapJson["service-desc"] = json::array(
+      {{{"href", std::string(onlineResource) + std::string(key) + "/?f=json"},
+        {"title", key},
+        {"type", "application/vnd.oai.openapi+json"}}});
+
+  mapJson["service-doc"] = json::array(
+      {{{"href", std::string(onlineResource) + std::string(key) + "/"},
+        {"title", key},
+        {"type", "text/html"}}});
 
   return mapJson;
 }
 
-static json getMapJsonFromConfig(configObj *config) {
+/**
+ * For invalid maps return a JSON object reporting the error
+ **/
+static json createMapError(const char *key) {
+  json mapJson;
+  mapJson["key"] = key;
+  mapJson["has-error"] = true;
+  mapJson["title"] = " <b>Error loading the map</b>";
+  mapJson["layer-count"] = 0;
+  mapJson["name"] = key;
+  mapJson["service-desc"] =
+      json::array({{{"href", "./" + std::string(key) + "/?f=json"},
+                    {"title", key},
+                    {"type", "application/vnd.oai.openapi+json"}}});
 
-  const char *key = NULL;
-  json links =
-      json::array(); // Create an empty JSON array to store nested objects
+  mapJson["service-doc"] =
+      json::array({{{"href", "./" + std::string(key) + "/"},
+                    {"title", key},
+                    {"type", "text/html"}}});
 
-  while (true) {
-    key = msNextKeyFromHashTable(&config->maps, key);
-    if (!key) {
-      break; // No more keys
-    }
-
-    const char *pszValue = msLookupHashTable(&config->maps, key);
-    if (pszValue) {
-      mapObj *map = msLoadMap(pszValue, nullptr, config);
-      if (!map) {
-        // return -1; // Handle error case
-        // try paths relative to the CONFIG file
-        // TODO - do we want this apart from to make it easier for testing?
-        const char *val;
-        if ((val = CPLGetConfigOption("MAPSERVER_CONFIG_FILE", NULL)) != NULL) {
-          char szPath[MS_MAXPATHLEN];
-          char *path = msGetPath(val);
-          if (path) {
-            msBuildPath(szPath, path, pszValue);
-            free(path); // Ensure msGetPath and free are compatible
-            map = msLoadMap(szPath, nullptr, config);
-          }
-        }
-      }
-      if (!map) {
-        // log error output
-      } else {
-        // Append the new JSON object to the "links" array
-        links.push_back(processMap(map));
-        msFreeMap(map);
-      }
-    }
-  }
-
-  return links;
+  return mapJson;
 }
 
-static std::string getEnvVar(const char *envVar) {
-  const char *value = getenv(envVar);
-  return value ? std::string(value) : std::string();
+/**
+ * Load the Map for the key, by getting its file path
+ * from the CONFIG file
+ */
+static mapObj *getMapFromConfig(configObj *config, const char *key) {
+  const char *mapfilePath = msLookupHashTable(&config->maps, key);
+
+  if (!mapfilePath)
+    return nullptr;
+
+  char pathBuf[MS_MAXPATHLEN];
+  mapfilePath = msConfigGetMap(config, key, pathBuf);
+
+  return msLoadMap(mapfilePath, nullptr, config);
 }
 
-static int processIndexRequest(configObj *config, OGCAPIFormat format) {
-  json response;
-  std::map<std::string, std::string> extraHeaders;
+/**
+ * Generate HTML by populating a template with the dynamic JSON
+ */
+static int createHTMLOutput(json response, const char *templateName) {
   std::string path;
   char fullpath[MS_MAXPATHLEN];
 
-  response = {{"title", "Index Page"},
-              {"description", "List of Mapfiles"},
-              {"linkset", getMapJsonFromConfig(config)}};
-
-  if (format == OGCAPIFormat::JSON) {
-    outputJson(response, OGCAPI_MIMETYPE_JSON, extraHeaders);
-  } else if (format == OGCAPIFormat::GeoJSON) {
-    outputJson(response, OGCAPI_MIMETYPE_GEOJSON, extraHeaders);
-  } else if (format == OGCAPIFormat::OpenAPI_V3) {
-    outputJson(response, OGCAPI_MIMETYPE_OPENAPI_V3, extraHeaders);
-  } else if (format == OGCAPIFormat::HTML) {
-    path = getTemplateDirectory(NULL, "html_template_directory",
-                                "MS_INDEX_TEMPLATE_DIRECTORY");
-    if (path.empty()) {
-      outputError(OGCAPI_CONFIG_ERROR, "Template directory not set.");
-      return MS_FAILURE;
-    }
-    msBuildPath(fullpath, NULL, path.c_str());
-
-    json j;
-    j["response"] = response;
-
-    // std::string api_root = "http://" + std::string(getenv("SERVER_NAME")) +
-    //                        ":" + std::string(getenv("SERVER_PORT")) +
-    //                        std::string(getenv("SCRIPT_NAME")) +
-    //                        std::string(getenv("PATH_INFO"));
-
-    std::string serverName = getEnvVar("SERVER_NAME");
-    std::string serverPort = getEnvVar("SERVER_PORT");
-    std::string scriptName = getEnvVar("SCRIPT_NAME");
-    std::string pathInfo = getEnvVar("PATH_INFO");
-
-    std::string api_root =
-        "http://" + serverName + ":" + serverPort + scriptName + pathInfo;
-
-    // extend the JSON with a few things that we need for templating
-    j["template"] = {{"path", json::array()},
-                     {"params", json::object()},
-                     {"api_root", api_root},
-                     {"title", "MapServer Index Page"},
-                     {"tags", json::object()}};
-
-    outputTemplate(fullpath, TEMPLATE_HTML_INDEX, j, OGCAPI_MIMETYPE_HTML);
+  path = getTemplateDirectory(NULL, "html_template_directory",
+                              "MS_INDEX_TEMPLATE_DIRECTORY");
+  if (path.empty()) {
+    outputError(OGCAPI_CONFIG_ERROR, "Template directory not set.");
+    return MS_FAILURE;
   }
+  msBuildPath(fullpath, NULL, path.c_str());
+
+  json j = {{"response", response}};
+  outputTemplate(fullpath, templateName, j, OGCAPI_MIMETYPE_HTML);
 
   return MS_SUCCESS;
 }
 
+/**
+ * Return an individual map landing page response
+ */
+int msOGCAPIDispatchMapIndexRequest(mapservObj *mapserv, configObj *config) {
+#ifdef USE_OGCAPI_SVR
+  if (!mapserv || !config)
+    return -1; // Handle null pointers
+
+  cgiRequestObj *request = mapserv->request;
+
+  if (request->api_path_length != 1) {
+    const char *pathInfo = getenv("PATH_INFO");
+    msSetError(MS_OGCAPIERR, "Invalid PATH_INFO format: \"%s\"",
+               "msOGCAPIDispatchMapIndexRequest()", pathInfo);
+    return MS_FAILURE;
+  }
+
+  OGCAPIFormat format = msGetOutputFormat(request);
+  const char *key = request->api_path[0];
+
+  mapObj *map = getMapFromConfig(config, key);
+
+  std::string onlineResource;
+
+  if (char *res =
+          msOWSGetOnlineResource(map, "MFCSGO", "onlineresource", request)) {
+    onlineResource = res;
+    free(res);
+  } else {
+    // use a relative URL if no onlineresource can be found or created
+    onlineResource = "./?"; // fallback
+  }
+
+  json response = createMapDetails(map, onlineResource.c_str());
+
+  // add in summary map details
+  json summary = createMapSummary(map, key, onlineResource.c_str());
+  response.update(summary);
+
+  if (format == OGCAPIFormat::JSON) {
+    outputJson(response, OGCAPI_MIMETYPE_JSON, {});
+  } else if (format == OGCAPIFormat::HTML) {
+    createHTMLOutput(response, TEMPLATE_HTML_MAP_INDEX);
+  } else {
+    outputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
+  }
+
+  return MS_SUCCESS;
+
+#else
+  msSetError(MS_OGCAPIERR, "OGC API server support is not enabled.",
+             "msOGCAPIDispatchMapIndexRequest()");
+  return MS_FAILURE;
+#endif
+}
+
+/**
+ * Return the MapServer landing page response
+ */
 int msOGCAPIDispatchIndexRequest(mapservObj *mapserv, configObj *config) {
 #ifdef USE_OGCAPI_SVR
   if (!mapserv || !config)
@@ -220,7 +413,45 @@ int msOGCAPIDispatchIndexRequest(mapservObj *mapserv, configObj *config) {
   OGCAPIFormat format;
   format = msGetOutputFormat(request);
 
-  return processIndexRequest(config, format);
+  std::string onlineResource;
+
+  if (char *res = msBuildOnlineResource(NULL, request)) {
+    onlineResource = res;
+    free(res);
+
+    // remove trailing '?' if present
+    if (!onlineResource.empty() && onlineResource.back() == '?') {
+      onlineResource.pop_back();
+    }
+  } else {
+    // use a relative URL if no onlineresource cannot be created
+    onlineResource = "./"; // fallback
+  }
+
+  const char *key = NULL;
+  json links = json::array();
+
+  while ((key = msNextKeyFromHashTable(&config->maps, key)) != NULL) {
+    if (mapObj *map = getMapFromConfig(config, key)) {
+      links.push_back(createMapSummary(map, key, onlineResource.c_str()));
+      msFreeMap(map);
+    } else {
+      // there was a problem loading the map
+      links.push_back(createMapError(key));
+    }
+  }
+
+  json response = {{"linkset", links}};
+
+  if (format == OGCAPIFormat::JSON) {
+    outputJson(response, OGCAPI_MIMETYPE_JSON, {});
+  } else if (format == OGCAPIFormat::HTML) {
+    createHTMLOutput(response, TEMPLATE_HTML_INDEX);
+  } else {
+    outputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
+  }
+
+  return MS_SUCCESS;
 
 #else
   msSetError(MS_OGCAPIERR, "OGC API server support is not enabled.",
