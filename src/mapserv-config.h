@@ -28,7 +28,7 @@ MS_DLL_EXPORT void msFreeConfig(configObj *config);
 MS_DLL_EXPORT const char *msConfigGetEnv(const configObj *config,
                                          const char *key);
 MS_DLL_EXPORT const char *msConfigGetMap(const configObj *config,
-                                         const char *key);
+                                         const char *key, char *pszReturnPath);
 MS_DLL_EXPORT const char *msConfigGetPlugin(const configObj *config,
                                             const char *key);
 

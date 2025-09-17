@@ -222,9 +222,10 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config) {
     }
     ms_mapfile_tainted = MS_FALSE;
   } else {
+    char pathBuf[MS_MAXPATHLEN];
     ms_mapfile = msConfigGetMap(
-        config,
-        map_value); /* does NOT check the environment, only the config */
+        config, map_value,
+        pathBuf); /* does NOT check the environment, only the config */
     if (ms_mapfile) {
       ms_mapfile_tainted = MS_FALSE;
     } else {
@@ -2484,6 +2485,10 @@ end_request:
   free(queryString);
 
   return 0;
+}
+
+int msCGIDispatchMapIndexRequest(mapservObj *mapserv, configObj *config) {
+  return msOGCAPIDispatchMapIndexRequest(mapserv, config);
 }
 
 int msCGIDispatchIndexRequest(mapservObj *mapserv, configObj *config) {

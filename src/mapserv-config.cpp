@@ -201,10 +201,34 @@ const char *msConfigGetEnv(const configObj *config, const char *key) {
   return msLookupHashTable(&config->env, key);
 }
 
-const char *msConfigGetMap(const configObj *config, const char *key) {
-  if (config == NULL || key == NULL)
+const char *msConfigGetMap(const configObj *config, const char *key,
+                           char *pszReturnPath) {
+  if (config == NULL || key == NULL || pszReturnPath == NULL)
     return NULL;
-  return msLookupHashTable(&config->maps, key);
+
+  const char *mapFile = msLookupHashTable(&config->maps, key);
+  if (!mapFile)
+    return NULL;
+
+  // if the mapFile path is relative, use the
+  // location of the CONFIG file to define the full path
+  if (CPLIsFilenameRelative(mapFile)) {
+    char *configPath =
+        msGetPath(CPLGetConfigOption("MAPSERVER_CONFIG_FILE", NULL));
+
+    if (!configPath)
+      return NULL;
+
+    if (msBuildPath(pszReturnPath, configPath, mapFile) == NULL) {
+      free(configPath);
+      return NULL;
+    }
+    free(configPath);
+  } else {
+    // just copy absolute path directly
+    strlcpy(pszReturnPath, mapFile, MS_MAXPATHLEN);
+  }
+  return pszReturnPath;
 }
 
 const char *msConfigGetPlugin(const configObj *config, const char *key) {
