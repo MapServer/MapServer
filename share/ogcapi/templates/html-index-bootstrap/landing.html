@@ -3,7 +3,7 @@
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb bg-light">
         <li class="breadcrumb-item active" aria-current="page">Home</li>
-        <li class="ms-auto json-link"><a target="_blank" href="./api-catalog.json">JSON</a></li>
+        <li class="ms-auto json-link"><a target="_blank" href="./?f=json">JSON</a></li>
     </ol>
 </nav>
 
@@ -19,6 +19,7 @@
         <thead class="thead-light">
             <tr>
                 <th>#</th>
+                <th>Key</th>
                 <th>Name</th>
                 <th>Layer Count</th>
                 <th>HTML Documentation</th>
@@ -26,13 +27,14 @@
             </tr>
         </thead>
         <tbody>
-            {% for link in linkset %}
+            {% for link in response.linkset %}
             <tr>
                 <td>{{ loop.index1 }}</td>
+                <td>{{ link.key }}</td>
                 <td>{{ link.title }}</td>
                 <td>{{ link.layer-count }}</td>
-                <td><a href="./{{ link.service-doc.0.href }}">{{ link.service-doc.0.title }}</a></td>
-                <td><a href="./{{ link.service-desc.0.href }}">{{ link.service-desc.0.title }}</a></td>
+                <td><a href="{{ link.service-doc.0.href }}">{{ link.service-doc.0.title }}</a></td>
+                <td><a href="{{ link.service-desc.0.href }}">{{ link.service-desc.0.title }}</a></td>
             </tr>
             {% endfor %}
         </tbody>

@@ -1,0 +1,66 @@
+{% include "header.html" %}
+
+<h1>MapServer Mapfile Landing Page</h1>
+<p>
+    This page lists all available services for the Mapfile.
+</p>
+
+<h2>Service Documentation Links</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Title</th>
+            <th>Service</th>
+            <th>Type</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% set index = 1 %}
+        {% for link in response.linkset %}
+        {% if existsIn(link,"service-doc")  %}
+        {% for service in link.service-doc %}
+        <tr>
+            <td>{{ loop.index1 }}</td>
+            <td>{{ link.title }}</td>
+            <td><a href="{{ service.href }}">{{ service.title }}</a></td>
+            <td>{{ service.service }}</td>
+        </tr>
+        {% set index = index + 1 %}
+        {% endfor %}
+        {% endif %}
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Service Description Links</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Title</th>
+            <th>Service</th>
+            <th>Type</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% set index = 1 %}
+        {% for link in response.linkset %}
+        {% if existsIn(link,"service-desc")  %}
+        {% for service in link.service-desc %}
+        <tr>
+            <td>{{ index }}</td>
+            <td>{{ link.title }}</td>
+            <td><a href="{{ service.href }}">{{ service.title }}</a></td>
+            <td>{{ service.service }}</td>
+        </tr>
+        {% set index = index + 1 %}
+        {% endfor %}
+        {% endif %}
+        {% endfor %}
+    </tbody>
+</table>
+
+{% include "footer.html" %}

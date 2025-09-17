@@ -1,15 +1,33 @@
 {% include "header.html" %}
 
-<h1>{{ response.title }}</h1>
+<h1>MapServer Homepage</h1>
 <p>
-  MapServer Mapfiles available on this server are listed below
+    This page lists all available Mapfiles hosted by MapServer.
 </p>
 
-<h2>Links</h2>
-<ul>
-{% for link in response.links %}
-  <li> <a href="{{ link.href }}">{{ link.title }}</a></li>
-{% endfor %}
-</ul>
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Key</th>
+            <th>Name</th>
+            <th>Layer Count</th>
+            <th>HTML Documentation</th>
+            <th>JSON</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for link in response.linkset %}
+        <tr>
+            <td>{{ loop.index1 }}</td>
+            <td>{{ link.key }}</td>
+            <td>{{ link.title }}</td>
+            <td>{{ link.layer-count }}</td>
+            <td><a href="./{{ link.service-doc.0.href }}">{{ link.service-doc.0.title }}</a></td>
+            <td><a href="./{{ link.service-desc.0.href }}">{{ link.service-desc.0.title }}</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
 {% include "footer.html" %}
