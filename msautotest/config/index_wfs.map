@@ -1,0 +1,30 @@
+MAP
+    NAME "WFSMAP"
+    SIZE 800 800
+    EXTENT -180.0 -90 180 90
+    PROJECTION
+        "EPSG:4326"
+    END
+    WEB
+        METADATA
+            "wfs_enable_request" "GetCapabilities GetMap"
+            "wfs_srs" "EPSG:4326"
+            "wfs_title" "MapServer WFS Demo Map"
+        END
+    END
+
+    LAYER
+        NAME "ne_110m_land"
+        STATUS OFF
+        CONNECTION "./data/ne_110m_land.fgb"
+        TYPE POLYGON
+        CONNECTIONTYPE OGR
+        TEMPLATE "ttt"
+        CLASS
+            NAME "land"
+            STYLE
+                COLOR "#b5651d"
+            END
+        END
+    END
+END

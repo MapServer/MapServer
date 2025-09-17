@@ -1,0 +1,31 @@
+MAP
+    NAME "WCS Demo Mapfile"
+    SIZE 1200 1200
+    IMAGETYPE "png"
+    EXTENT -117.5459036  44.6653607 -117.3871721  44.7670830
+    PROJECTION
+        "EPSG:4326"
+    END
+    WEB
+        METADATA
+            "wcs_srs" "EPSG:4326"
+            "wcs_enable_request" "*"
+        END
+    END
+    LAYER
+      STATUS OFF
+      NAME toronto
+      DATA "data/toronto.tif"
+      METADATA
+        "ows_title" "Toronto"
+        "wcs_label" "Toronto"
+        "ows_abstract" "Toronto"
+        "wcs_rangeset_name" "range 1"
+        "wcs_rangeset_label" "label"
+      END
+      TYPE RASTER
+      PROJECTION
+        "init=epsg:32611"
+      END
+    END
+END
