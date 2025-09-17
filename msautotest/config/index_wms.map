@@ -12,6 +12,8 @@ MAP
             "wms_srs" "EPSG:4326"
             "ows_title" "MapServer WMS Demo Map"
         END
+        # required if using &mode=browse&template=openlayers
+        IMAGEPATH "/tmp/"
     END
 
     LAYER

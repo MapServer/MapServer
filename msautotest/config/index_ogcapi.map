@@ -6,10 +6,10 @@ MAP
         "EPSG:4326"
     END
     WEB
+        IMAGEPATH "/tmp/"
         METADATA
             "oga_title" "MapServer OGC Features API Demo Map"
             "oga_enable_request" "*" #REQUIRED
-            "oga_html_template_directory" "../../share/ogcapi/templates/html-bootstrap/"
         END
     END
 

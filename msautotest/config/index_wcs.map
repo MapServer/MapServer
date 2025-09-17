@@ -7,6 +7,7 @@ MAP
         "EPSG:4326"
     END
     WEB
+        IMAGEPATH "/tmp/"
         METADATA
             "wcs_srs" "EPSG:4326"
             "wcs_enable_request" "*"

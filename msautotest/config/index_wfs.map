@@ -6,6 +6,7 @@ MAP
         "EPSG:4326"
     END
     WEB
+        IMAGEPATH "/tmp/"
         METADATA
             "wfs_enable_request" "GetCapabilities GetMap"
             "wfs_srs" "EPSG:4326"

@@ -5,6 +5,10 @@ MAP
   EXTENT 1 1 100 100
   SIZE 300 300
 
+  WEB
+    IMAGEPATH "/tmp/"
+  END
+
   LAYER
     NAME 'hello_world'
     STATUS DEFAULT

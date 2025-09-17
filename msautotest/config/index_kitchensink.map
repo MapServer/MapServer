@@ -7,12 +7,12 @@ MAP
         "EPSG:4326"
     END
     WEB
+        IMAGEPATH "/tmp/"
         METADATA
             "ows_enable_request" "*"
             "oga_enable_request" "*"
             "ows_srs" "EPSG:4326"
             "ows_title" "MapServer Kitchensink Demo Map"
-            "oga_html_template_directory" "../../share/ogcapi/templates/html-bootstrap4/"
         END
     END
         LAYER
