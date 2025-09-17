@@ -13,7 +13,7 @@ echo 'deb [signed-by=/etc/apt/keyrings/kitware-archive-latest.asc] https://apt.k
 
 # Add required repositories
 sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
-sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ noble main'
+sudo apt-add-repository -y 'deb https://apt.kitware.com/ubuntu/ noble main'
 
 sudo apt-get update
 
