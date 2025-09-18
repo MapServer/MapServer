@@ -23,8 +23,8 @@
             <td>{{ link.key }}</td>
             <td>{{ link.title }}</td>
             <td>{{ link.layer-count }}</td>
-            <td><a href="./{{ link.service-doc.0.href }}">{{ link.service-doc.0.title }}</a></td>
-            <td><a href="./{{ link.service-desc.0.href }}">{{ link.service-desc.0.title }}</a></td>
+            <td><a href="{{ link.service-doc.0.href }}">{{ link.service-doc.0.title }}</a></td>
+            <td><a href="{{ link.service-desc.0.href }}">{{ link.service-desc.0.title }}</a></td>
         </tr>
         {% endfor %}
     </tbody>
