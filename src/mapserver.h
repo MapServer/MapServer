@@ -2895,6 +2895,7 @@ MS_DLL_EXPORT int msUTF8ToUniChar(const char *str,
 MS_DLL_EXPORT char *msStringEscape(const char *pszString);
 MS_DLL_EXPORT int msStringInArray(const char *pszString, char **array,
                                   int numelements);
+void msStringUnescape(char *pszString, char chEscapeChar);
 
 typedef struct msStringBuffer msStringBuffer;
 MS_DLL_EXPORT msStringBuffer *msStringBufferAlloc(void);

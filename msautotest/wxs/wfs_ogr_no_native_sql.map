@@ -17,6 +17,9 @@
 #
 # RUN_PARMS: wfs_ogr_native_sql_05.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=towns&OUTPUTFORMAT=GML2&FILTER=<Filter><PropertyIsEqualTo matchCase="false"><PropertyName>name</PropertyName><Literal>fanano</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
 # RUN_PARMS: wfs_ogr_native_sql_06.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=towns&OUTPUTFORMAT=GML2&FILTER=<Filter><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>Fanano</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
+
+# RUN_PARMS: wfs_ogr_native_sql_is_equal_to_invalid_property_name.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=towns&OUTPUTFORMAT=GML2&FILTER=<Filter><PropertyIsEqualTo matchCase="false"><PropertyName>" OR 1=1 OR 1="</PropertyName><Literal>fanano</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
+
 # RUN_PARMS: wfs_ogr_native_sql_07.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=towns&OUTPUTFORMAT=GML2&FILTER=<Filter><PropertyIsEqualTo matchCase="false"><PropertyName>name</PropertyName><Literal>fanano</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
 # RUN_PARMS: wfs_ogr_native_sql_08.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=towns&OUTPUTFORMAT=GML2&FILTER=<Filter><PropertyIsNotEqualTo><PropertyName>name</PropertyName><Literal>Fanano</Literal></PropertyIsNotEqualTo></Filter>" > [RESULT]
 #
@@ -62,6 +65,9 @@
 # RUN_PARMS: wfs_ogr_native_sql_31.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=towns&OUTPUTFORMAT=GML2&FILTER=<Filter><Beyond><Distance unit="m">20000</Distance><PropertyName>Geometry</PropertyName><Polygon><exterior><LinearRing><posList>653627 4881103 653174 4890443 663148 4887813 663330 4879471 653627 4881103</posList></LinearRing></exterior></Polygon></Beyond></Filter>" > [RESULT]
 # RUN_PARMS: wfs_ogr_native_sql_32.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=towns&OUTPUTFORMAT=GML2&FILTER=<Filter><DWithin><Distance unit="m">1000</Distance><PropertyName>Geometry</PropertyName><Polygon><exterior><LinearRing><posList>653627 4881103 653174 4890443 663148 4887813 663330 4879471 653627 4881103</posList></LinearRing></exterior></Polygon></DWithin></Filter>" > [RESULT]
 
+# RUN_PARMS: wfs_ogr_weird_column_names_binary_op_numeric.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=weird_column_names&OUTPUTFORMAT=GML2&FILTER=<Filter><PropertyIsEqualTo><PropertyName>]</PropertyName><Literal>1</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
+# RUN_PARMS: wfs_ogr_weird_column_names_binary_op_string.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=weird_column_names&OUTPUTFORMAT=GML2&FILTER=<Filter><PropertyIsEqualTo><PropertyName>a%26quot;b</PropertyName><Literal>foo</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
+
 MAP
 
 NAME WFS_OGR_NATIVE_SQL_TEST
@@ -105,6 +111,28 @@ LAYER
   PROCESSING "NATIVE_SQL=NO"
   METADATA
     "ows_title"         "towns"
+    "wfs_featureid"     "ID"
+    "gml_include_items" "all"
+    "gml_types"         "auto"
+    "wfs_getfeature_formatlist" "ogrgml"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:32632"
+  END
+
+  TEMPLATE "wfs_ogr_native_sql.map"
+END # Layer
+
+LAYER
+
+  NAME weird_column_names
+  CONNECTIONTYPE OGR
+  CONNECTION "./data/weird_column_names.db"
+  PROCESSING "NATIVE_SQL=NO"
+  METADATA
+    "ows_title"         "weird_column_names"
     "wfs_featureid"     "ID"
     "gml_include_items" "all"
     "gml_types"         "auto"
