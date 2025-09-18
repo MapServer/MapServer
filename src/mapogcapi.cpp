@@ -400,11 +400,6 @@ static const char *getTitle(mapObj *map) {
   return getWebMetadata(map, "OA", "title", OGCAPI_DEFAULT_TITLE);
 }
 
-static std::string getEnvVar(const char *envVar) {
-  const char *value = getenv(envVar);
-  return value ? std::string(value) : std::string();
-}
-
 /*
 ** Returns the API root URL from oga_onlineresource or builds a value if not
 *set.
