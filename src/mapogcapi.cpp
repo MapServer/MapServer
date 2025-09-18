@@ -409,20 +409,27 @@ static std::string getEnvVar(const char *envVar) {
 ** Returns the API root URL from oga_onlineresource or builds a value if not
 *set.
 */
-std::string getApiRootUrl(mapObj *map, const char *namespaces = "A") {
+std::string getApiRootUrl(mapObj *map, cgiRequestObj *request,
+                          const char *namespaces = "A") {
   const char *root;
-
   if ((root = msOWSLookupMetadata(&(map->web.metadata), namespaces,
                                   "onlineresource")) != NULL) {
     return std::string(root);
-  } else {
-    std::string serverName = getEnvVar("SERVER_NAME");
-    std::string serverPort = getEnvVar("SERVER_PORT");
-    std::string scriptName = getEnvVar("SCRIPT_NAME");
-    std::string pathInfo = getEnvVar("PATH_INFO");
-
-    return "http://" + serverName + ":" + serverPort + scriptName + pathInfo;
   }
+
+  std::string api_root;
+  if (char *res = msBuildOnlineResource(NULL, request)) {
+    api_root = res;
+    free(res);
+
+    // find last ogcapi in the string and strip the rest to get the root API
+    std::size_t pos = api_root.rfind("ogcapi");
+    if (pos != std::string::npos) {
+      api_root = api_root.substr(0, pos + std::string("ogcapi").size());
+    }
+  }
+
+  return api_root;
 }
 
 static json getFeatureConstant(const gmlConstantObj *constant) {
@@ -769,7 +776,8 @@ static int getGeometryPrecision(mapObj *map, layerObj *layer) {
   return geometry_precision;
 }
 
-static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format) {
+static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format,
+                          const std::string api_root) {
   json collection; // empty (null)
   rectObj bbox;
 
@@ -780,8 +788,6 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format) {
     return collection;
 
   // initialize some things
-  std::string api_root = getApiRootUrl(map);
-
   if (msOWSGetLayerExtent(map, layer, "AOF", &bbox) == MS_SUCCESS) {
     if (layer->projection.numargs > 0)
       msOWSProjectToWGS84(&layer->projection, &bbox);
@@ -987,7 +993,7 @@ outputResponse(mapObj *map, cgiRequestObj *request, OGCAPIFormat format,
     // extend the JSON with a few things that we need for templating
     j["template"] = {{"path", json::array()},
                      {"params", json::object()},
-                     {"api_root", getApiRootUrl(map)},
+                     {"api_root", getApiRootUrl(map, request)},
                      {"title", getTitle(map)},
                      {"tags", json::object()}};
 
@@ -1040,7 +1046,7 @@ static int processLandingRequest(mapObj *map, cgiRequestObj *request,
                             "abstract"); // fallback on abstract if necessary
 
   // define api root url
-  std::string api_root = getApiRootUrl(map);
+  std::string api_root = getApiRootUrl(map, request);
 
   // build response object
   //   - consider conditionally excluding links for HTML format
@@ -1165,6 +1171,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
     return MS_SUCCESS;
   }
 
+  std::string api_root = getApiRootUrl(map, request);
   const char *crs = getRequestParameter(request, "crs");
 
   std::string outputCrs = "EPSG:4326";
@@ -1366,7 +1373,6 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
 
   // build response object
   if (!featureId) {
-    std::string api_root = getApiRootUrl(map);
     const char *id = layer->name;
     char *id_encoded = msEncodeUrl(id); // free after use
 
@@ -1502,7 +1508,6 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
   }
 
   if (featureId) {
-    std::string api_root = getApiRootUrl(map);
     const char *id = layer->name;
     char *id_encoded = msEncodeUrl(id); // free after use
 
@@ -1560,7 +1565,8 @@ static int processCollectionRequest(mapObj *map, cgiRequestObj *request,
   }
 
   try {
-    response = getCollection(map, map->layers[l], format);
+    response =
+        getCollection(map, map->layers[l], format, getApiRootUrl(map, request));
     if (response.is_null()) { // same as not found
       outputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
       return MS_SUCCESS;
@@ -1582,7 +1588,7 @@ static int processCollectionsRequest(mapObj *map, cgiRequestObj *request,
   int i;
 
   // define api root url
-  std::string api_root = getApiRootUrl(map);
+  std::string api_root = getApiRootUrl(map, request);
 
   // build response object
   response = {{"links",
@@ -1598,7 +1604,7 @@ static int processCollectionsRequest(mapObj *map, cgiRequestObj *request,
 
   for (i = 0; i < map->numlayers; i++) {
     try {
-      json collection = getCollection(map, map->layers[i], format);
+      json collection = getCollection(map, map->layers[i], format, api_root);
       if (!collection.is_null())
         response["collections"].push_back(collection);
     } catch (const std::runtime_error &e) {
@@ -1666,7 +1672,8 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
   }
 
   json server;
-  server["url"] = getApiRootUrl(map);
+  server["url"] = getApiRootUrl(map, request);
+
   {
     const char *value =
         getWebMetadata(map, "AO", "server_description", nullptr);
