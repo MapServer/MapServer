@@ -190,7 +190,7 @@ option(LINK_STATIC_LIBMAPSERVER "Link to static version of libmapserver (also fo
 option(WITH_APACHE_MODULE "include (experimental) support for apache module" OFF)
 option(WITH_GENERIC_NINT "generic rounding" OFF)
 option(WITH_PYMAPSCRIPT_ANNOTATIONS "Add annotations to Python mapscript output" OFF)
-option(INSTALL_HTML_BOOTSTRAP "Whether to install HTML Bootstrap4 resources for OGCAPIs" ON)
+option(INSTALL_HTML_BOOTSTRAP "Whether to install HTML Bootstrap resources for OGCAPIs" ON)
 
 option(FUZZER "Build fuzzers using libFuzzer (requires Clang, will disable executable - mapserv, etc. - generation)" OFF)
 mark_as_advanced(FUZZER)
