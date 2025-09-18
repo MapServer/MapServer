@@ -1,3 +1,5 @@
+# RUN_PARMS: index_wcs.json [MAPSERV] -conf index.conf "PATH_INFO=/WCS_MAP/" QUERY_STRING="f=json" > [RESULT_DEMIME]
+
 MAP
     NAME "WCS Demo Mapfile"
     SIZE 1200 1200

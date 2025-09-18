@@ -1,3 +1,5 @@
+# RUN_PARMS: index_kitchensink.json [MAPSERV] -conf index.conf "PATH_INFO=/KITCHENSINK_MAP/" QUERY_STRING="f=json" > [RESULT_DEMIME]
+
 MAP
     NAME "Kitchensink Demo Mapfile"
     IMAGETYPE "png"

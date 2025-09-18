@@ -1,3 +1,5 @@
+# RUN_PARMS: index_wms_nocgi.json [MAPSERV] -conf index.conf "PATH_INFO=/WMS_MAP_NOCGI/" QUERY_STRING="f=json" > [RESULT_DEMIME]
+
 MAP
     NAME "WMSMAPNOCGI"
     IMAGETYPE "png"

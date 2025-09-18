@@ -1,3 +1,5 @@
+# RUN_PARMS: index_ogcapi.json [MAPSERV] -conf index.conf "PATH_INFO=/OGCAPI_MAP/" QUERY_STRING="f=json" > [RESULT_DEMIME]
+
 MAP
     NAME "OAPIF Demo Mapfile"
     SIZE 800 800
