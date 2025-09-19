@@ -16,7 +16,7 @@ The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE
 8.4.1 release (2025-09-19)
 --------------------------
 
-- security:  Add missing column name escaping for WFS filters through OGR (#7349)
+- security:  add missing column name escaping for WFS filters through OGR (#7349)
 
 - fix opacity for gradient legend symbol (#7255)
 
