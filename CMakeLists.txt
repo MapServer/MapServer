@@ -1155,6 +1155,14 @@ install(
   DESTINATION ${MAPSERVER_DATA_SUBDIR}/ogcapi/templates/html-plain/
 )
 
+install(
+  FILES ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-index-plain/footer.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-index-plain/header.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-index-plain/landing.html
+        ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-index-plain/map.html
+  DESTINATION ${MAPSERVER_DATA_SUBDIR}/ogcapi/templates/html-index-plain/
+)
+
 if(INSTALL_HTML_BOOTSTRAP)
   install(
     FILES ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap/collection.html
@@ -1168,6 +1176,14 @@ if(INSTALL_HTML_BOOTSTRAP)
           ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap/landing.html
           ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap/openapi.html
     DESTINATION ${MAPSERVER_DATA_SUBDIR}/ogcapi/templates/html-bootstrap/
+  )
+
+  install(
+    FILES ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-index-bootstrap/footer.html
+          ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-index-bootstrap/header.html
+          ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-index-bootstrap/landing.html
+          ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-index-bootstrap/map.html
+    DESTINATION ${MAPSERVER_DATA_SUBDIR}/ogcapi/templates/html-index-bootstrap/
   )
 endif()
 
