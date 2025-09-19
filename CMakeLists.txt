@@ -190,6 +190,7 @@ option(LINK_STATIC_LIBMAPSERVER "Link to static version of libmapserver (also fo
 option(WITH_APACHE_MODULE "include (experimental) support for apache module" OFF)
 option(WITH_GENERIC_NINT "generic rounding" OFF)
 option(WITH_PYMAPSCRIPT_ANNOTATIONS "Add annotations to Python mapscript output" OFF)
+option(INSTALL_HTML_BOOTSTRAP "Whether to install HTML Bootstrap resources for OGCAPIs" ON)
 
 option(FUZZER "Build fuzzers using libFuzzer (requires Clang, will disable executable - mapserv, etc. - generation)" OFF)
 mark_as_advanced(FUZZER)
@@ -1153,6 +1154,22 @@ install(
         ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-plain/openapi.html
   DESTINATION ${MAPSERVER_DATA_SUBDIR}/ogcapi/templates/html-plain/
 )
+
+if(INSTALL_HTML_BOOTSTRAP)
+  install(
+    FILES ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap/collection.html
+          ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap/collection-item.html
+          ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap/collection-items.html
+          ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap/collections.html
+          ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap/conformance.html
+          ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap/debug.html
+          ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap/footer.html
+          ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap/header.html
+          ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap/landing.html
+          ${PROJECT_SOURCE_DIR}/share/ogcapi/templates/html-bootstrap/openapi.html
+    DESTINATION ${MAPSERVER_DATA_SUBDIR}/ogcapi/templates/html-bootstrap/
+  )
+endif()
 
 install(
   FILES ${PROJECT_SOURCE_DIR}/etc/mapserver-sample.conf

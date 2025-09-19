@@ -1,0 +1,22 @@
+{% include "header.html" %}
+
+<nav aria-label="breadcrumb">  
+  <ol class="breadcrumb bg-light">
+    <li class="breadcrumb-item active" aria-current="page">Home</li>
+    <li class="ms-auto json-link"><a target="_blank" href="{{ template.api_root }}?f=json">JSON</a></li>
+  </ol>
+</nav>
+
+<h1>{{ response.title }}</h1>
+<p>
+  {{ response.description }}
+</p>
+
+<h2>Links</h2>
+<ul>
+{% for link in response.links %}
+  <li> <a href="{{ link.href }}">{{ link.title }}</a></li>
+{% endfor %}
+</ul>
+
+{% include "footer.html" %}

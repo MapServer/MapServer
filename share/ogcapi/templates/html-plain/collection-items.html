@@ -9,14 +9,16 @@
 
 <table>
   <thead>
-    <th>ID</th>
+    <tr>
+      <th>ID</th>
 {% if response.features %}
 {% for key, value in response.features.0.properties %}
-    <th>{{ key }}</th>
-{% endfor %} 
+      <th>{{ key }}</th>
+{% endfor %}
 {% endif %}
+    </tr>
   </thead>
-  <tbody>    
+  <tbody>
 {% for feature in response.features %}
     <tr>
       <td><a target="_blank" href="{{ template.api_root }}/collections/{{ response.collection.id }}/items/{{ feature.id }}?f=html">{{ feature.id }}</a></td>

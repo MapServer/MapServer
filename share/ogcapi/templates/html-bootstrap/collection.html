@@ -1,0 +1,78 @@
+{% include "header.html" %}
+
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb bg-light">
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}?f=html">Home</a></li>
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}/collections?f=html">Collections</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ response.title }}</li>
+    <li class="ms-auto json-link"><a target="_blank" href="{{ template.api_root }}/collections/{{ response.id }}?f=json">JSON</a></li>
+  </ol>
+</nav>
+
+<h1>{{ template.title }} - Collection: {{ response.title }}</h1>
+
+<div class="row">
+  <div class="col-sm">
+
+    <p>{{ response.description }}</p>
+    {% if existsIn(response, "keywords") and length(response.keywords) > 0 %}
+      <div id="keywords"><p>
+        {% for keyword in response.keywords %}
+          <span class="badge badge-secondary">{{ keyword }}</span>
+        {% endfor %}
+      </p></div>
+    {% endif %}
+
+    {% if existsIn(response, "storageCrs") %}
+    <p>Storage CRS:
+    <a href="{{ response.storageCrs }}">{{ response.storageCrs }}</a>
+    </p>
+    {% endif %}
+
+    {% if existsIn(response, "crs") %}
+    <p>
+    Supported CRS:
+    <ul>
+    {% for href in response.crs %}
+    <li> <a href="{{ href }}">{{ href }}</a></li>
+    {% endfor %}
+    </ul>
+    </p>
+    {% endif %}
+
+    <h2>Links</h2>
+    <ul>
+    {% for link in response.links %}
+      <li> <a href="{{ link.href }}">{{ link.title }}</a></li>
+    {% endfor %}
+    </ul>
+  </div>
+  <div class="col-sm">
+    <div id="map" class="rounded" style="width:100%;height:400px;">Loading...</div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const map = L.map('map').setView([0, 0], 1);
+    map.addLayer(new L.TileLayer(
+      'https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: 'Map data &copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+      }
+    ));
+
+    const bbox = {{ response.extent.spatial.bbox.0 }};
+    const bbox_polygon = L.polygon([
+      [bbox[1], bbox[0]],
+      [bbox[1], bbox[2]],
+      [bbox[3], bbox[2]],
+      [bbox[3], bbox[0]]
+    ]);
+
+    map.addLayer(bbox_polygon);
+    map.fitBounds(bbox_polygon.getBounds());
+  });
+</script>
+
+{% include "footer.html" %}
