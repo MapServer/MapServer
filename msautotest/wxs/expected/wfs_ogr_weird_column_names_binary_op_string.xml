@@ -1,0 +1,37 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:wfs="http://www.opengis.net/wfs"
+   xmlns:gml="http://www.opengis.net/gml"
+   xmlns:ogc="http://www.opengis.net/ogc"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd 
+                       http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=1.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=weird_column_names&amp;OUTPUTFORMAT=XMLSCHEMA">
+      <gml:boundedBy>
+      	<gml:Box srsName="EPSG:32632">
+      		<gml:coordinates>1000000.000000,4000000.000000 1000000.000000,4000000.000000</gml:coordinates>
+      	</gml:Box>
+      </gml:boundedBy>
+<!-- WARNING: FeatureId item 'ID' not found in typename 'weird_column_names'. -->
+    <gml:featureMember>
+      <ms:weird_column_names>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>1000000.000000,4000000.000000 1000000.000000,4000000.000000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>1000000.000000,4000000.000000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+<!-- WARNING: The value ']' is not valid in a XML tag context. -->
+        <ms:]>1</ms:]>
+<!-- WARNING: The value 'a"b' is not valid in a XML tag context. -->
+        <ms:a"b>foo</ms:a"b>
+      </ms:weird_column_names>
+    </gml:featureMember>
+</wfs:FeatureCollection>
+
