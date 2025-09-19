@@ -13,7 +13,7 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
-8.2.1 release (2025-09-19)
+8.4.1 release (2025-09-19)
 --------------------------
 
 - security:  Add missing column name escaping for WFS filters through OGR (#7349)
