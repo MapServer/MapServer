@@ -59,7 +59,7 @@ typedef struct {
   double *qc_y;
   double *qc_x_reproj;
   double *qc_y_reproj;
-  float *qc_values;
+  double *qc_values;
   int *qc_class;
   int *qc_red;
   int *qc_green;
@@ -76,7 +76,7 @@ typedef struct {
   pointObj target_point;
 
   GDALColorTableH hCT;
-
+  GDALDataType eDataType;
   double shape_tolerance;
 
 } rasterLayerInfo;
@@ -211,7 +211,7 @@ static void msRasterLayerInfoInitialize(layerObj *layer)
 /************************************************************************/
 
 static void msRasterQueryAddPixel(layerObj *layer, pointObj *location,
-                                  pointObj *reprojectedLocation, float *values)
+                                  pointObj *reprojectedLocation, double *values)
 
 {
   rasterLayerInfo *rlinfo = (rasterLayerInfo *)layer->layerinfo;
@@ -238,8 +238,8 @@ static void msRasterQueryAddPixel(layerObj *layer, pointObj *location,
           (double *)msSmallCalloc(sizeof(double), rlinfo->query_alloc_max);
       rlinfo->qc_y_reproj =
           (double *)msSmallCalloc(sizeof(double), rlinfo->query_alloc_max);
-      rlinfo->qc_values = (float *)msSmallCalloc(
-          sizeof(float),
+      rlinfo->qc_values = (double *)msSmallCalloc(
+          sizeof(double),
           ((size_t)rlinfo->query_alloc_max) * rlinfo->band_count);
       rlinfo->qc_red =
           (int *)msSmallCalloc(sizeof(int), rlinfo->query_alloc_max);
@@ -285,7 +285,7 @@ static void msRasterQueryAddPixel(layerObj *layer, pointObj *location,
     if (rlinfo->qc_values != NULL)
       rlinfo->qc_values = msSmallRealloc(
           rlinfo->qc_values,
-          sizeof(float) * rlinfo->query_alloc_max * rlinfo->band_count);
+          sizeof(double) * rlinfo->query_alloc_max * rlinfo->band_count);
     if (rlinfo->qc_class != NULL)
       rlinfo->qc_class = msSmallRealloc(rlinfo->qc_class,
                                         sizeof(int) * rlinfo->query_alloc_max);
@@ -385,7 +385,7 @@ static void msRasterQueryAddPixel(layerObj *layer, pointObj *location,
   /* -------------------------------------------------------------------- */
   if (rlinfo->qc_values != NULL)
     memcpy(rlinfo->qc_values + rlinfo->query_results * rlinfo->band_count,
-           values, sizeof(float) * rlinfo->band_count);
+           values, sizeof(double) * rlinfo->band_count);
 
   /* -------------------------------------------------------------------- */
   /*      Add to the results cache.                                       */
@@ -408,7 +408,7 @@ static int msRasterQueryByRectLow(mapObj *map, layerObj *layer,
   double dfXMin, dfYMin, dfXMax, dfYMax, dfX, dfY, dfAdjustedRange;
   int nWinXOff, nWinYOff, nWinXSize, nWinYSize;
   int nRXSize, nRYSize;
-  float *pafRaster;
+  double *pafRaster;
   int nBandCount, *panBandMap, iPixel, iLine;
   CPLErr eErr;
   rasterLayerInfo *rlinfo;
@@ -504,15 +504,20 @@ static int msRasterQueryByRectLow(mapObj *map, layerObj *layer,
   /*      band in the file.  Later we will deal with the various band     */
   /*      selection criteria.                                             */
   /* -------------------------------------------------------------------- */
-  pafRaster = (float *)calloc(((size_t)nWinXSize) * nWinYSize * nBandCount,
-                              sizeof(float));
-  MS_CHECK_ALLOC(pafRaster, sizeof(float) * nWinXSize * nWinYSize * nBandCount,
-                 -1);
 
-  eErr = GDALDatasetRasterIO(hDS, GF_Read, nWinXOff, nWinYOff, nWinXSize,
-                             nWinYSize, pafRaster, nWinXSize, nWinYSize,
-                             GDT_Float32, nBandCount, panBandMap,
-                             4 * nBandCount, 4 * nBandCount * nWinXSize, 4);
+  size_t nPixels = (size_t)nWinXSize * nWinYSize * nBandCount;
+  pafRaster = (double *)calloc(nPixels, sizeof(double));
+  MS_CHECK_ALLOC(pafRaster, sizeof(double) * nPixels, -1);
+
+  // read raster block as GDT_Float64
+  eErr = GDALDatasetRasterIO(
+      hDS, GF_Read, nWinXOff, nWinYOff, nWinXSize, nWinYSize, pafRaster,
+      nWinXSize, nWinYSize, GDT_Float64, nBandCount, panBandMap,
+      sizeof(double) * nBandCount, sizeof(double) * nBandCount * nWinXSize,
+      sizeof(double));
+
+  // store the datatype of the original raster to use for output formatting
+  rlinfo->eDataType = GDALGetRasterDataType(GDALGetRasterBand(hDS, 1));
 
   if (eErr != CE_None) {
     msSetError(MS_IOERR, "GDALDatasetRasterIO() failed: %s",
@@ -1179,13 +1184,36 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record) {
           if (iValue != 0)
             strlcat(szWork, ",", bufferSize);
 
-          snprintf(szWork + strlen(szWork), bufferSize - strlen(szWork), "%.8g",
+          snprintf(szWork + strlen(szWork), bufferSize - strlen(szWork),
+                   "%.10g",
                    rlinfo->qc_values[shapeindex * rlinfo->band_count + iValue]);
         }
       } else if (EQUALN(layer->items[i], "value_", 6) && rlinfo->qc_values) {
         int iValue = atoi(layer->items[i] + 6);
-        snprintf(szWork, bufferSize, "%.8g",
-                 rlinfo->qc_values[shapeindex * rlinfo->band_count + iValue]);
+
+        double pixelValue =
+            rlinfo->qc_values[shapeindex * rlinfo->band_count + iValue];
+
+        switch (rlinfo->eDataType) {
+        case GDT_Byte:
+        case GDT_Int8:
+        case GDT_UInt16:
+        case GDT_Int16:
+        case GDT_Int32:
+          snprintf(szWork, bufferSize, "%d", (int)pixelValue);
+          break;
+        case GDT_UInt32:
+          snprintf(szWork, bufferSize, "%u", (unsigned int)pixelValue);
+          break;
+        case GDT_Float64:
+          snprintf(szWork, bufferSize, "%.12g", pixelValue);
+          break;
+        default:
+          // GDT_Float32
+          snprintf(szWork, bufferSize, "%.8g", pixelValue);
+          break;
+        }
+
       } else if (EQUAL(layer->items[i], "class") && rlinfo->qc_class) {
         int p_class = rlinfo->qc_class[shapeindex];
         if (layer->class[p_class] -> name != NULL)
