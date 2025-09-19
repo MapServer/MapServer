@@ -34,6 +34,20 @@
 
 #include <string>
 
+static std::string FLTEscapePropertyName(const char *pszStr,
+                                         char chEscapeChar) {
+  std::string ret;
+  for (; *pszStr; ++pszStr) {
+    if (*pszStr == chEscapeChar) {
+      ret += chEscapeChar;
+      ret += chEscapeChar;
+    } else {
+      ret += *pszStr;
+    }
+  }
+  return ret;
+}
+
 static std::string
 FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode) {
   /* From
@@ -63,7 +77,7 @@ FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode) {
   std::string expr("(\"[");
 
   /* attribute */
-  expr += psFilterNode->psLeftNode->pszValue;
+  expr += FLTEscapePropertyName(psFilterNode->psLeftNode->pszValue, '"');
 
   /* #3521 */
   if (bCaseInsensitive)
@@ -177,7 +191,8 @@ FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNode,
   else
     expr += "([";
 
-  expr += psFilterNode->psLeftNode->pszValue;
+  expr += FLTEscapePropertyName(psFilterNode->psLeftNode->pszValue,
+                                bString ? '"' : ']');
 
   if (bString)
     expr += "]\" ";
@@ -268,7 +283,9 @@ FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode,
     expr = "(\"[";
   else
     expr = "([";
-  expr += psFilterNode->psLeftNode->pszValue;
+
+  expr += FLTEscapePropertyName(psFilterNode->psLeftNode->pszValue,
+                                bString ? '"' : ']');
 
   if (bString)
     expr += "]\" ";
@@ -562,13 +579,13 @@ FLTGetFeatureIdCommonExpression(FilterEncodingNode *psFilterNode,
 
           if (bString) {
             expr += "(\"[";
-            expr += pszAttribute;
+            expr += FLTEscapePropertyName(pszAttribute, '"');
             expr += "]\" == \"";
             expr += pszId;
             expr += "\")";
           } else {
             expr += "([";
-            expr += pszAttribute;
+            expr += FLTEscapePropertyName(pszAttribute, ']');
             expr += "] == ";
             expr += pszId;
             expr += ")";

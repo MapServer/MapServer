@@ -1,0 +1,8 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<ServiceExceptionReport version="1.2.0" xmlns="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/ogc http://schemas.opengis.net/wfs/1.0.0/OGC-exception.xsd">
+  <ServiceException code="InvalidParameterValue" locator="filter">
+msWFSGetFeature(): WFS server error. Invalid or Unsupported FILTER in GetFeature : &lt;Filter&gt;&lt;PropertyIsEqualTo matchCase=false&gt;&lt;PropertyName&gt;
+  </ServiceException>
+</ServiceExceptionReport>
