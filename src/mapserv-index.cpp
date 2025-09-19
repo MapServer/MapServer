@@ -261,7 +261,7 @@ static json createMapSummary(mapObj *map, const char *key,
       msOWSLookupMetadata(&(map->web.metadata), "MCFGO", "title");
 
   mapJson["key"] = key;
-  mapJson["has-error"] = 0;
+  mapJson["has-error"] = false;
 
   if (value) {
     mapJson["title"] = value;
