@@ -1,0 +1,37 @@
+# RUN_PARMS: index_ogcapi.json [MAPSERV] -conf index.conf "PATH_INFO=/OGCAPI_MAP/" QUERY_STRING="f=json" > [RESULT_DEMIME]
+
+MAP
+    NAME "OAPIF Demo Mapfile"
+    SIZE 800 800
+    EXTENT -180.0 -90 180 90
+    PROJECTION
+        "EPSG:4326"
+    END
+    WEB
+        IMAGEPATH "/tmp/"
+        METADATA
+            "oga_title" "MapServer OGC Features API Demo Map"
+            "oga_enable_request" "*" #REQUIRED
+        END
+    END
+
+    LAYER
+        NAME "ne_110m_land"
+        STATUS OFF
+        CONNECTION "./data/ne_110m_land.fgb"
+        TYPE POLYGON
+        CONNECTIONTYPE OGR
+        TEMPLATE "ttt"
+        METADATA
+            "ows_title" "ne_110m_land"
+            "gml_include_items" "all"
+            "gml_featureid" "fid"
+        END
+        CLASS
+            NAME "land"
+            STYLE
+                COLOR "#556b2f"
+            END
+        END
+    END
+END

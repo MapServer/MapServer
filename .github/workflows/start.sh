@@ -127,7 +127,7 @@ CONFIG
     "MS_MAP_NO_PATH" "1"
   END
   MAPS
-    "MYMAPFILE" "wfs_simple.map"
+    "MYMAPFILE" "/tmp/wfs_simple.map"
   END
 END
 EOF

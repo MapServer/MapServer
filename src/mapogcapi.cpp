@@ -59,14 +59,6 @@ using json = nlohmann::json;
 #define OGCAPI_TEMPLATE_HTML_COLLECTION_ITEM "collection-item.html"
 #define OGCAPI_TEMPLATE_HTML_OPENAPI "openapi.html"
 
-enum class OGCAPIFormat { JSON, GeoJSON, OpenAPI_V3, HTML };
-
-#define OGCAPI_MIMETYPE_JSON "application/json"
-#define OGCAPI_MIMETYPE_GEOJSON "application/geo+json"
-#define OGCAPI_MIMETYPE_OPENAPI_V3                                             \
-  "application/vnd.oai.openapi+json;version=3.0"
-#define OGCAPI_MIMETYPE_HTML "text/html"
-
 #define OGCAPI_DEFAULT_LIMIT 10 // by specification
 #define OGCAPI_MAX_LIMIT 10000
 
@@ -79,19 +71,10 @@ constexpr const char *CRS84_URL =
 
 #ifdef USE_OGCAPI_SVR
 
-// Error types
-typedef enum {
-  OGCAPI_SERVER_ERROR = 0,
-  OGCAPI_CONFIG_ERROR = 1,
-  OGCAPI_PARAM_ERROR = 2,
-  OGCAPI_NOT_FOUND_ERROR = 3,
-} OGCAPIErrorType;
-
 /*
 ** Returns a JSON object using and a description.
 */
-static void outputError(OGCAPIErrorType errorType,
-                        const std::string &description) {
+void outputError(OGCAPIErrorType errorType, const std::string &description) {
   const char *code = "";
   const char *status = "";
   switch (errorType) {
@@ -368,11 +351,13 @@ static bool getBbox(mapObj *map, layerObj *layer, cgiRequestObj *request,
 /*
 ** Returns the template directory location or NULL if it isn't set.
 */
-static std::string getTemplateDirectory(mapObj *map, const char *key,
-                                        const char *envvar) {
-  const char *directory;
+std::string getTemplateDirectory(mapObj *map, const char *key,
+                                 const char *envvar) {
+  const char *directory = NULL;
 
-  directory = msOWSLookupMetadata(&(map->web.metadata), "A", key);
+  if (map != NULL) {
+    directory = msOWSLookupMetadata(&(map->web.metadata), "A", key);
+  }
 
   if (directory == NULL) {
     directory = CPLGetConfigOption(envvar, NULL);
@@ -419,17 +404,27 @@ static const char *getTitle(mapObj *map) {
 ** Returns the API root URL from oga_onlineresource or builds a value if not
 *set.
 */
-static std::string getApiRootUrl(mapObj *map) {
+std::string getApiRootUrl(mapObj *map, cgiRequestObj *request,
+                          const char *namespaces = "A") {
   const char *root;
-
-  if ((root = msOWSLookupMetadata(&(map->web.metadata), "A",
-                                  "onlineresource")) != NULL)
+  if ((root = msOWSLookupMetadata(&(map->web.metadata), namespaces,
+                                  "onlineresource")) != NULL) {
     return std::string(root);
-  else
-    return "http://" + std::string(getenv("SERVER_NAME")) + ":" +
-           std::string(getenv("SERVER_PORT")) +
-           std::string(getenv("SCRIPT_NAME")) +
-           std::string(getenv("PATH_INFO"));
+  }
+
+  std::string api_root;
+  if (char *res = msBuildOnlineResource(NULL, request)) {
+    api_root = res;
+    free(res);
+
+    // find last ogcapi in the string and strip the rest to get the root API
+    std::size_t pos = api_root.rfind("ogcapi");
+    if (pos != std::string::npos) {
+      api_root = api_root.substr(0, pos + std::string("ogcapi").size());
+    }
+  }
+
+  return api_root;
 }
 
 static json getFeatureConstant(const gmlConstantObj *constant) {
@@ -776,7 +771,8 @@ static int getGeometryPrecision(mapObj *map, layerObj *layer) {
   return geometry_precision;
 }
 
-static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format) {
+static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format,
+                          const std::string api_root) {
   json collection; // empty (null)
   rectObj bbox;
 
@@ -787,8 +783,6 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format) {
     return collection;
 
   // initialize some things
-  std::string api_root = getApiRootUrl(map);
-
   if (msOWSGetLayerExtent(map, layer, "AOF", &bbox) == MS_SUCCESS) {
     if (layer->projection.numargs > 0)
       msOWSProjectToWGS84(&layer->projection, &bbox);
@@ -895,8 +889,8 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format) {
 ** Output stuff...
 */
 
-static void outputJson(const json &j, const char *mimetype,
-                       const std::map<std::string, std::string> &extraHeaders) {
+void outputJson(const json &j, const char *mimetype,
+                const std::map<std::string, std::string> &extraHeaders) {
   std::string js;
 
   try {
@@ -914,8 +908,8 @@ static void outputJson(const json &j, const char *mimetype,
   msIO_printf("%s\n", js.c_str());
 }
 
-static void outputTemplate(const char *directory, const char *filename,
-                           const json &j, const char *mimetype) {
+void outputTemplate(const char *directory, const char *filename, const json &j,
+                    const char *mimetype) {
   std::string _directory(directory);
   std::string _filename(filename);
   Environment env{_directory}; // catch
@@ -994,7 +988,7 @@ outputResponse(mapObj *map, cgiRequestObj *request, OGCAPIFormat format,
     // extend the JSON with a few things that we need for templating
     j["template"] = {{"path", json::array()},
                      {"params", json::object()},
-                     {"api_root", getApiRootUrl(map)},
+                     {"api_root", getApiRootUrl(map, request)},
                      {"title", getTitle(map)},
                      {"tags", json::object()}};
 
@@ -1047,7 +1041,7 @@ static int processLandingRequest(mapObj *map, cgiRequestObj *request,
                             "abstract"); // fallback on abstract if necessary
 
   // define api root url
-  std::string api_root = getApiRootUrl(map);
+  std::string api_root = getApiRootUrl(map, request);
 
   // build response object
   //   - consider conditionally excluding links for HTML format
@@ -1172,6 +1166,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
     return MS_SUCCESS;
   }
 
+  std::string api_root = getApiRootUrl(map, request);
   const char *crs = getRequestParameter(request, "crs");
 
   std::string outputCrs = "EPSG:4326";
@@ -1373,7 +1368,6 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
 
   // build response object
   if (!featureId) {
-    std::string api_root = getApiRootUrl(map);
     const char *id = layer->name;
     char *id_encoded = msEncodeUrl(id); // free after use
 
@@ -1509,7 +1503,6 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
   }
 
   if (featureId) {
-    std::string api_root = getApiRootUrl(map);
     const char *id = layer->name;
     char *id_encoded = msEncodeUrl(id); // free after use
 
@@ -1567,7 +1560,8 @@ static int processCollectionRequest(mapObj *map, cgiRequestObj *request,
   }
 
   try {
-    response = getCollection(map, map->layers[l], format);
+    response =
+        getCollection(map, map->layers[l], format, getApiRootUrl(map, request));
     if (response.is_null()) { // same as not found
       outputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
       return MS_SUCCESS;
@@ -1589,7 +1583,7 @@ static int processCollectionsRequest(mapObj *map, cgiRequestObj *request,
   int i;
 
   // define api root url
-  std::string api_root = getApiRootUrl(map);
+  std::string api_root = getApiRootUrl(map, request);
 
   // build response object
   response = {{"links",
@@ -1605,7 +1599,7 @@ static int processCollectionsRequest(mapObj *map, cgiRequestObj *request,
 
   for (i = 0; i < map->numlayers; i++) {
     try {
-      json collection = getCollection(map, map->layers[i], format);
+      json collection = getCollection(map, map->layers[i], format, api_root);
       if (!collection.is_null())
         response["collections"].push_back(collection);
     } catch (const std::runtime_error &e) {
@@ -1673,7 +1667,8 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
   }
 
   json server;
-  server["url"] = getApiRootUrl(map);
+  server["url"] = getApiRootUrl(map, request);
+
   {
     const char *value =
         getWebMetadata(map, "AO", "server_description", nullptr);
@@ -1935,29 +1930,7 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
 
 #endif
 
-int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request) {
-#ifdef USE_OGCAPI_SVR
-
-  // make sure ogcapi requests are enabled for this map
-  int status = msOWSRequestIsEnabled(map, NULL, "AO", "OGCAPI", MS_FALSE);
-  if (status != MS_TRUE) {
-    msSetError(MS_OGCAPIERR, "OGC API requests are not enabled.",
-               "msCGIDispatchAPIRequest()");
-    return MS_FAILURE; // let normal error handling take over
-  }
-
-  for (int i = 0; i < request->NumParams; i++) {
-    for (int j = i + 1; j < request->NumParams; j++) {
-      if (strcmp(request->ParamNames[i], request->ParamNames[j]) == 0) {
-        std::string errorMsg("Query parameter ");
-        errorMsg += request->ParamNames[i];
-        errorMsg += " is repeated";
-        outputError(OGCAPI_PARAM_ERROR, errorMsg.c_str());
-        return MS_SUCCESS;
-      }
-    }
-  }
-
+OGCAPIFormat msGetOutputFormat(cgiRequestObj *request) {
   OGCAPIFormat format; // all endpoints need a format
   const char *p = getRequestParameter(request, "f");
 
@@ -1984,9 +1957,42 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request) {
     std::string errorMsg("Unsupported format requested: ");
     errorMsg += p;
     outputError(OGCAPI_PARAM_ERROR, errorMsg.c_str());
-    return MS_SUCCESS; // avoid any downstream MapServer processing
+    format = OGCAPIFormat::Invalid;
   } else {
     format = OGCAPIFormat::HTML; // default for now
+  }
+
+  return format;
+}
+
+int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request) {
+#ifdef USE_OGCAPI_SVR
+
+  // make sure ogcapi requests are enabled for this map
+  int status = msOWSRequestIsEnabled(map, NULL, "AO", "OGCAPI", MS_FALSE);
+  if (status != MS_TRUE) {
+    msSetError(MS_OGCAPIERR, "OGC API requests are not enabled.",
+               "msCGIDispatchAPIRequest()");
+    return MS_FAILURE; // let normal error handling take over
+  }
+
+  for (int i = 0; i < request->NumParams; i++) {
+    for (int j = i + 1; j < request->NumParams; j++) {
+      if (strcmp(request->ParamNames[i], request->ParamNames[j]) == 0) {
+        std::string errorMsg("Query parameter ");
+        errorMsg += request->ParamNames[i];
+        errorMsg += " is repeated";
+        outputError(OGCAPI_PARAM_ERROR, errorMsg.c_str());
+        return MS_SUCCESS;
+      }
+    }
+  }
+
+  OGCAPIFormat format;
+  format = msGetOutputFormat(request);
+
+  if (format == OGCAPIFormat::Invalid) {
+    return MS_SUCCESS; // avoid any downstream MapServer processing
   }
 
   if (request->api_path_length == 2) {

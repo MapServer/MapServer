@@ -260,6 +260,16 @@ int main(int argc, char *argv[]) {
 
     mapserv->request->NumParams =
         loadParams(mapserv->request, NULL, NULL, 0, NULL);
+
+    const char *path_info = getenv("PATH_INFO");
+    if (path_info != NULL && strcmp(path_info, "/") == 0) {
+      if (msConfigGetEnv(config, "MS_INDEX_TEMPLATE_DIRECTORY") != NULL) {
+        // return the landing page if MS_INDEX_TEMPLATE_DIRECTORY is set
+        msCGIDispatchIndexRequest(mapserv, config);
+        goto end_request;
+      }
+    }
+
     if (msCGIIsAPIRequest(mapserv) == MS_FALSE &&
         mapserv->request->NumParams == -1) { /* no QUERY_STRING or PATH_INFO */
       msCGIWriteError(mapserv);
@@ -284,16 +294,46 @@ int main(int argc, char *argv[]) {
     }
 #endif
 
-    if (mapserv->request->api_path != NULL &&
-        mapserv->request->api_path_length > 1) {
-      // API requests require a map key and a path
-      if (msCGIDispatchAPIRequest(mapserv) != MS_SUCCESS) {
+    if (mapserv->request->api_path != NULL) {
+      switch (mapserv->request->api_path_length) {
+      case 0: // just in case, treat as normal
+        if (msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
+          msCGIWriteError(mapserv);
+          goto end_request;
+        }
+        break;
+
+      case 1:
+        if (msConfigGetEnv(config, "MS_INDEX_TEMPLATE_DIRECTORY") != NULL) {
+          // Try normal dispatch first
+          if (msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
+            // Fallback to landing page
+            if (msCGIDispatchMapIndexRequest(mapserv, config) != MS_SUCCESS) {
+              msCGIWriteError(mapserv);
+              goto end_request;
+            }
+          }
+        } else {
+          if (msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
+            msCGIWriteError(mapserv);
+            goto end_request;
+          }
+        }
+        break;
+
+      default: // length > 1
+        if (msCGIDispatchAPIRequest(mapserv) != MS_SUCCESS) {
+          msCGIWriteError(mapserv);
+          goto end_request;
+        }
+        break;
+      }
+    } else {
+      // api_path == NULL
+      if (msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
         msCGIWriteError(mapserv);
         goto end_request;
       }
-    } else if (msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
-      msCGIWriteError(mapserv);
-      goto end_request;
     }
 
   end_request:
