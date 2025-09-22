@@ -1,19 +1,15 @@
 {% include "header.html" %}
-
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb bg-light">
         <li class="breadcrumb-item active" aria-current="page">Home</li>
         <li class="ms-auto json-link"><a target="_blank" href="./?f=json">JSON</a></li>
     </ol>
 </nav>
-
 <h1>MapServer Homepage</h1>
 <p>
     This page lists all available Mapfiles hosted by MapServer.
 </p>
-
 <h2>Links</h2>
-
 <div class="table-responsive">
     <table class="table" style="width:100%;">
         <thead class="thead-light">
@@ -27,7 +23,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for link in response.linkset %}
+            {% for link in response.linkset -%}
             <tr>
                 <td>{{ loop.index1 }}</td>
                 <td>{{ link.key }}</td>
@@ -40,6 +36,4 @@
         </tbody>
     </table>
 </div>
-
-{% include "footer.html" %}
-
+{% include "footer.html" -%}

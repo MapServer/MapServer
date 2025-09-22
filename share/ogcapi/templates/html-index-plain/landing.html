@@ -1,10 +1,8 @@
 {% include "header.html" %}
-
 <h1>MapServer Homepage</h1>
 <p>
     This page lists all available Mapfiles hosted by MapServer.
 </p>
-
 <table>
     <thead>
         <tr>
@@ -17,7 +15,7 @@
         </tr>
     </thead>
     <tbody>
-        {% for link in response.linkset %}
+        {% for link in response.linkset -%}
         <tr>
             <td>{{ loop.index1 }}</td>
             <td>{{ link.key }}</td>
@@ -29,5 +27,4 @@
         {% endfor %}
     </tbody>
 </table>
-
-{% include "footer.html" %}
+{% include "footer.html" -%}
