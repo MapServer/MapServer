@@ -23,6 +23,12 @@ MAP
         CONNECTION "./data/ne_110m_land.fgb"
         TYPE POLYGON
         CONNECTIONTYPE OGR
+        TEMPLATE "ttt"
+        METADATA
+            "ows_title" "ne_110m_land"
+            "gml_include_items" "all"
+            "gml_featureid" "fid"
+        END
         CLASS
             NAME "land"
             STYLE
