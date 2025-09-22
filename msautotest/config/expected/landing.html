@@ -1,108 +1,96 @@
-Content-Type: text/html
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <title>MapServer Landing Page</title>
     <meta charset="utf-8" />
 </head>
-<body>
+  <body>
 
 
-    <h1>MapServer Homepage</h1>
-    <p>
-        This page lists all available Mapfiles hosted by MapServer.
-    </p>
+<h1>MapServer Homepage</h1>
+<p>
+    This page lists all available Mapfiles hosted by MapServer.
+</p>
 
-    <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Key</th>
-                <th>Name</th>
-                <th>Layer Count</th>
-                <th>HTML Documentation</th>
-                <th>JSON</th>
-            </tr>
-        </thead>
-        <tbody>
-
-            <tr>
-                <td>1</td>
-                <td>KITCHENSINK_MAP</td>
-                <td>MapServer Kitchensink Demo Map</td>
-                <td>2</td>
-                <td><a href="http://hpz:8080/cgi-bin/mapserv.exe/KITCHENSINK_MAP/">KITCHENSINK_MAP</a></td>
-                <td><a href="http://hpz:8080/cgi-bin/mapserv.exe/KITCHENSINK_MAP/?f=json">KITCHENSINK_MAP</a></td>
-            </tr>
-
-            <tr>
-                <td>2</td>
-                <td>INDEX</td>
-                <td>hello_world</td>
-                <td>1</td>
-                <td><a href="http://hpz:8080/cgi-bin/mapserv.exe/INDEX/">INDEX</a></td>
-                <td><a href="http://hpz:8080/cgi-bin/mapserv.exe/INDEX/?f=json">INDEX</a></td>
-            </tr>
-
-            <tr>
-                <td>3</td>
-                <td>WMS_MAP</td>
-                <td>MapServer WMS Demo Map</td>
-                <td>1</td>
-                <td><a href="http://hpz:8080/cgi-bin/mapserv.exe/WMS_MAP/">WMS_MAP</a></td>
-                <td><a href="http://hpz:8080/cgi-bin/mapserv.exe/WMS_MAP/?f=json">WMS_MAP</a></td>
-            </tr>
-
-            <tr>
-                <td>4</td>
-                <td>WFS_MAP</td>
-                <td>MapServer WFS Demo Map</td>
-                <td>1</td>
-                <td><a href="http://hpz:8080/cgi-bin/mapserv.exe/WFS_MAP/">WFS_MAP</a></td>
-                <td><a href="http://hpz:8080/cgi-bin/mapserv.exe/WFS_MAP/?f=json">WFS_MAP</a></td>
-            </tr>
-
-            <tr>
-                <td>5</td>
-                <td>WCS_MAP</td>
-                <td>WCS Demo Mapfile</td>
-                <td>1</td>
-                <td><a href="http://hpz:8080/cgi-bin/mapserv.exe/WCS_MAP/">WCS_MAP</a></td>
-                <td><a href="http://hpz:8080/cgi-bin/mapserv.exe/WCS_MAP/?f=json">WCS_MAP</a></td>
-            </tr>
-
-            <tr>
-                <td>6</td>
-                <td>WMS_MAP_NOCGI</td>
-                <td>MapServer WMS Demo Map with CGI Disabled</td>
-                <td>1</td>
-                <td><a href="http://hpz:8080/cgi-bin/mapserv.exe/WMS_MAP_NOCGI/">WMS_MAP_NOCGI</a></td>
-                <td><a href="http://hpz:8080/cgi-bin/mapserv.exe/WMS_MAP_NOCGI/?f=json">WMS_MAP_NOCGI</a></td>
-            </tr>
-
-            <tr>
-                <td>7</td>
-                <td>MISSING_MAP</td>
-                <td> <b>Error loading the map</b></td>
-                <td>0</td>
-                <td><a href="./MISSING_MAP/">MISSING_MAP</a></td>
-                <td><a href="./MISSING_MAP/?f=json">MISSING_MAP</a></td>
-            </tr>
-
-            <tr>
-                <td>8</td>
-                <td>OGCAPI_MAP</td>
-                <td>OAPIF Demo Mapfile</td>
-                <td>1</td>
-                <td><a href="http://hpz:8080/cgi-bin/mapserv.exe/OGCAPI_MAP/">OGCAPI_MAP</a></td>
-                <td><a href="http://hpz:8080/cgi-bin/mapserv.exe/OGCAPI_MAP/?f=json">OGCAPI_MAP</a></td>
-            </tr>
-
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Key</th>
+            <th>Name</th>
+            <th>Layer Count</th>
+            <th>HTML Documentation</th>
+            <th>JSON</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>1</td>
+            <td>KITCHENSINK_MAP</td>
+            <td>MapServer Kitchensink Demo Map</td>
+            <td>2</td>
+            <td><a href="./KITCHENSINK_MAP/">KITCHENSINK_MAP</a></td>
+            <td><a href="./KITCHENSINK_MAP/?f=json">KITCHENSINK_MAP</a></td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>INDEX</td>
+            <td>hello_world</td>
+            <td>1</td>
+            <td><a href="./INDEX/">INDEX</a></td>
+            <td><a href="./INDEX/?f=json">INDEX</a></td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>WMS_MAP</td>
+            <td>MapServer WMS Demo Map</td>
+            <td>1</td>
+            <td><a href="./WMS_MAP/">WMS_MAP</a></td>
+            <td><a href="./WMS_MAP/?f=json">WMS_MAP</a></td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td>WFS_MAP</td>
+            <td>MapServer WFS Demo Map</td>
+            <td>1</td>
+            <td><a href="./WFS_MAP/">WFS_MAP</a></td>
+            <td><a href="./WFS_MAP/?f=json">WFS_MAP</a></td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td>WCS_MAP</td>
+            <td>WCS Demo Mapfile</td>
+            <td>1</td>
+            <td><a href="./WCS_MAP/">WCS_MAP</a></td>
+            <td><a href="./WCS_MAP/?f=json">WCS_MAP</a></td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td>WMS_MAP_NOCGI</td>
+            <td>MapServer WMS Demo Map with CGI Disabled</td>
+            <td>1</td>
+            <td><a href="./WMS_MAP_NOCGI/">WMS_MAP_NOCGI</a></td>
+            <td><a href="./WMS_MAP_NOCGI/?f=json">WMS_MAP_NOCGI</a></td>
+        </tr>
+        <tr>
+            <td>7</td>
+            <td>MISSING_MAP</td>
+            <td> <b>Error loading the map</b></td>
+            <td>0</td>
+            <td><a href="./MISSING_MAP/">MISSING_MAP</a></td>
+            <td><a href="./MISSING_MAP/?f=json">MISSING_MAP</a></td>
+        </tr>
+        <tr>
+            <td>8</td>
+            <td>OGCAPI_MAP</td>
+            <td>MapServer OGC Features API Demo Map</td>
+            <td>1</td>
+            <td><a href="./OGCAPI_MAP/">OGCAPI_MAP</a></td>
+            <td><a href="./OGCAPI_MAP/?f=json">OGCAPI_MAP</a></td>
+        </tr>
         </tbody>
-    </table>
+</table>
 
-</body>
+  </body>
 </html>
-
 
