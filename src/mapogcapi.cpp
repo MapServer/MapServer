@@ -405,7 +405,7 @@ static const char *getTitle(mapObj *map) {
 *set.
 */
 std::string getApiRootUrl(mapObj *map, cgiRequestObj *request,
-                          const char *namespaces = "A") {
+                          const char *namespaces = "AO") {
   const char *root;
   if ((root = msOWSLookupMetadata(&(map->web.metadata), namespaces,
                                   "onlineresource")) != NULL) {
@@ -421,7 +421,18 @@ std::string getApiRootUrl(mapObj *map, cgiRequestObj *request,
     std::size_t pos = api_root.rfind("ogcapi");
     if (pos != std::string::npos) {
       api_root = api_root.substr(0, pos + std::string("ogcapi").size());
+    } else {
+      // strip trailing '?' or '/' and append "/ogcapi"
+      while (!api_root.empty() &&
+             (api_root.back() == '?' || api_root.back() == '/')) {
+        api_root.pop_back();
+      }
+      api_root += "/ogcapi";
     }
+  }
+
+  if (api_root.empty()) {
+    api_root = "/ogcapi";
   }
 
   return api_root;
