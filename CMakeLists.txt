@@ -332,10 +332,10 @@ src/mapservutil.c src/mapxbase.c src/maphash.c src/mapowscommon.c src/mapshape.c
 src/maphttp.c src/mapparser.c src/mapstring.cpp src/mapxmp.c src/mapcairo.c src/mapimageio.c
 src/mappluginlayer.c src/mapsymbol.c src/mapchart.c src/mapimagemap.c src/mappool.c src/maptclutf.c
 src/mapcluster.c src/mapio.c src/mappostgis.cpp src/maptemplate.c src/mapcontext.c src/mapjoin.c
-src/mappostgresql.c src/mapthread.c src/mapcopy.c src/maplabel.c src/mapprimitive.c src/maptile.c
+src/mappostgresql.c src/mapthread.c src/mapcopy.c src/maplabel.c src/mapprimitive.cpp src/maptile.c
 src/mapcpl.c src/maplayer.c src/mapproject.c src/maptime.c src/mapcrypto.c src/maplegend.c src/hittest.c
 src/maptree.c src/mapdebug.c src/maplexer.c src/mapquantization.c src/mapunion.cpp
-src/mapdraw.c src/maplibxml2.c src/mapquery.c src/maputil.c src/strptime.c src/mapdrawgdal.c
+src/mapdraw.c src/maplibxml2.c src/mapquery.cpp src/maputil.c src/strptime.c src/mapdrawgdal.c
 src/mapraster.c src/mapuvraster.cpp src/mapdummyrenderer.c src/mapobject.c src/maprasterquery.c
 src/mapwcs.cpp src/maperror.c src/mapogcfilter.cpp src/mapregex.c src/mapwcs11.cpp src/mapfile.c
 src/mapogcfiltercommon.cpp src/maprendering.c src/mapwcs20.cpp src/mapogcsld.cpp src/mapmetadata.c

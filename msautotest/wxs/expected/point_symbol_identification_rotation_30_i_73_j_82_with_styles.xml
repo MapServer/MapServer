@@ -1,0 +1,19 @@
+Content-Type: application/vnd.ogc.gml; charset=UTF-8
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<msGMLOutput 
+	 xmlns:gml="http://www.opengis.net/gml"
+	 xmlns:xlink="http://www.w3.org/1999/xlink"
+	 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<test_rotation_30_layer>
+	<gml:name>test_rotation_30</gml:name>
+		<test_rotation_30_feature>
+			<gml:boundedBy>
+				<gml:Box srsName="EPSG:3857">
+					<gml:coordinates>1200.000000,2150.000000 1200.000000,2150.000000</gml:coordinates>
+				</gml:Box>
+			</gml:boundedBy>
+		</test_rotation_30_feature>
+	</test_rotation_30_layer>
+</msGMLOutput>

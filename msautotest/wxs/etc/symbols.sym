@@ -156,4 +156,11 @@ SYMBOL
   CHARACTER "&#125;"
 END
 
+symbol
+  name "Road_Works_inner_transparent"
+  type svg
+  image "../../misc/data/Road_Works_inner_transparent.svg"
+end
+
+
 END

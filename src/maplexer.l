@@ -423,6 +423,8 @@ char path[MS_MAXPATHLEN];
 <INITIAL>to                                    { MS_LEXER_RETURN_TOKEN(TO); }
 <INITIAL>tolerance                             { MS_LEXER_RETURN_TOKEN(TOLERANCE); }
 <INITIAL>toleranceunits                        { MS_LEXER_RETURN_TOKEN(TOLERANCEUNITS); }
+<INITIAL>identify                              { MS_LEXER_RETURN_TOKEN(IDENTIFY); }
+<INITIAL>classauto                             { MS_LEXER_RETURN_TOKEN(CLASSAUTO); }
 <INITIAL>transparent                           { MS_LEXER_RETURN_TOKEN(TRANSPARENT); }
 <INITIAL>transform                             { MS_LEXER_RETURN_TOKEN(TRANSFORM); }
 <INITIAL>type                                  { MS_LEXER_RETURN_TOKEN(TYPE); }
