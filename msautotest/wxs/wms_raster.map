@@ -31,7 +31,7 @@ IMAGECOLOR 255 255 255
 SHAPEPATH ./data
 SYMBOLSET etc/symbols.sym
 FONTSET etc/fonts.txt
-
+DEBUG 1
 
 #
 # Start of web interface definition
