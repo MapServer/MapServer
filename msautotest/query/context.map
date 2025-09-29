@@ -6,6 +6,8 @@
 # RUN_PARMS: context_test001.png [MAP2IMG] -m [MAPFILE] -l "bdry_counpy2" -o [RESULT]
 # RUN_PARMS: context_test002.png [MAP2IMG] -m [MAPFILE] -l "bdry_counpy2 indx_q100kpy4" -o [RESULT]
 # RUN_PARMS: context_test003.png [MAP2IMG] -m [MAPFILE] -l "indx_q100kpy4" -o [RESULT]
+# RUN_PARMS: context_test004.png [MAP2IMG] -m [MAPFILE] -l "req_fail" -o [RESULT]
+# RUN_PARMS: context_test005.png [MAP2IMG] -m [MAPFILE] -l "lreq_fail" -o [RESULT]
 #
 MAP
   NAME 'context'
@@ -24,5 +26,17 @@ MAP
     NAME 'indx_q100kpy4'
     REQUIRES '![bdry_counpy2]'
     INCLUDE 'include/indx_q100kpy4_shapefile.map'
+  END
+
+  LAYER
+    NAME 'req_fail'
+    REQUIRES '[non_existant]'
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+  END
+
+  LAYER
+    NAME 'lreq_fail'
+    LABELREQUIRES '[non_existant]'
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
   END
 END
