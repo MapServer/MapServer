@@ -43,12 +43,14 @@
 
 #include "maptime.h"
 #include "mapproject.h"
+#include "mapquery.h"
 
 #include <cassert>
 #include <stdarg.h>
 #include <time.h>
 #include <string.h>
 
+#include <map>
 #include <set>
 #include <string>
 #include <vector>
@@ -76,15 +78,13 @@ static int msWMSException(mapObj *map, int nVersion, const char *exception_code,
   if (nVersion <= 0)
     nVersion = OWS_1_3_0;
 
-  /* get scheam location */
+  /* get schema location */
   schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
 
   /* Establish default exception format depending on VERSION */
   if (wms_exception_format == NULL) {
     if (nVersion <= OWS_1_0_0)
       wms_exception_format = "INIMAGE"; /* WMS 1.0.0 */
-    else if (nVersion <= OWS_1_0_7)
-      wms_exception_format = "SE_XML"; /* WMS 1.0.1 to 1.0.7 */
     else if (nVersion <= OWS_1_1_1)
       wms_exception_format =
           "application/vnd.ogc.se_xml"; /* WMS 1.1.0 and later */
@@ -118,22 +118,10 @@ static int msWMSException(mapObj *map, int nVersion, const char *exception_code,
     msIO_printf("<WMTException version=\"1.0.0\">\n");
     msWriteErrorXML(stdout);
     msIO_printf("</WMTException>\n");
-  } else /* XML error, the default: SE_XML (1.0.1 to 1.0.7) */
-  /* or application/vnd.ogc.se_xml (1.1.0 and later) */
+  } else /* XML error, the default:application/vnd.ogc.se_xml (1.1.0 and later)
+          */
   {
-    if (nVersion <= OWS_1_0_7) {
-      /* In V1.0.1 to 1.0.7, the MIME type was text/xml */
-      msIO_setHeader("Content-Type", "text/xml; charset=UTF-8");
-      msIO_sendHeaders();
-
-      msIO_printf(
-          "<?xml version='1.0' encoding=\"UTF-8\" standalone=\"no\" ?>\n");
-      msIO_printf(
-          "<!DOCTYPE ServiceExceptionReport SYSTEM "
-          "\"http://www.digitalearth.gov/wmt/xml/exception_1_0_1.dtd\">\n");
-
-      msIO_printf("<ServiceExceptionReport version=\"1.0.1\">\n");
-    } else if (nVersion <= OWS_1_1_0) {
+    if (nVersion <= OWS_1_1_0) {
       /* In V1.1.0 and later, we have OGC-specific MIME types */
       /* we cannot return anything else than application/vnd.ogc.se_xml here. */
       msIO_setHeader("Content-Type",
@@ -2054,7 +2042,7 @@ static void msWMSPrintRequestCap(int nVersion, const char *request,
   while (fmt != NULL) {
     /* Special case for early WMS with subelements in Format (bug 908) */
     char *encoded;
-    if (nVersion <= OWS_1_0_7) {
+    if (nVersion < OWS_1_1_0) {
       encoded = msStrdup(fmt);
     }
 
@@ -2333,7 +2321,7 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
                  "the expected behavior of a WMS server. Using status ON or "
                  "OFF is recommended. -->\n");
 
-  if (nVersion <= OWS_1_0_7) {
+  if (nVersion < OWS_1_1_0) {
     msIO_printf("%s    <Layer queryable=\"%d\">\n", indent,
                 hasQueryableSubLayers || msIsLayerQueryable(lp));
   } else {
@@ -2560,12 +2548,9 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
     }
   }
 
-  if (nVersion >= OWS_1_0_7) {
-    msWMSPrintAttribution(stdout, "    ", &(lp->metadata), "MO");
-  }
-
   /* AuthorityURL support and Identifier support, only available >= WMS 1.1.0 */
   if (nVersion >= OWS_1_1_0) {
+    msWMSPrintAttribution(stdout, "    ", &(lp->metadata), "MO");
     msWMSPrintAuthorityURL(stdout, "        ", &(lp->metadata), "MO");
     msWMSPrintIdentifier(stdout, "        ", &(lp->metadata), "MO");
   }
@@ -3115,16 +3100,9 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
 
   /* Decide which version we're going to return. */
   std::string dtd_url;
-  if (nVersion < OWS_1_0_7) {
-    nVersion = OWS_1_0_0;
+  if (nVersion == OWS_1_0_0) {
     dtd_url = std::move(schemalocation);
     dtd_url += "/wms/1.0.0/capabilities_1_0_0.dtd";
-  }
-
-  else if (nVersion < OWS_1_1_0) {
-    nVersion = OWS_1_0_7;
-    dtd_url = std::move(schemalocation);
-    dtd_url += "/wms/1.0.7/capabilities_1_0_7.dtd";
   } else if (nVersion < OWS_1_1_1) {
     nVersion = OWS_1_1_0;
     dtd_url = std::move(schemalocation);
@@ -3132,7 +3110,7 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
   } else if (nVersion < OWS_1_3_0) {
     nVersion = OWS_1_1_1;
     dtd_url = std::move(schemalocation);
-    /* this exception was added to accomadote the OGC test suite (Bug 1576)*/
+    /* this exception was added to accommodate the OGC test suite (Bug 1576)*/
     if (strcasecmp(dtd_url.c_str(), OWS_DEFAULT_SCHEMAS_LOCATION) == 0)
       dtd_url += "/wms/1.1.1/WMS_MS_Capabilities.dtd";
     else
@@ -3168,8 +3146,7 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
     free(script_url);
   }
 
-  if (nVersion <= OWS_1_0_7 ||
-      nVersion >= OWS_1_3_0) /* 1.0.0 to 1.0.7 and >=1.3.0*/
+  if (nVersion == OWS_1_0_0 || nVersion >= OWS_1_3_0) /* 1.0.0 and >=1.3.0*/
     msIO_setHeader("Content-Type", "text/xml; charset=UTF-8");
   else /* 1.1.0 and later */
     msIO_setHeader("Content-Type",
@@ -3395,9 +3372,9 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
   msIO_printf("<Service>\n");
 
   /* Service name is defined by the spec and changed at v1.0.0 */
-  if (nVersion <= OWS_1_0_7)
-    msIO_printf("  <Name>GetMap</Name>\n"); /* v 1.0.0 to 1.0.7 */
-  else if (nVersion > OWS_1_0_7 && nVersion < OWS_1_3_0)
+  if (nVersion == OWS_1_0_0)
+    msIO_printf("  <Name>GetMap</Name>\n"); /* v 1.0.0 */
+  else if (nVersion >= OWS_1_1_0 && nVersion < OWS_1_3_0)
     msIO_printf("  <Name>OGC:WMS</Name>\n"); /* v 1.1.0 to 1.1.1*/
   else
     msIO_printf("  <Name>WMS</Name>\n"); /* v 1.3.0+ */
@@ -3428,8 +3405,6 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
         "xlink:href=\"%s\"/>\n",
         script_url_encoded);
 
-  /* contact information is a required element in 1.0.7 but the */
-  /* sub-elements such as ContactPersonPrimary, etc. are not! */
   /* In 1.1.0, ContactInformation becomes optional. */
   msOWSPrintContactInfo(stdout, "  ", nVersion, &(map->web.metadata), "MO");
 
@@ -3456,8 +3431,8 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
   msIO_printf("<Capability>\n");
   msIO_printf("  <Request>\n");
 
-  if (nVersion <= OWS_1_0_7) {
-    /* WMS 1.0.0 to 1.0.7 - We don't try to use outputformats list here for now
+  if (nVersion == OWS_1_0_0) {
+    /* WMS 1.0.0 - we don't try to use outputformats list here for now
      */
     if (msOWSRequestIsEnabled(map, NULL, "M", "GetMap", MS_FALSE))
       msWMSPrintRequestCap(nVersion, "Map", script_url_encoded,
@@ -3608,7 +3583,7 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
   msIO_printf("  </Request>\n");
 
   msIO_printf("  <Exception>\n");
-  if (nVersion <= OWS_1_0_7)
+  if (nVersion < OWS_1_1_0)
     msIO_printf("    <Format><BLANK /><INIMAGE /><WMS_XML /></Format>\n");
   else if (nVersion <= OWS_1_1_1) {
     msIO_printf("    <Format>application/vnd.ogc.se_xml</Format>\n");
@@ -3637,15 +3612,13 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
 
   /* SLD support */
   if (strcasecmp(sldenabled, "true") == 0) {
-    if (nVersion >= OWS_1_0_7) {
-      if (nVersion >= OWS_1_3_0)
-        msIO_printf("  <sld:UserDefinedSymbolization SupportSLD=\"1\" "
-                    "UserLayer=\"0\" UserStyle=\"1\" RemoteWFS=\"0\" "
-                    "InlineFeature=\"0\" RemoteWCS=\"0\"/>\n");
-      else
-        msIO_printf("  <UserDefinedSymbolization SupportSLD=\"1\" "
-                    "UserLayer=\"0\" UserStyle=\"1\" RemoteWFS=\"0\"/>\n");
-    }
+    if (nVersion >= OWS_1_3_0)
+      msIO_printf("  <sld:UserDefinedSymbolization SupportSLD=\"1\" "
+                  "UserLayer=\"0\" UserStyle=\"1\" RemoteWFS=\"0\" "
+                  "InlineFeature=\"0\" RemoteWCS=\"0\"/>\n");
+    else
+      msIO_printf("  <UserDefinedSymbolization SupportSLD=\"1\" "
+                  "UserLayer=\"0\" UserStyle=\"1\" RemoteWFS=\"0\"/>\n");
   }
 
   /* INSPIRE extended capabilities for WMS 1.3.0 */
@@ -3781,13 +3754,10 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
     msOWSPrintBoundingBox(stdout, "    ", &(map->extent), &(map->projection),
                           NULL, &(map->web.metadata), "MO", nVersion);
 
-    if (nVersion >= OWS_1_0_7) {
-      msWMSPrintAttribution(stdout, "    ", &(map->web.metadata), "MO");
-    }
-
     /* AuthorityURL support and Identifier support, only available >= WMS 1.1.0
      */
     if (nVersion >= OWS_1_1_0) {
+      msWMSPrintAttribution(stdout, "    ", &(map->web.metadata), "MO");
       msWMSPrintAuthorityURL(stdout, "    ", &(map->web.metadata), "MO");
       msWMSPrintIdentifier(stdout, "    ", &(map->web.metadata), "MO");
     }
@@ -4564,12 +4534,117 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
   msWMSPrepareNestedGroups(map, nVersion, nestedGroups, numNestedGroups,
                            isUsedInNestedGroup);
 
+  const char *styles = nullptr;
+  std::vector<std::string> wmslayers;
+  for (int i = 0; i < numentries; i++) {
+    if (strcasecmp(names[i], "LAYERS") == 0) {
+
+      wmslayers = msStringSplit(values[i], ',');
+      if (wmslayers.empty()) {
+        return msWMSException(map, nVersion, NULL, wms_exception_format);
+      }
+
+      if (nVersion >= OWS_1_3_0) {
+        const char *layerlimit =
+            msOWSLookupMetadata(&(map->web.metadata), "MO", "layerlimit");
+        if (layerlimit) {
+          if (static_cast<int>(wmslayers.size()) > atoi(layerlimit)) {
+            msSetErrorWithStatus(
+                MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                "Number of layers requested exceeds LayerLimit.",
+                "msWMSLoadGetMapParams()");
+            return msWMSException(map, nVersion, NULL, wms_exception_format);
+          }
+        }
+      }
+    } else if (strcasecmp(names[i], "STYLES=") == 0) {
+      styles = values[i];
+    }
+  }
+
+  std::map<std::string, std::vector<std::string>> mapLayerNameToStyleNames;
+
+  if (styles && strlen(styles) > 0) {
+    int n = 0;
+    char **tokens = msStringSplitComplex(styles, ",", &n, MS_ALLOWEMPTYTOKENS);
+
+    if (static_cast<int>(wmslayers.size()) != n) {
+      msSetErrorWithStatus(
+          MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+          "Invalid style (%s). Mapserver is expecting an empty "
+          "string for the STYLES : STYLES= or STYLES=,,, or using "
+          "keyword default  STYLES=default,default, ...",
+          "msWMSLoadGetMapParams()", styles);
+      msFreeCharArray(tokens, n);
+      return msWMSException(map, nVersion, "StyleNotDefined",
+                            wms_exception_format);
+    }
+
+    for (int i = 0; i < n; i++) {
+      if (tokens[i] && strlen(tokens[i]) > 0 &&
+          strcasecmp(tokens[i], "default") != 0) {
+        const std::string &correspondingLayer = wmslayers[i];
+        for (int j = 0; j < map->numlayers; j++) {
+          layerObj *lp = GET_LAYER(map, j);
+          if ((lp->name &&
+               strcasecmp(lp->name, correspondingLayer.c_str()) == 0) ||
+              (lp->group &&
+               strcasecmp(lp->group, correspondingLayer.c_str()) == 0)) {
+            bool found = false;
+            for (int k = 0; k < lp->numclasses; k++) {
+              if (lp->_class[k]->group &&
+                  strcasecmp(lp->_class[k]->group, tokens[i]) == 0) {
+                mapLayerNameToStyleNames[correspondingLayer].push_back(
+                    tokens[i]);
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                                   "Style (%s) not defined on layer.",
+                                   "msWMSLoadGetMapParams()", tokens[i]);
+              msFreeCharArray(tokens, n);
+
+              return msWMSException(map, nVersion, "StyleNotDefined",
+                                    wms_exception_format);
+            }
+            /* Check the style of the root layer */
+          } else if (map->name &&
+                     strcasecmp(map->name, correspondingLayer.c_str()) == 0) {
+            const char *styleName =
+                msOWSLookupMetadata(&(map->web.metadata), "MO", "style_name");
+            if (styleName == NULL)
+              styleName = "default";
+            char *pszEncodedStyleName = msEncodeHTMLEntities(styleName);
+            if (strcasecmp(pszEncodedStyleName, tokens[i]) != 0) {
+              msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                                   "Style (%s) not defined on root layer.",
+                                   "msWMSLoadGetMapParams()", tokens[i]);
+              msFreeCharArray(tokens, n);
+              msFree(pszEncodedStyleName);
+
+              return msWMSException(map, nVersion, "StyleNotDefined",
+                                    wms_exception_format);
+            }
+            msFree(pszEncodedStyleName);
+
+            mapLayerNameToStyleNames[map->name].push_back(styleName);
+          }
+        }
+      }
+    }
+    msFreeCharArray(tokens, n);
+  }
+
+  std::map<int, std::vector<std::string>> mapLayerIndexToStyleNames;
+
   for (int i = 0; i < numentries; i++) {
     if (strcasecmp(names[i], "QUERY_LAYERS") == 0) {
       query_layer = 1; /* flag set if QUERY_LAYERS is the request */
 
-      const auto wmslayers = msStringSplit(values[i], ',');
-      if (wmslayers.empty()) {
+      const auto querylayers = msStringSplit(values[i], ',');
+      if (querylayers.empty()) {
         msSetErrorWithStatus(
             MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
             "At least one layer name required in QUERY_LAYERS.",
@@ -4588,7 +4663,7 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
           msOWSLookupMetadata(&(map->web.metadata), "MO", "rootlayer_name");
       if (!rootlayer_name)
         rootlayer_name = map->name;
-      if (rootlayer_name && msStringInArray(rootlayer_name, wmslayers)) {
+      if (rootlayer_name && msStringInArray(rootlayer_name, querylayers)) {
         for (int j = 0; j < map->numlayers; j++) {
           layerObj *layer = GET_LAYER(map, j);
           if (msIsLayerQueryable(layer) &&
@@ -4598,6 +4673,9 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
               wms_layer = MS_TRUE;
               wms_connection = layer->connection;
             }
+
+            mapLayerIndexToStyleNames[j] =
+                mapLayerNameToStyleNames[rootlayer_name];
 
             numlayers_found++;
             layer->status = MS_ON;
@@ -4609,7 +4687,7 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
         layerObj *layer = GET_LAYER(map, j);
         if (!msIsLayerQueryable(layer))
           continue;
-        for (const auto &wmslayer : wmslayers) {
+        for (const auto &wmslayer : querylayers) {
           if (((layer->name &&
                 strcasecmp(layer->name, wmslayer.c_str()) == 0) ||
                (layer->group &&
@@ -4624,6 +4702,8 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
               wms_layer = MS_TRUE;
               wms_connection = layer->connection;
             }
+
+            mapLayerIndexToStyleNames[j] = mapLayerNameToStyleNames[wmslayer];
 
             numlayers_found++;
             layer->status = MS_ON;
@@ -4725,7 +4805,6 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
     return msWMSLayerExecuteRequest(map, numOWSLayers, point.x, point.y,
                                     feature_count, info_format,
                                     WMS_GETFEATUREINFO);
-
   if (use_bbox == MS_FALSE) {
 
     if (point.x == -1.0 || point.y == -1.0) {
@@ -4751,42 +4830,6 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
                               wms_exception_format);
       }
     }
-    /* Perform the actual query */
-    const double cellx =
-        MS_CELLSIZE(map->extent.minx, map->extent.maxx,
-                    map->width); /* note: don't adjust extent, WMS assumes
-                                    incoming extent is correct */
-    const double celly =
-        MS_CELLSIZE(map->extent.miny, map->extent.maxy, map->height);
-    point.x = MS_IMAGE2MAP_X(point.x, map->extent.minx, cellx);
-    point.y = MS_IMAGE2MAP_Y(point.y, map->extent.maxy, celly);
-
-    /* WMS 1.3.0 states that feature_count is *per layer*.
-     * Its value is a positive integer, if omitted then the default is 1
-     */
-    if (feature_count < 1)
-      feature_count = 1;
-
-    map->query.type = MS_QUERY_BY_POINT;
-    map->query.mode =
-        (feature_count == 1 ? MS_QUERY_SINGLE : MS_QUERY_MULTIPLE);
-    map->query.layer = -1;
-    map->query.point = point;
-    map->query.buffer = 0;
-    map->query.maxresults = feature_count;
-
-    if (msQueryByPoint(map) != MS_SUCCESS)
-      return msWMSException(map, nVersion, NULL, wms_exception_format);
-
-  } else { /* use_bbox == MS_TRUE */
-    map->query.type = MS_QUERY_BY_RECT;
-    map->query.mode = MS_QUERY_MULTIPLE;
-    map->query.layer = -1;
-    map->query.rect = map->extent;
-    map->query.buffer = 0;
-    map->query.maxresults = feature_count;
-    if (msQueryByRect(map) != MS_SUCCESS)
-      return msWMSException(map, nVersion, NULL, wms_exception_format);
   }
 
   /*validate the INFO_FORMAT*/
@@ -4807,16 +4850,19 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
   }
   /*check to see if the format passed is text/plain or GML and if is
     defined in the formatlist. If that is the case, It is a valid format*/
-  if (strcasecmp(info_format, "MIME") == 0 ||
-      strcasecmp(info_format, "text/plain") == 0 ||
+  bool bMimeResponse = strcasecmp(info_format, "MIME") == 0 ||
+                       strcasecmp(info_format, "text/plain") == 0;
+  const bool bGMLResponse =
       strncasecmp(info_format, "GML", 3) == 0 ||
-      strcasecmp(info_format, "application/vnd.ogc.gml") == 0)
+      strcasecmp(info_format, "application/vnd.ogc.gml") == 0;
+  if (bMimeResponse || bGMLResponse)
     valid_format = MS_TRUE;
 
   /*last case: if the info_format is not part of the request, it defaults to
    * MIME*/
-  if (!valid_format && format_found == MS_FALSE)
-    valid_format = MS_TRUE;
+  if (!valid_format && format_found == MS_FALSE) {
+    bMimeResponse = true, valid_format = MS_TRUE;
+  }
 
   if (!valid_format) {
     msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
@@ -4829,9 +4875,51 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
       return msWMSException(map, nVersion, NULL, wms_exception_format);
   }
 
+  if (use_bbox == MS_FALSE) {
+
+    /* Perform the actual query */
+    const double cellx =
+        MS_CELLSIZE(map->extent.minx, map->extent.maxx,
+                    map->width); /* note: don't adjust extent, WMS assumes
+                                    incoming extent is correct */
+    const double celly =
+        MS_CELLSIZE(map->extent.miny, map->extent.maxy, map->height);
+
+    point.x = MS_IMAGE2MAP_X(point.x, map->extent.minx, cellx);
+    point.y = MS_IMAGE2MAP_Y(point.y, map->extent.maxy, celly);
+
+    /* WMS 1.3.0 states that feature_count is *per layer*.
+     * Its value is a positive integer, if omitted then the default is 1
+     */
+    if (feature_count < 1)
+      feature_count = 1;
+
+    map->query.type = MS_QUERY_BY_POINT;
+    map->query.mode =
+        (feature_count == 1 ? MS_QUERY_SINGLE : MS_QUERY_MULTIPLE);
+    map->query.layer = -1;
+    map->query.point = point;
+    map->query.buffer = 0;
+    map->query.maxresults = feature_count;
+    map->query.getFeatureInfo->mapLayerIndexToStyleNames =
+        std::move(mapLayerIndexToStyleNames);
+
+    if (msQueryByPoint(map) != MS_SUCCESS)
+      return msWMSException(map, nVersion, NULL, wms_exception_format);
+
+  } else { /* use_bbox == MS_TRUE */
+    map->query.type = MS_QUERY_BY_RECT;
+    map->query.mode = MS_QUERY_MULTIPLE;
+    map->query.layer = -1;
+    map->query.rect = map->extent;
+    map->query.buffer = 0;
+    map->query.maxresults = feature_count;
+    if (msQueryByRect(map) != MS_SUCCESS)
+      return msWMSException(map, nVersion, NULL, wms_exception_format);
+  }
+
   /* Generate response */
-  if (strcasecmp(info_format, "MIME") == 0 ||
-      strcasecmp(info_format, "text/plain") == 0) {
+  if (bMimeResponse) {
 
     /* MIME response... we're free to use any valid MIME type */
     int numresults = 0;
@@ -4845,11 +4933,9 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
     if (numresults == 0)
       msIO_printf("\n  Search returned no results.\n");
 
-  } else if (strncasecmp(info_format, "GML", 3) ==
-                 0 || /* accept GML.1 or GML */
-             strcasecmp(info_format, "application/vnd.ogc.gml") == 0) {
+  } else if (bGMLResponse) {
 
-    if (nVersion <= OWS_1_0_7) /* 1.0.0 to 1.0.7 */
+    if (nVersion == OWS_1_0_0)
       msIO_setHeader("Content-Type", "text/xml; charset=UTF-8");
     else /* 1.1.0 and later */
       msIO_setHeader("Content-Type", "application/vnd.ogc.gml; charset=UTF-8");
@@ -5660,12 +5746,12 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request,
 
   /*
   ** GetCapbilities request needs the service parameter defined as WMS:
-  see section 7.1.3.2 wms 1.1.1 specs for decsription.
+  see section 7.1.3.2 wms 1.1.1 specs for description.
   */
   if (request && service == NULL &&
       (strcasecmp(request, "capabilities") == 0 ||
        strcasecmp(request, "GetCapabilities") == 0) &&
-      (nVersion >= OWS_1_0_7 || nVersion == OWS_VERSION_NOTSET)) {
+      (nVersion >= OWS_1_1_0 || nVersion == OWS_VERSION_NOTSET)) {
     if (force_wms_mode) {
       msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
                            "Required SERVICE parameter missing.",
@@ -5794,13 +5880,13 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request,
     return msWMSException(map, OWS_VERSION_NOTSET, NULL, wms_exception_format);
   }
 
-  /*check if the version is one of the supported vcersions*/
-  if (nVersion != OWS_1_0_0 && nVersion != OWS_1_0_6 && nVersion != OWS_1_0_7 &&
-      nVersion != OWS_1_1_0 && nVersion != OWS_1_1_1 && nVersion != OWS_1_3_0) {
+  /*check if the version is one of the supported versions*/
+  if (nVersion != OWS_1_0_0 && nVersion != OWS_1_1_0 && nVersion != OWS_1_1_1 &&
+      nVersion != OWS_1_3_0) {
     msSetErrorWithStatus(
         MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
         "Invalid WMS version: VERSION %s is not supported. Supported "
-        "versions are 1.0.0, 1.0.6, 1.0.7, 1.1.0, 1.1.1, 1.3.0",
+        "versions are 1.0.0, 1.1.0, 1.1.1, 1.3.0",
         "msWMSDispatch()", version);
     return msWMSException(map, OWS_VERSION_NOTSET, NULL, wms_exception_format);
   }

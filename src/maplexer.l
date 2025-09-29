@@ -289,6 +289,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>expression                            { MS_LEXER_RETURN_TOKEN(EXPRESSION); }
 <INITIAL>extent                                { MS_LEXER_RETURN_TOKEN(EXTENT); }
 <INITIAL>extension                             { MS_LEXER_RETURN_TOKEN(EXTENSION); }
+<INITIAL>fallback                              { MS_LEXER_RETURN_TOKEN(FALLBACK); }
 <INITIAL>feature                               { MS_LEXER_RETURN_TOKEN(FEATURE); }
 <INITIAL>filled                                { MS_LEXER_RETURN_TOKEN(FILLED); }
 <INITIAL>filter                                { MS_LEXER_RETURN_TOKEN(FILTER); }
@@ -422,6 +423,8 @@ char path[MS_MAXPATHLEN];
 <INITIAL>to                                    { MS_LEXER_RETURN_TOKEN(TO); }
 <INITIAL>tolerance                             { MS_LEXER_RETURN_TOKEN(TOLERANCE); }
 <INITIAL>toleranceunits                        { MS_LEXER_RETURN_TOKEN(TOLERANCEUNITS); }
+<INITIAL>identify                              { MS_LEXER_RETURN_TOKEN(IDENTIFY); }
+<INITIAL>classauto                             { MS_LEXER_RETURN_TOKEN(CLASSAUTO); }
 <INITIAL>transparent                           { MS_LEXER_RETURN_TOKEN(TRANSPARENT); }
 <INITIAL>transform                             { MS_LEXER_RETURN_TOKEN(TRANSFORM); }
 <INITIAL>type                                  { MS_LEXER_RETURN_TOKEN(TYPE); }
@@ -539,31 +542,33 @@ char path[MS_MAXPATHLEN];
   /* attribute binding - data cellsize */
   return(MS_TOKEN_BINDING_DATA_CELLSIZE);
 }
-<EXPRESSION_STRING>\[[^\]]*\] {
+<EXPRESSION_STRING>\[(?:\]\]|[^\]])*\] {
   /* attribute binding - numeric (no quotes) */
   msyytext++;
   msyytext[msyyleng-1-1] = '\0';
   MS_LEXER_STRING_REALLOC(msyystring_buffer, msyyleng, 
                           msyystring_buffer_size);
   strcpy(msyystring_buffer, msyytext);
+  msStringUnescape(msyystring_buffer, ']');
   return(MS_TOKEN_BINDING_DOUBLE);
 }
-<EXPRESSION_STRING>\"\[[^\"]*\]\"|\'\[[^\']*\]\' {
+<EXPRESSION_STRING>\"\[(?:\"\"|[^\"])*\]\"|\'\[(?:\'\'|[^\'])*\]\' {
   /* attribute binding - string (single or double quotes) */
-  msyytext+=2;
-  msyytext[msyyleng-2-2] = '\0';
+  msyytext[msyyleng-2] = '\0';
   MS_LEXER_STRING_REALLOC(msyystring_buffer, msyyleng, 
                           msyystring_buffer_size);
-  strcpy(msyystring_buffer, msyytext);
+  strcpy(msyystring_buffer, msyytext + 2);
+  msStringUnescape(msyystring_buffer, msyytext[0]);
   return(MS_TOKEN_BINDING_STRING);
 }
-<EXPRESSION_STRING>\`\[[^\`]*\]\` {
+<EXPRESSION_STRING>\`\[(?:\`\`|[^\`])*\]\` {
   /* attribute binding - time */
   msyytext+=2;
   msyytext[msyyleng-2-2] = '\0';
   MS_LEXER_STRING_REALLOC(msyystring_buffer, msyyleng,
                           msyystring_buffer_size);
   strcpy(msyystring_buffer, msyytext);
+  msStringUnescape(msyystring_buffer, '`');
   return(MS_TOKEN_BINDING_TIME);
 }
 

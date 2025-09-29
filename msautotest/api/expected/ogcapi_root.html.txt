@@ -43,7 +43,7 @@ Content-Type: text/html
   
 <h2>Template Data</h2>
 <p>
-  API Root: http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi<br>    
+  API Root: http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi<br>
   Path: ["ogcapi.map","ogcapi"]<br>
   Params: {}<br>
   Title: OGC API Test<br>

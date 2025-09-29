@@ -486,17 +486,18 @@ def get_gdal_version():
     except Exception:
         gdal_version = os.popen("gdalinfo --version").read()
 
-    # Parse something like "GDAL x.y.zdev, released..." to extract "x.y.z"
+    # Parse GDAL version formats to extract "x.y.z" e.g.
+    # 'GDAL x.y.zdev'
+    # 'GDAL 3.11.3 "Eganville", released 2025/07/12'
+    # 'GDAL 3.11.3 Eganville'
+    # 'GDAL 3.x.y, released'
     if gdal_version.startswith("GDAL "):
         gdal_version = gdal_version[len("GDAL ") :]
-        pos = gdal_version.find("dev")
-        if pos >= 0:
-            return gdal_version[0:pos]
-        pos = gdal_version.find(",")
-        if pos >= 0:
-            return gdal_version[0:pos]
-        # e.g. "GDAL 3.11.3 Eganville"
-        pos = gdal_version.find(" ")
+        dev_pos = gdal_version.find("dev")
+        comma_pos = gdal_version.find(",")
+        space_pos = gdal_version.find(" ")
+        positions = [p for p in (dev_pos, comma_pos, space_pos) if p != -1]
+        pos = min(positions) if positions else -1
         if pos >= 0:
             return gdal_version[0:pos]
     return None

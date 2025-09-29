@@ -13,7 +13,7 @@ echo 'deb [signed-by=/etc/apt/keyrings/kitware-archive-latest.asc] https://apt.k
 
 # Add required repositories
 sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
-sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ noble main'
+sudo apt-add-repository -y 'deb https://apt.kitware.com/ubuntu/ noble main'
 
 sudo apt-get update
 
@@ -29,6 +29,9 @@ sudo apt-get install -y --allow-unauthenticated build-essential protobuf-c-compi
 
 # install recent CMake from Kitware
 sudo apt-get install -y --allow-unauthenticated cmake
+
+echo "GDAL version"
+gdal --version
 
 echo "cmake version"
 cmake --version

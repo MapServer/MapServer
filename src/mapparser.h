@@ -106,60 +106,6 @@ extern int yydebug;
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Token kinds.  */
-#define YYEMPTY -2
-#define YYEOF 0
-#define YYerror 256
-#define YYUNDEF 257
-#define BOOLEAN 258
-#define NUMBER 259
-#define STRING 260
-#define TIME 261
-#define SHAPE 262
-#define OR 263
-#define AND 264
-#define NOT 265
-#define RE 266
-#define EQ 267
-#define NE 268
-#define LT 269
-#define GT 270
-#define LE 271
-#define GE 272
-#define IN 273
-#define IEQ 274
-#define IRE 275
-#define INTERSECTS 276
-#define DISJOINT 277
-#define TOUCHES 278
-#define OVERLAPS 279
-#define CROSSES 280
-#define WITHIN 281
-#define CONTAINS 282
-#define EQUALS 283
-#define BEYOND 284
-#define DWITHIN 285
-#define AREA 286
-#define LENGTH 287
-#define COMMIFY 288
-#define ROUND 289
-#define UPPER 290
-#define LOWER 291
-#define INITCAP 292
-#define FIRSTCAP 293
-#define TOSTRING 294
-#define YYBUFFER 295
-#define INNER 296
-#define OUTER 297
-#define DIFFERENCE 298
-#define DENSIFY 299
-#define SIMPLIFY 300
-#define SIMPLIFYPT 301
-#define GENERALIZE 302
-#define SMOOTHSIA 303
-#define CENTERLINE 304
-#define JAVASCRIPT 305
-#define NEG 306
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -173,7 +119,7 @@ union YYSTYPE
   struct tm tmval;
   shapeObj *shpval;
 
-#line 177 "src/mapparser.h"
+#line 123 "src/mapparser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

@@ -45,6 +45,7 @@
     <Format><BLANK /><INIMAGE /><WMS_XML /></Format>
   </Exception>
   <VendorSpecificCapabilities />
+  <UserDefinedSymbolization SupportSLD="1" UserLayer="0" UserStyle="1" RemoteWFS="0"/>
   <!-- WARNING: No WMS layers are enabled. Check wms/ows_enable_request settings. -->
 </Capability>
 </WMT_MS_Capabilities>
