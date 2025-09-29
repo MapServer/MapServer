@@ -574,6 +574,7 @@ int msValidateContexts(mapObj *map) {
 int msEvalContext(mapObj *map, layerObj *layer, char *context) {
   int i, status;
   char *tag = NULL;
+  tokenListNodeObjPtr token = NULL;
 
   expressionObj e;
   parseObj p;
@@ -608,6 +609,24 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context) {
   }
 
   msTokenizeExpression(&e, NULL, NULL);
+
+  /*
+   * We'll check for binding tokens in the token list. Since there is no shape
+   * to bind to, the parser will crash if any are present.
+   * This is one way to catch references to non-existent layers.
+   */
+  for (token = e.tokens; token; token = token->next) {
+    if (token->token == MS_TOKEN_BINDING_DOUBLE ||
+        token->token == MS_TOKEN_BINDING_STRING ||
+        token->token == MS_TOKEN_BINDING_TIME) {
+      msSetError(MS_PARSEERR,
+                 "A non-existent layer is referenced in a LAYER REQUIRES or "
+                 "LABELREQUIRES expression: %s",
+                 "msEvalContext()", e.string);
+      msFreeExpression(&e);
+      return MS_FALSE;
+    }
+  }
 
   p.shape = NULL;
   p.expr = &e;
