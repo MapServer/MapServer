@@ -42,6 +42,8 @@
 #define MSRASTERLABEL_VALUE "value"
 #define MSRASTERLABEL_VALUEINDEX -100
 
+typedef enum { RASTER_FLOAT, RASTER_DOUBLE } RasterValueType;
+
 typedef struct {
 
   /* query cache results */
@@ -49,7 +51,11 @@ typedef struct {
 
   int refcount;
 
-  float *raster_values; /* raster values */
+  float *f_raster_values; /* raster values */
+  double *d_raster_values;
+
+  RasterValueType value_type; // flag to check if floats or doubles are used
+
   int width;
   int height;
   rectObj extent;
@@ -128,7 +134,9 @@ static void msRasterLabelLayerInfoInitialize(layerObj *layer) {
       (RasterLabelLayerInfo *)msSmallCalloc(1, sizeof(RasterLabelLayerInfo));
   layer->layerinfo = rllinfo;
 
-  rllinfo->raster_values = NULL;
+  rllinfo->value_type = RASTER_FLOAT;
+  rllinfo->f_raster_values = NULL;
+  rllinfo->d_raster_values = NULL;
   rllinfo->width = 0;
   rllinfo->height = 0;
 
@@ -158,8 +166,8 @@ static void msRasterLabelLayerInfoFree(layerObj *layer)
   if (rllinfo == NULL)
     return;
 
-  free(rllinfo->raster_values);
-
+  free(rllinfo->f_raster_values);
+  free(rllinfo->d_raster_values);
   free(rllinfo);
 
   layer->layerinfo = NULL;
@@ -216,7 +224,7 @@ int msRasterLabelLayerGetItems(layerObj *layer) {
 /**********************************************************************
  *                     msRasterLabelGetValues()
  **********************************************************************/
-static char **msRasterLabelGetValues(layerObj *layer, float value) {
+static char **msRasterLabelGetValues(layerObj *layer, double value) {
   char **values;
   int i = 0;
   char tmp[100];
@@ -246,6 +254,12 @@ static char **msRasterLabelGetValues(layerObj *layer, float value) {
   }
 
   return values;
+}
+
+// Float overload
+static char **msRasterLabelGetValues(layerObj *layer, float value) {
+  // cast float to double and call the double version
+  return msRasterLabelGetValues(layer, static_cast<double>(value));
 }
 
 rectObj msRasterLabelGetSearchRect(layerObj *layer, mapObj *map) {
@@ -448,7 +462,19 @@ int msRasterLabelLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
   outputformat->vtable = NULL;
   outputformat->device = NULL;
   outputformat->renderer = MS_RENDER_WITH_RAWDATA;
-  outputformat->imagemode = MS_IMAGEMODE_FLOAT32;
+
+  // check type of the first band only to decide output format
+  switch (GDALGetRasterDataType(GDALGetRasterBand(hDS, 1))) {
+  case GDT_Int32:
+  case GDT_Float64:
+    outputformat->imagemode = MS_IMAGEMODE_FLOAT64;
+    rllinfo->value_type = RASTER_DOUBLE;
+    break;
+  default:
+    outputformat->imagemode = MS_IMAGEMODE_FLOAT32;
+    break;
+  }
+
   msAppendOutputFormat(map_tmp, outputformat);
 
   msCopyHashTable(&map_tmp->configoptions, &layer->map->configoptions);
@@ -726,16 +752,32 @@ int msRasterLabelLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
   rllinfo->last_queried_shapeindex = 0;
   rllinfo->last_raster_off = 0;
 
-  free(rllinfo->raster_values);
-  rllinfo->raster_values =
-      (float *)msSmallMalloc(sizeof(float) * width * height);
+  free(rllinfo->f_raster_values);
+  free(rllinfo->d_raster_values);
 
-  for (size_t off = 0; off < static_cast<size_t>(width) * height; ++off) {
-    if (MS_GET_BIT(image_tmp->img_mask, off)) {
-      rllinfo->raster_values[off] = image_tmp->img.raw_float[off];
-      rllinfo->query_results++;
-    } else
-      rllinfo->raster_values[off] = std::numeric_limits<float>::quiet_NaN();
+  if (rllinfo->value_type == RASTER_DOUBLE) {
+    rllinfo->d_raster_values =
+        (double *)msSmallMalloc(sizeof(double) * width * height);
+
+    for (size_t off = 0; off < static_cast<size_t>(width) * height; ++off) {
+      if (MS_GET_BIT(image_tmp->img_mask, off)) {
+        rllinfo->d_raster_values[off] = image_tmp->img.raw_double[off];
+        rllinfo->query_results++;
+      } else
+        rllinfo->d_raster_values[off] =
+            std::numeric_limits<double>::quiet_NaN();
+    }
+  } else {
+    rllinfo->f_raster_values =
+        (float *)msSmallMalloc(sizeof(float) * width * height);
+
+    for (size_t off = 0; off < static_cast<size_t>(width) * height; ++off) {
+      if (MS_GET_BIT(image_tmp->img_mask, off)) {
+        rllinfo->f_raster_values[off] = image_tmp->img.raw_float[off];
+        rllinfo->query_results++;
+      } else
+        rllinfo->f_raster_values[off] = std::numeric_limits<float>::quiet_NaN();
+    }
   }
 
   msFreeImage(image_tmp); /* we do not need the imageObj anymore */
@@ -774,7 +816,15 @@ int msRasterLabelLayerGetShape(layerObj *layer, shapeObj *shape,
                                 : 0;
        raster_off < static_cast<size_t>(rllinfo->width) * rllinfo->height;
        ++raster_off) {
-    if (!std::isnan(rllinfo->raster_values[raster_off])) {
+
+    bool is_valid = false;
+    if (rllinfo->value_type == RASTER_DOUBLE) {
+      is_valid = !std::isnan(rllinfo->d_raster_values[raster_off]);
+    } else {
+      is_valid = !std::isnan(rllinfo->f_raster_values[raster_off]);
+    }
+
+    if (is_valid) {
       if (curshapeindex == shapeindex) {
         rllinfo->last_queried_shapeindex = shapeindex;
         rllinfo->last_raster_off = raster_off;
@@ -804,8 +854,13 @@ int msRasterLabelLayerGetShape(layerObj *layer, shapeObj *shape,
   msComputeBounds(shape);
 
   shape->numvalues = layer->numitems;
-  shape->values =
-      msRasterLabelGetValues(layer, rllinfo->raster_values[raster_off]);
+  if (rllinfo->value_type == RASTER_DOUBLE) {
+    shape->values =
+        msRasterLabelGetValues(layer, rllinfo->d_raster_values[raster_off]);
+  } else {
+    shape->values =
+        msRasterLabelGetValues(layer, rllinfo->f_raster_values[raster_off]);
+  }
   shape->index = shapeindex;
   shape->resultindex = shapeindex;
 

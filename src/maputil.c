@@ -1767,6 +1767,7 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
   } else if (MS_RENDERER_RAWDATA(format)) {
     if (format->imagemode != MS_IMAGEMODE_INT16 &&
         format->imagemode != MS_IMAGEMODE_FLOAT32 &&
+        format->imagemode != MS_IMAGEMODE_FLOAT64 &&
         format->imagemode != MS_IMAGEMODE_BYTE) {
       msSetError(MS_IMGERR,
                  "Attempt to use illegal imagemode with rawdata renderer.",
@@ -1787,6 +1788,9 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
     else if (format->imagemode == MS_IMAGEMODE_FLOAT32)
       image->img.raw_float = (float *)msSmallCalloc(
           sizeof(float), ((size_t)width) * height * format->bands);
+    else if (format->imagemode == MS_IMAGEMODE_FLOAT64)
+      image->img.raw_double = (double *)msSmallCalloc(
+          sizeof(double), ((size_t)width) * height * format->bands);
     else if (format->imagemode == MS_IMAGEMODE_BYTE)
       image->img.raw_byte = (unsigned char *)msSmallCalloc(
           sizeof(unsigned char), ((size_t)width) * height * format->bands);
@@ -1831,6 +1835,10 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
         float nv = atof(nullvalue);
         for (; i > 0;)
           image->img.raw_float[--i] = nv;
+      } else if (format->imagemode == MS_IMAGEMODE_FLOAT64) {
+        double nv = atof(nullvalue);
+        for (; i > 0;)
+          image->img.raw_double[--i] = nv;
       } else if (format->imagemode == MS_IMAGEMODE_BYTE) {
         unsigned char nv = (unsigned char)atoi(nullvalue);
 
