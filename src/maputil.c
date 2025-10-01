@@ -2578,12 +2578,11 @@ void *msSmallCalloc(size_t nCount, size_t nSize) {
 char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req) {
   (void)map;
   char *online_resource = NULL;
-  const char *value, *hostname, *port, *script, *protocol = "http", *pathinfo,
-                                                *mapparam = NULL;
+  const char *value, *protocol = "http", *mapparam = NULL;
   char **hostname_array = NULL;
   int mapparam_len = 0, hostname_array_len = 0;
 
-  hostname = getenv("HTTP_X_FORWARDED_HOST");
+  const char *hostname = getenv("HTTP_X_FORWARDED_HOST");
   if (!hostname)
     hostname = getenv("SERVER_NAME");
   else {
@@ -2593,16 +2592,16 @@ char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req) {
     }
   }
 
-  port = getenv("HTTP_X_FORWARDED_PORT");
+  const char *port = getenv("HTTP_X_FORWARDED_PORT");
   if (!port)
     port = getenv("SERVER_PORT");
 
-  pathinfo = getenv("PATH_INFO");
+  const char *pathinfo = getenv("PATH_INFO");
   if (!pathinfo) {
     pathinfo = "";
   }
 
-  script = getenv("SCRIPT_NAME");
+  const char *script = getenv("SCRIPT_NAME");
 
   /* HTTPS is set by Apache to "on" in an HTTPS server ... if not set */
   /* then check SERVER_PORT: 443 is the default https port. */

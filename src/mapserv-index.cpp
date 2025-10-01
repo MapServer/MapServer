@@ -110,7 +110,7 @@ static json processOGCAPI(mapObj *map, cgiRequestObj *request) {
   if (status == MS_TRUE) {
     response["title"] = title;
 
-    std::string onlineResource = getApiRootUrl(map, request, "AO");
+    std::string onlineResource = msOGCAPIGetApiRootUrl(map, request);
 
     // strip any trailing slash as we add it back manually in the hrefs
     if (!onlineResource.empty() && onlineResource.back() == '/') {
@@ -384,16 +384,16 @@ static int createHTMLOutput(json response, const char *templateName) {
   std::string path;
   char fullpath[MS_MAXPATHLEN];
 
-  path = getTemplateDirectory(NULL, "html_template_directory",
-                              "MS_INDEX_TEMPLATE_DIRECTORY");
+  path = msOGCAPIGetTemplateDirectory(NULL, "html_template_directory",
+                                      "MS_INDEX_TEMPLATE_DIRECTORY");
   if (path.empty()) {
-    outputError(OGCAPI_CONFIG_ERROR, "Template directory not set.");
+    msOGCAPIOutputError(OGCAPI_CONFIG_ERROR, "Template directory not set.");
     return MS_FAILURE;
   }
   msBuildPath(fullpath, NULL, path.c_str());
 
   json j = {{"response", response}};
-  outputTemplate(fullpath, templateName, j, OGCAPI_MIMETYPE_HTML);
+  msOGCAPIOutputTemplate(fullpath, templateName, j, OGCAPI_MIMETYPE_HTML);
 
   return MS_SUCCESS;
 }
@@ -415,7 +415,7 @@ int msOGCAPIDispatchMapIndexRequest(mapservObj *mapserv, configObj *config) {
     return MS_FAILURE;
   }
 
-  OGCAPIFormat format = msGetOutputFormat(request);
+  OGCAPIFormat format = msOGCAPIGetOutputFormat(request);
   const char *key = request->api_path[0];
 
   mapObj *map = getMapFromConfig(config, key);
@@ -431,11 +431,11 @@ int msOGCAPIDispatchMapIndexRequest(mapservObj *mapserv, configObj *config) {
   response.update(summary);
 
   if (format == OGCAPIFormat::JSON) {
-    outputJson(response, OGCAPI_MIMETYPE_JSON, {});
+    msOGCAPIOutputJson(response, OGCAPI_MIMETYPE_JSON, {});
   } else if (format == OGCAPIFormat::HTML) {
     createHTMLOutput(response, TEMPLATE_HTML_MAP_INDEX);
   } else {
-    outputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
+    msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
   }
 
   return MS_SUCCESS;
@@ -456,8 +456,7 @@ int msOGCAPIDispatchIndexRequest(mapservObj *mapserv, configObj *config) {
     return -1; // Handle null pointers
 
   cgiRequestObj *request = mapserv->request;
-  OGCAPIFormat format;
-  format = msGetOutputFormat(request);
+  const OGCAPIFormat format = msOGCAPIGetOutputFormat(request);
 
   const char *key = NULL;
   json links = json::array();
@@ -475,11 +474,11 @@ int msOGCAPIDispatchIndexRequest(mapservObj *mapserv, configObj *config) {
   json response = {{"linkset", links}};
 
   if (format == OGCAPIFormat::JSON) {
-    outputJson(response, OGCAPI_MIMETYPE_JSON, {});
+    msOGCAPIOutputJson(response, OGCAPI_MIMETYPE_JSON, {});
   } else if (format == OGCAPIFormat::HTML) {
     createHTMLOutput(response, TEMPLATE_HTML_INDEX);
   } else {
-    outputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
+    msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
   }
 
   return MS_SUCCESS;

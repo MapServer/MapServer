@@ -59,21 +59,22 @@ enum class OGCAPIFormat { JSON, GeoJSON, OpenAPI_V3, HTML, Invalid };
   "application/vnd.oai.openapi+json;version=3.0"
 #define OGCAPI_MIMETYPE_HTML "text/html"
 
-std::string getTemplateDirectory(mapObj *map, const char *key,
-                                 const char *envvar);
+std::string msOGCAPIGetTemplateDirectory(mapObj *map, const char *key,
+                                         const char *envvar);
 
-OGCAPIFormat msGetOutputFormat(cgiRequestObj *request);
+OGCAPIFormat msOGCAPIGetOutputFormat(cgiRequestObj *request);
 
-std::string getApiRootUrl(mapObj *map, cgiRequestObj *request,
-                          const char *namespaces);
+std::string msOGCAPIGetApiRootUrl(mapObj *map, cgiRequestObj *request,
+                                  const char *namespaces = "AO");
 
-void outputError(OGCAPIErrorType errorType, const std::string &description);
+void msOGCAPIOutputError(OGCAPIErrorType errorType,
+                         const std::string &description);
 
-void outputJson(const nlohmann::json &j, const char *mimetype,
-                const std::map<std::string, std::string> &extraHeaders);
+void msOGCAPIOutputJson(const nlohmann::json &j, const char *mimetype,
+                        const std::map<std::string, std::string> &extraHeaders);
 
-void outputTemplate(const char *directory, const char *filename,
-                    const nlohmann::json &j, const char *mimetype);
+void msOGCAPIOutputTemplate(const char *directory, const char *filename,
+                            const nlohmann::json &j, const char *mimetype);
 
 #endif
 

@@ -121,22 +121,38 @@ static void msConfigSetConfigOption(const char *key, const char *value) {
   }
 }
 
+std::string msGetMapserverConfigFilePath() {
+
+  const char *config_path = CPLGetConfigOption("MAPSERVER_CONFIG_FILE", NULL);
+  if (config_path != nullptr) {
+    return std::string(config_path);
+  }
+
+  const char *env_file = getenv("MAPSERVER_CONFIG_FILE");
+  if (env_file != nullptr) {
+    // get config filename from environment
+    return std::string(env_file);
+  }
+
+  if (MAPSERVER_CONFIG_FILE[0] != '\0') {
+    // fallback to hardcoded file name
+    return std::string(MAPSERVER_CONFIG_FILE);
+  }
+  return std::string();
+}
+
 configObj *msLoadConfig(const char *ms_config_file) {
   configObj *config = NULL;
 
-  if (ms_config_file == NULL) {
-    // get config filename from environment
-    ms_config_file = getenv("MAPSERVER_CONFIG_FILE");
-  }
-
-  if (ms_config_file == NULL && MAPSERVER_CONFIG_FILE[0] != '\0') {
-    // Fallback to hardcoded file name
-    ms_config_file = MAPSERVER_CONFIG_FILE;
-  }
+  std::string config_path;
 
   if (ms_config_file == NULL) {
-    msSetError(MS_MISCERR, "No config file set.", "msLoadConfig()");
-    return NULL;
+    config_path = msGetMapserverConfigFilePath();
+    if (config_path.empty()) {
+      msSetError(MS_MISCERR, "No config file set.", "msLoadConfig()");
+      return NULL;
+    }
+    ms_config_file = config_path.c_str();
   }
 
   config = (configObj *)calloc(1, sizeof(configObj));
@@ -201,6 +217,12 @@ const char *msConfigGetEnv(const configObj *config, const char *key) {
   return msLookupHashTable(&config->env, key);
 }
 
+/**
+ * Get the path to a Mapfile, from the MapServer CONFIG file using
+ * its key. If the path is relative then the CONFIG file location
+ * is used to determine the absolute path.
+ * The provided pszReturnPath must be at least MS_MAXPATHLEN long.
+ */
 const char *msConfigGetMap(const configObj *config, const char *key,
                            char *pszReturnPath) {
   if (config == NULL || key == NULL || pszReturnPath == NULL)
@@ -210,11 +232,14 @@ const char *msConfigGetMap(const configObj *config, const char *key,
   if (!mapFile)
     return NULL;
 
-  // if the mapFile path is relative, use the
-  // location of the CONFIG file to define the full path
+  // check for relative Mapfile paths
   if (CPLIsFilenameRelative(mapFile)) {
-    char *configPath =
-        msGetPath(CPLGetConfigOption("MAPSERVER_CONFIG_FILE", NULL));
+
+    std::string config_path = msGetMapserverConfigFilePath();
+    if (config_path.empty()) {
+      return NULL;
+    }
+    char *configPath = msGetPath(config_path.c_str());
 
     if (!configPath)
       return NULL;
