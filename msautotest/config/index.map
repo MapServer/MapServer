@@ -1,0 +1,34 @@
+# test root URLs
+# RUN_PARMS: landing.json [MAPSERV] -conf index.conf "PATH_INFO=/" "QUERY_STRING=f=json" > [RESULT_DEMIME]
+# RUN_PARMS: landing.html [MAPSERV] -conf index.conf "PATH_INFO=/" "QUERY_STRING=f=html" > [RESULT_DEMIME]
+
+# map URLs
+# RUN_PARMS: index_map_landing.json [MAPSERV] -conf index.conf "PATH_INFO=/INDEX/" QUERY_STRING="f=json" > [RESULT_DEMIME]
+# RUN_PARMS: index_map_landing_no_slash.json [MAPSERV] -conf index.conf "PATH_INFO=/INDEX" QUERY_STRING="f=json" > [RESULT_DEMIME]
+# RUN_PARMS: index_map.html [MAPSERV] -conf index.conf "PATH_INFO=/INDEX/" QUERY_STRING="f=html" > [RESULT_DEMIME]
+
+MAP
+  NAME 'hello_world'
+  EXTENT 1 1 100 100
+  SIZE 300 300
+
+  WEB
+    IMAGEPATH "/tmp/"
+  END
+
+  LAYER
+    NAME 'hello_world'
+    STATUS DEFAULT
+    TYPE POINT
+    FEATURE
+      POINTS 50 50 END
+    END
+    CLASS
+      TEXT 'Hello World!'
+      LABEL
+        SIZE MEDIUM
+        COLOR 0 0 0
+      END
+    END
+  END
+END

@@ -37,6 +37,45 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request);
 
 #ifdef __cplusplus
 }
+
+#include <string>
+#include <map>
+#include "third-party/include_nlohmann_json.hpp"
+#include "third-party/include_pantor_inja.hpp"
+
+// Error types
+typedef enum {
+  OGCAPI_SERVER_ERROR = 0,
+  OGCAPI_CONFIG_ERROR = 1,
+  OGCAPI_PARAM_ERROR = 2,
+  OGCAPI_NOT_FOUND_ERROR = 3,
+} OGCAPIErrorType;
+
+enum class OGCAPIFormat { JSON, GeoJSON, OpenAPI_V3, HTML, Invalid };
+
+#define OGCAPI_MIMETYPE_JSON "application/json"
+#define OGCAPI_MIMETYPE_GEOJSON "application/geo+json"
+#define OGCAPI_MIMETYPE_OPENAPI_V3                                             \
+  "application/vnd.oai.openapi+json;version=3.0"
+#define OGCAPI_MIMETYPE_HTML "text/html"
+
+std::string msOGCAPIGetTemplateDirectory(mapObj *map, const char *key,
+                                         const char *envvar);
+
+OGCAPIFormat msOGCAPIGetOutputFormat(cgiRequestObj *request);
+
+std::string msOGCAPIGetApiRootUrl(mapObj *map, cgiRequestObj *request,
+                                  const char *namespaces = "AO");
+
+void msOGCAPIOutputError(OGCAPIErrorType errorType,
+                         const std::string &description);
+
+void msOGCAPIOutputJson(const nlohmann::json &j, const char *mimetype,
+                        const std::map<std::string, std::string> &extraHeaders);
+
+void msOGCAPIOutputTemplate(const char *directory, const char *filename,
+                            const nlohmann::json &j, const char *mimetype);
+
 #endif
 
 #endif
