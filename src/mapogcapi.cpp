@@ -1839,6 +1839,7 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
                oapif_part2_yaml_url + "#/components/parameters/bbox-crs"}},
              {{"$ref", oapif_part2_yaml_url + "#/components/parameters/crs"}},
              {{"$ref", "#/components/parameters/offset"}},
+             {{"$ref", "#/components/parameters/vendorSpecificParameters"}},
          }},
         {"responses",
          {{"200",
@@ -1939,6 +1940,19 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
        }},
       {"style", "form"},
       {"explode", false},
+  };
+
+  parameters["vendorSpecificParameters"] = {
+      {"name", "vendorSpecificParameters"},
+      {"in", "query"},
+      {"description",
+       "Additional \"free-form\" parameters that are not explicitly defined"},
+      {"schema",
+       {
+           {"type", "object"},
+           {"additionalProperties", true},
+       }},
+      {"style", "form"},
   };
 
   components["parameters"] = std::move(parameters);
