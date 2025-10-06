@@ -59,14 +59,6 @@ using json = nlohmann::json;
 #define OGCAPI_TEMPLATE_HTML_COLLECTION_ITEM "collection-item.html"
 #define OGCAPI_TEMPLATE_HTML_OPENAPI "openapi.html"
 
-enum class OGCAPIFormat { JSON, GeoJSON, OpenAPI_V3, HTML };
-
-#define OGCAPI_MIMETYPE_JSON "application/json"
-#define OGCAPI_MIMETYPE_GEOJSON "application/geo+json"
-#define OGCAPI_MIMETYPE_OPENAPI_V3                                             \
-  "application/vnd.oai.openapi+json;version=3.0"
-#define OGCAPI_MIMETYPE_HTML "text/html"
-
 #define OGCAPI_DEFAULT_LIMIT 10 // by specification
 #define OGCAPI_MAX_LIMIT 10000
 
@@ -79,19 +71,11 @@ constexpr const char *CRS84_URL =
 
 #ifdef USE_OGCAPI_SVR
 
-// Error types
-typedef enum {
-  OGCAPI_SERVER_ERROR = 0,
-  OGCAPI_CONFIG_ERROR = 1,
-  OGCAPI_PARAM_ERROR = 2,
-  OGCAPI_NOT_FOUND_ERROR = 3,
-} OGCAPIErrorType;
-
 /*
 ** Returns a JSON object using and a description.
 */
-static void outputError(OGCAPIErrorType errorType,
-                        const std::string &description) {
+void msOGCAPIOutputError(OGCAPIErrorType errorType,
+                         const std::string &description) {
   const char *code = "";
   const char *status = "";
   switch (errorType) {
@@ -291,7 +275,7 @@ static bool getBbox(mapObj *map, layerObj *layer, cgiRequestObj *request,
   } else {
     const auto tokens = msStringSplit(bboxParam, ',');
     if (tokens.size() != 4) {
-      outputError(OGCAPI_PARAM_ERROR, "Bad value for bbox.");
+      msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Bad value for bbox.");
       return false;
     }
 
@@ -299,7 +283,7 @@ static bool getBbox(mapObj *map, layerObj *layer, cgiRequestObj *request,
     for (int i = 0; i < 4; i++) {
       status = msStringToDouble(tokens[i].c_str(), &values[i]);
       if (status != MS_SUCCESS) {
-        outputError(OGCAPI_PARAM_ERROR, "Bad value for bbox.");
+        msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Bad value for bbox.");
         return false;
       }
     }
@@ -311,7 +295,7 @@ static bool getBbox(mapObj *map, layerObj *layer, cgiRequestObj *request,
 
     // validate bbox is well-formed (degenerate is ok)
     if (MS_VALID_SEARCH_EXTENT(*bbox) != MS_TRUE) {
-      outputError(OGCAPI_PARAM_ERROR, "Bad value for bbox.");
+      msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Bad value for bbox.");
       return false;
     }
 
@@ -328,7 +312,7 @@ static bool getBbox(mapObj *map, layerObj *layer, cgiRequestObj *request,
         }
       }
       if (!isExpectedCrs) {
-        outputError(OGCAPI_PARAM_ERROR, "Bad value for bbox-crs.");
+        msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Bad value for bbox-crs.");
         return false;
       }
       if (std::string(bboxCrsParam) != CRS84_URL) {
@@ -349,15 +333,15 @@ static bool getBbox(mapObj *map, layerObj *layer, cgiRequestObj *request,
     msProjectionInheritContextFrom(&bboxProj, &(map->projection));
     if (msLoadProjectionString(&bboxProj, bboxCrs.c_str()) != 0) {
       msFreeProjection(&bboxProj);
-      outputError(OGCAPI_SERVER_ERROR, "Cannot process bbox-crs.");
+      msOGCAPIOutputError(OGCAPI_SERVER_ERROR, "Cannot process bbox-crs.");
       return false;
     }
 
     status = msProjectRect(&bboxProj, outputProj, bbox);
     msFreeProjection(&bboxProj);
     if (status != MS_SUCCESS) {
-      outputError(OGCAPI_SERVER_ERROR,
-                  "Cannot reproject bbox from bbox-crs to output CRS.");
+      msOGCAPIOutputError(OGCAPI_SERVER_ERROR,
+                          "Cannot reproject bbox from bbox-crs to output CRS.");
       return false;
     }
   }
@@ -368,11 +352,13 @@ static bool getBbox(mapObj *map, layerObj *layer, cgiRequestObj *request,
 /*
 ** Returns the template directory location or NULL if it isn't set.
 */
-static std::string getTemplateDirectory(mapObj *map, const char *key,
-                                        const char *envvar) {
-  const char *directory;
+std::string msOGCAPIGetTemplateDirectory(mapObj *map, const char *key,
+                                         const char *envvar) {
+  const char *directory = NULL;
 
-  directory = msOWSLookupMetadata(&(map->web.metadata), "A", key);
+  if (map != NULL) {
+    directory = msOWSLookupMetadata(&(map->web.metadata), "A", key);
+  }
 
   if (directory == NULL) {
     directory = CPLGetConfigOption(envvar, NULL);
@@ -419,17 +405,38 @@ static const char *getTitle(mapObj *map) {
 ** Returns the API root URL from oga_onlineresource or builds a value if not
 *set.
 */
-static std::string getApiRootUrl(mapObj *map) {
+std::string msOGCAPIGetApiRootUrl(mapObj *map, cgiRequestObj *request,
+                                  const char *namespaces) {
   const char *root;
-
-  if ((root = msOWSLookupMetadata(&(map->web.metadata), "A",
-                                  "onlineresource")) != NULL)
+  if ((root = msOWSLookupMetadata(&(map->web.metadata), namespaces,
+                                  "onlineresource")) != NULL) {
     return std::string(root);
-  else
-    return "http://" + std::string(getenv("SERVER_NAME")) + ":" +
-           std::string(getenv("SERVER_PORT")) +
-           std::string(getenv("SCRIPT_NAME")) +
-           std::string(getenv("PATH_INFO"));
+  }
+
+  std::string api_root;
+  if (char *res = msBuildOnlineResource(NULL, request)) {
+    api_root = res;
+    free(res);
+
+    // find last ogcapi in the string and strip the rest to get the root API
+    std::size_t pos = api_root.rfind("ogcapi");
+    if (pos != std::string::npos) {
+      api_root = api_root.substr(0, pos + std::string("ogcapi").size());
+    } else {
+      // strip trailing '?' or '/' and append "/ogcapi"
+      while (!api_root.empty() &&
+             (api_root.back() == '?' || api_root.back() == '/')) {
+        api_root.pop_back();
+      }
+      api_root += "/ogcapi";
+    }
+  }
+
+  if (api_root.empty()) {
+    api_root = "/ogcapi";
+  }
+
+  return api_root;
 }
 
 static json getFeatureConstant(const gmlConstantObj *constant) {
@@ -776,7 +783,8 @@ static int getGeometryPrecision(mapObj *map, layerObj *layer) {
   return geometry_precision;
 }
 
-static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format) {
+static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format,
+                          const std::string &api_root) {
   json collection; // empty (null)
   rectObj bbox;
 
@@ -787,8 +795,6 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format) {
     return collection;
 
   // initialize some things
-  std::string api_root = getApiRootUrl(map);
-
   if (msOWSGetLayerExtent(map, layer, "AOF", &bbox) == MS_SUCCESS) {
     if (layer->projection.numargs > 0)
       msOWSProjectToWGS84(&layer->projection, &bbox);
@@ -895,14 +901,16 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format) {
 ** Output stuff...
 */
 
-static void outputJson(const json &j, const char *mimetype,
-                       const std::map<std::string, std::string> &extraHeaders) {
+void msOGCAPIOutputJson(
+    const json &j, const char *mimetype,
+    const std::map<std::string, std::string> &extraHeaders) {
   std::string js;
 
   try {
     js = j.dump();
   } catch (...) {
-    outputError(OGCAPI_CONFIG_ERROR, "Invalid UTF-8 data, check encoding.");
+    msOGCAPIOutputError(OGCAPI_CONFIG_ERROR,
+                        "Invalid UTF-8 data, check encoding.");
     return;
   }
 
@@ -914,8 +922,8 @@ static void outputJson(const json &j, const char *mimetype,
   msIO_printf("%s\n", js.c_str());
 }
 
-static void outputTemplate(const char *directory, const char *filename,
-                           const json &j, const char *mimetype) {
+void msOGCAPIOutputTemplate(const char *directory, const char *filename,
+                            const json &j, const char *mimetype) {
   std::string _directory(directory);
   std::string _filename(filename);
   Environment env{_directory}; // catch
@@ -932,7 +940,8 @@ static void outputTemplate(const char *directory, const char *filename,
   try {
     std::string js = j.dump();
   } catch (...) {
-    outputError(OGCAPI_CONFIG_ERROR, "Invalid UTF-8 data, check encoding.");
+    msOGCAPIOutputError(OGCAPI_CONFIG_ERROR,
+                        "Invalid UTF-8 data, check encoding.");
     return;
   }
 
@@ -944,18 +953,19 @@ static void outputTemplate(const char *directory, const char *filename,
     msIO_sendHeaders();
     msIO_printf("%s\n", result.c_str());
   } catch (const inja::RenderError &e) {
-    outputError(OGCAPI_CONFIG_ERROR, "Template rendering error. " +
-                                         std::string(e.what()) + " (" +
-                                         std::string(filename) + ").");
+    msOGCAPIOutputError(OGCAPI_CONFIG_ERROR, "Template rendering error. " +
+                                                 std::string(e.what()) + " (" +
+                                                 std::string(filename) + ").");
     return;
   } catch (const inja::InjaError &e) {
-    outputError(OGCAPI_CONFIG_ERROR, "InjaError error. " +
-                                         std::string(e.what()) + " (" +
-                                         std::string(filename) + ")." + " (" +
-                                         std::string(directory) + ").");
+    msOGCAPIOutputError(OGCAPI_CONFIG_ERROR,
+                        "InjaError error. " + std::string(e.what()) + " (" +
+                            std::string(filename) + ")." + " (" +
+                            std::string(directory) + ").");
     return;
   } catch (...) {
-    outputError(OGCAPI_SERVER_ERROR, "General template handling error.");
+    msOGCAPIOutputError(OGCAPI_SERVER_ERROR,
+                        "General template handling error.");
     return;
   }
 }
@@ -972,16 +982,16 @@ outputResponse(mapObj *map, cgiRequestObj *request, OGCAPIFormat format,
   char fullpath[MS_MAXPATHLEN];
 
   if (format == OGCAPIFormat::JSON) {
-    outputJson(response, OGCAPI_MIMETYPE_JSON, extraHeaders);
+    msOGCAPIOutputJson(response, OGCAPI_MIMETYPE_JSON, extraHeaders);
   } else if (format == OGCAPIFormat::GeoJSON) {
-    outputJson(response, OGCAPI_MIMETYPE_GEOJSON, extraHeaders);
+    msOGCAPIOutputJson(response, OGCAPI_MIMETYPE_GEOJSON, extraHeaders);
   } else if (format == OGCAPIFormat::OpenAPI_V3) {
-    outputJson(response, OGCAPI_MIMETYPE_OPENAPI_V3, extraHeaders);
+    msOGCAPIOutputJson(response, OGCAPI_MIMETYPE_OPENAPI_V3, extraHeaders);
   } else if (format == OGCAPIFormat::HTML) {
-    path = getTemplateDirectory(map, "html_template_directory",
-                                "OGCAPI_HTML_TEMPLATE_DIRECTORY");
+    path = msOGCAPIGetTemplateDirectory(map, "html_template_directory",
+                                        "OGCAPI_HTML_TEMPLATE_DIRECTORY");
     if (path.empty()) {
-      outputError(OGCAPI_CONFIG_ERROR, "Template directory not set.");
+      msOGCAPIOutputError(OGCAPI_CONFIG_ERROR, "Template directory not set.");
       return; // bail
     }
     msBuildPath(fullpath, map->mappath, path.c_str());
@@ -994,7 +1004,7 @@ outputResponse(mapObj *map, cgiRequestObj *request, OGCAPIFormat format,
     // extend the JSON with a few things that we need for templating
     j["template"] = {{"path", json::array()},
                      {"params", json::object()},
-                     {"api_root", getApiRootUrl(map)},
+                     {"api_root", msOGCAPIGetApiRootUrl(map, request)},
                      {"title", getTitle(map)},
                      {"tags", json::object()}};
 
@@ -1025,9 +1035,9 @@ outputResponse(mapObj *map, cgiRequestObj *request, OGCAPIFormat format,
       }
     }
 
-    outputTemplate(fullpath, filename, j, OGCAPI_MIMETYPE_HTML);
+    msOGCAPIOutputTemplate(fullpath, filename, j, OGCAPI_MIMETYPE_HTML);
   } else {
-    outputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
+    msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
   }
 }
 
@@ -1047,7 +1057,7 @@ static int processLandingRequest(mapObj *map, cgiRequestObj *request,
                             "abstract"); // fallback on abstract if necessary
 
   // define api root url
-  std::string api_root = getApiRootUrl(map);
+  std::string api_root = msOGCAPIGetApiRootUrl(map, request);
 
   // build response object
   //   - consider conditionally excluding links for HTML format
@@ -1100,7 +1110,7 @@ static int processLandingRequest(mapObj *map, cgiRequestObj *request,
         json link = getLink(&(map->web.metadata), name);
         response["links"].push_back(link);
       } catch (const std::runtime_error &e) {
-        outputError(OGCAPI_CONFIG_ERROR, std::string(e.what()));
+        msOGCAPIOutputError(OGCAPI_CONFIG_ERROR, std::string(e.what()));
         return MS_SUCCESS;
       }
     }
@@ -1152,7 +1162,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
   }
 
   if (i == map->numlayers) { // invalid collectionId
-    outputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
+    msOGCAPIOutputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
     return MS_SUCCESS;
   }
 
@@ -1160,7 +1170,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
   layer->status = MS_ON;  // force on (do we need to save and reset?)
 
   if (!includeLayer(map, layer)) {
-    outputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
+    msOGCAPIOutputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
     return MS_SUCCESS;
   }
 
@@ -1168,10 +1178,11 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
   // handle parameters specific to this endpoint
   //
   if (getLimit(map, request, layer, &limit) != MS_SUCCESS) {
-    outputError(OGCAPI_PARAM_ERROR, "Bad value for limit.");
+    msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Bad value for limit.");
     return MS_SUCCESS;
   }
 
+  std::string api_root = msOGCAPIGetApiRootUrl(map, request);
   const char *crs = getRequestParameter(request, "crs");
 
   std::string outputCrs = "EPSG:4326";
@@ -1187,7 +1198,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
       }
     }
     if (!isExpectedCrs) {
-      outputError(OGCAPI_PARAM_ERROR, "Bad value for crs.");
+      msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Bad value for crs.");
       return MS_SUCCESS;
     }
     extraHeaders["Content-Crs"] = '<' + std::string(crs) + '>';
@@ -1225,7 +1236,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
 
   msProjectionInheritContextFrom(&reprObjs.proj, &(map->projection));
   if (msLoadProjectionString(&reprObjs.proj, outputCrs.c_str()) != 0) {
-    outputError(OGCAPI_SERVER_ERROR, "Cannot instantiate output CRS.");
+    msOGCAPIOutputError(OGCAPI_SERVER_ERROR, "Cannot instantiate output CRS.");
     return MS_SUCCESS;
   }
 
@@ -1234,7 +1245,8 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
       reprObjs.reprojector =
           msProjectCreateReprojector(&(layer->projection), &reprObjs.proj);
       if (reprObjs.reprojector == NULL) {
-        outputError(OGCAPI_SERVER_ERROR, "Error creating re-projector.");
+        msOGCAPIOutputError(OGCAPI_SERVER_ERROR,
+                            "Error creating re-projector.");
         return MS_SUCCESS;
       }
     }
@@ -1243,13 +1255,15 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
       reprObjs.reprojector =
           msProjectCreateReprojector(&(map->projection), &reprObjs.proj);
       if (reprObjs.reprojector == NULL) {
-        outputError(OGCAPI_SERVER_ERROR, "Error creating re-projector.");
+        msOGCAPIOutputError(OGCAPI_SERVER_ERROR,
+                            "Error creating re-projector.");
         return MS_SUCCESS;
       }
     }
   } else {
-    outputError(OGCAPI_CONFIG_ERROR,
-                "Unable to transform geometries, no projection defined.");
+    msOGCAPIOutputError(
+        OGCAPI_CONFIG_ERROR,
+        "Unable to transform geometries, no projection defined.");
     return MS_SUCCESS;
   }
 
@@ -1266,7 +1280,8 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
     const char *featureIdItem =
         msOWSLookupMetadata(&(layer->metadata), "AGFO", "featureid");
     if (featureIdItem == NULL) {
-      outputError(OGCAPI_CONFIG_ERROR, "Missing required featureid metadata.");
+      msOGCAPIOutputError(OGCAPI_CONFIG_ERROR,
+                          "Missing required featureid metadata.");
       return MS_SUCCESS;
     }
 
@@ -1278,7 +1293,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
     if (featureIdValidation &&
         msValidateParameter(featureId, featureIdValidation, NULL, NULL, NULL) !=
             MS_SUCCESS) {
-      outputError(OGCAPI_NOT_FOUND_ERROR, "Invalid feature id.");
+      msOGCAPIOutputError(OGCAPI_NOT_FOUND_ERROR, "Invalid feature id.");
       return MS_SUCCESS;
     }
 
@@ -1293,12 +1308,14 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
     map->query.filter.string = strdup(featureId);
 
     if (reprObjs.executeQuery(map) != MS_SUCCESS) {
-      outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items id query failed.");
+      msOGCAPIOutputError(OGCAPI_NOT_FOUND_ERROR,
+                          "Collection items id query failed.");
       return MS_SUCCESS;
     }
 
     if (!layer->resultcache || layer->resultcache->numresults != 1) {
-      outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items id query failed.");
+      msOGCAPIOutputError(OGCAPI_NOT_FOUND_ERROR,
+                          "Collection items id query failed.");
       return MS_SUCCESS;
     }
   } else { // bbox query
@@ -1315,7 +1332,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
             strcmp(paramName, "offset") == 0 || strcmp(paramName, "crs") == 0) {
           // ok
         } else {
-          outputError(
+          msOGCAPIOutputError(
               OGCAPI_PARAM_ERROR,
               (std::string("Unknown query parameter: ") + paramName).c_str());
           return MS_SUCCESS;
@@ -1331,12 +1348,14 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
 
     // get number matched
     if (reprObjs.executeQuery(map) != MS_SUCCESS) {
-      outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
+      msOGCAPIOutputError(OGCAPI_NOT_FOUND_ERROR,
+                          "Collection items query failed.");
       return MS_SUCCESS;
     }
 
     if (!layer->resultcache) {
-      outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
+      msOGCAPIOutputError(OGCAPI_NOT_FOUND_ERROR,
+                          "Collection items query failed.");
       return MS_SUCCESS;
     }
 
@@ -1349,12 +1368,12 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
       const char *offsetStr = getRequestParameter(request, "offset");
       if (offsetStr) {
         if (msStringToInt(offsetStr, &offset, 10) != MS_SUCCESS) {
-          outputError(OGCAPI_PARAM_ERROR, "Bad value for offset.");
+          msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Bad value for offset.");
           return MS_SUCCESS;
         }
 
         if (offset < 0 || offset >= numberMatched) {
-          outputError(OGCAPI_PARAM_ERROR, "Offset out of range.");
+          msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Offset out of range.");
           return MS_SUCCESS;
         }
 
@@ -1365,7 +1384,8 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
       }
 
       if (reprObjs.executeQuery(map) != MS_SUCCESS || !layer->resultcache) {
-        outputError(OGCAPI_NOT_FOUND_ERROR, "Collection items query failed.");
+        msOGCAPIOutputError(OGCAPI_NOT_FOUND_ERROR,
+                            "Collection items query failed.");
         return MS_SUCCESS;
       }
     }
@@ -1373,7 +1393,6 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
 
   // build response object
   if (!featureId) {
-    std::string api_root = getApiRootUrl(map);
     const char *id = layer->name;
     char *id_encoded = msEncodeUrl(id); // free after use
 
@@ -1449,8 +1468,8 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
     if (!items || !constants) {
       msGMLFreeItems(items);
       msGMLFreeConstants(constants);
-      outputError(OGCAPI_SERVER_ERROR,
-                  "Error fetching layer attribute metadata.");
+      msOGCAPIOutputError(OGCAPI_SERVER_ERROR,
+                          "Error fetching layer attribute metadata.");
       return MS_SUCCESS;
     }
 
@@ -1462,7 +1481,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
       if (status != MS_SUCCESS) {
         msGMLFreeItems(items);
         msGMLFreeConstants(constants);
-        outputError(OGCAPI_SERVER_ERROR, "Error fetching feature.");
+        msOGCAPIOutputError(OGCAPI_SERVER_ERROR, "Error fetching feature.");
         return MS_SUCCESS;
       }
 
@@ -1472,7 +1491,8 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
           msGMLFreeItems(items);
           msGMLFreeConstants(constants);
           msFreeShape(&shape);
-          outputError(OGCAPI_SERVER_ERROR, "Error reprojecting feature.");
+          msOGCAPIOutputError(OGCAPI_SERVER_ERROR,
+                              "Error reprojecting feature.");
           return MS_SUCCESS;
         }
       }
@@ -1489,8 +1509,8 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
         msGMLFreeItems(items);
         msGMLFreeConstants(constants);
         msFreeShape(&shape);
-        outputError(OGCAPI_SERVER_ERROR,
-                    "Error getting feature. " + std::string(e.what()));
+        msOGCAPIOutputError(OGCAPI_SERVER_ERROR,
+                            "Error getting feature. " + std::string(e.what()));
         return MS_SUCCESS;
       }
 
@@ -1509,7 +1529,6 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
   }
 
   if (featureId) {
-    std::string api_root = getApiRootUrl(map);
     const char *id = layer->name;
     char *id_encoded = msEncodeUrl(id); // free after use
 
@@ -1562,19 +1581,20 @@ static int processCollectionRequest(mapObj *map, cgiRequestObj *request,
   }
 
   if (l == map->numlayers) { // invalid collectionId
-    outputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
+    msOGCAPIOutputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
     return MS_SUCCESS;
   }
 
   try {
-    response = getCollection(map, map->layers[l], format);
+    response = getCollection(map, map->layers[l], format,
+                             msOGCAPIGetApiRootUrl(map, request));
     if (response.is_null()) { // same as not found
-      outputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
+      msOGCAPIOutputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
       return MS_SUCCESS;
     }
   } catch (const std::runtime_error &e) {
-    outputError(OGCAPI_CONFIG_ERROR,
-                "Error getting collection. " + std::string(e.what()));
+    msOGCAPIOutputError(OGCAPI_CONFIG_ERROR,
+                        "Error getting collection. " + std::string(e.what()));
     return MS_SUCCESS;
   }
 
@@ -1589,7 +1609,7 @@ static int processCollectionsRequest(mapObj *map, cgiRequestObj *request,
   int i;
 
   // define api root url
-  std::string api_root = getApiRootUrl(map);
+  std::string api_root = msOGCAPIGetApiRootUrl(map, request);
 
   // build response object
   response = {{"links",
@@ -1605,12 +1625,12 @@ static int processCollectionsRequest(mapObj *map, cgiRequestObj *request,
 
   for (i = 0; i < map->numlayers; i++) {
     try {
-      json collection = getCollection(map, map->layers[i], format);
+      json collection = getCollection(map, map->layers[i], format, api_root);
       if (!collection.is_null())
         response["collections"].push_back(collection);
     } catch (const std::runtime_error &e) {
-      outputError(OGCAPI_CONFIG_ERROR,
-                  "Error getting collection." + std::string(e.what()));
+      msOGCAPIOutputError(OGCAPI_CONFIG_ERROR,
+                          "Error getting collection." + std::string(e.what()));
       return MS_SUCCESS;
     }
   }
@@ -1673,7 +1693,8 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
   }
 
   json server;
-  server["url"] = getApiRootUrl(map);
+  server["url"] = msOGCAPIGetApiRootUrl(map, request);
+
   {
     const char *value =
         getWebMetadata(map, "AO", "server_description", nullptr);
@@ -1935,29 +1956,7 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
 
 #endif
 
-int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request) {
-#ifdef USE_OGCAPI_SVR
-
-  // make sure ogcapi requests are enabled for this map
-  int status = msOWSRequestIsEnabled(map, NULL, "AO", "OGCAPI", MS_FALSE);
-  if (status != MS_TRUE) {
-    msSetError(MS_OGCAPIERR, "OGC API requests are not enabled.",
-               "msCGIDispatchAPIRequest()");
-    return MS_FAILURE; // let normal error handling take over
-  }
-
-  for (int i = 0; i < request->NumParams; i++) {
-    for (int j = i + 1; j < request->NumParams; j++) {
-      if (strcmp(request->ParamNames[i], request->ParamNames[j]) == 0) {
-        std::string errorMsg("Query parameter ");
-        errorMsg += request->ParamNames[i];
-        errorMsg += " is repeated";
-        outputError(OGCAPI_PARAM_ERROR, errorMsg.c_str());
-        return MS_SUCCESS;
-      }
-    }
-  }
-
+OGCAPIFormat msOGCAPIGetOutputFormat(cgiRequestObj *request) {
   OGCAPIFormat format; // all endpoints need a format
   const char *p = getRequestParameter(request, "f");
 
@@ -1983,10 +1982,42 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request) {
   } else if (p) {
     std::string errorMsg("Unsupported format requested: ");
     errorMsg += p;
-    outputError(OGCAPI_PARAM_ERROR, errorMsg.c_str());
-    return MS_SUCCESS; // avoid any downstream MapServer processing
+    msOGCAPIOutputError(OGCAPI_PARAM_ERROR, errorMsg.c_str());
+    format = OGCAPIFormat::Invalid;
   } else {
     format = OGCAPIFormat::HTML; // default for now
+  }
+
+  return format;
+}
+
+int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request) {
+#ifdef USE_OGCAPI_SVR
+
+  // make sure ogcapi requests are enabled for this map
+  int status = msOWSRequestIsEnabled(map, NULL, "AO", "OGCAPI", MS_FALSE);
+  if (status != MS_TRUE) {
+    msSetError(MS_OGCAPIERR, "OGC API requests are not enabled.",
+               "msCGIDispatchAPIRequest()");
+    return MS_FAILURE; // let normal error handling take over
+  }
+
+  for (int i = 0; i < request->NumParams; i++) {
+    for (int j = i + 1; j < request->NumParams; j++) {
+      if (strcmp(request->ParamNames[i], request->ParamNames[j]) == 0) {
+        std::string errorMsg("Query parameter ");
+        errorMsg += request->ParamNames[i];
+        errorMsg += " is repeated";
+        msOGCAPIOutputError(OGCAPI_PARAM_ERROR, errorMsg.c_str());
+        return MS_SUCCESS;
+      }
+    }
+  }
+
+  const OGCAPIFormat format = msOGCAPIGetOutputFormat(request);
+
+  if (format == OGCAPIFormat::Invalid) {
+    return MS_SUCCESS; // avoid any downstream MapServer processing
   }
 
   if (request->api_path_length == 2) {
@@ -2035,7 +2066,7 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request) {
     }
   }
 
-  outputError(OGCAPI_NOT_FOUND_ERROR, "Invalid API path.");
+  msOGCAPIOutputError(OGCAPI_NOT_FOUND_ERROR, "Invalid API path.");
   return MS_SUCCESS; // avoid any downstream MapServer processing
 #else
   msSetError(MS_OGCAPIERR, "OGC API server support is not enabled.",

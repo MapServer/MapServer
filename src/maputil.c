@@ -2593,7 +2593,7 @@ void *msSmallCalloc(size_t nCount, size_t nSize) {
 ** msBuildOnlineResource()
 **
 ** Try to build the online resource (mapserv URL) for this service.
-** "http://$(SERVER_NAME):$(SERVER_PORT)$(SCRIPT_NAME)?"
+** "http://$(SERVER_NAME):$(SERVER_PORT)$(SCRIPT_NAME)$(PATH_INFO)?"
 ** (+append the map=... param if it was explicitly passed in QUERY_STRING)
 **
 ** Returns a newly allocated string that should be freed by the caller or
@@ -2602,12 +2602,11 @@ void *msSmallCalloc(size_t nCount, size_t nSize) {
 char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req) {
   (void)map;
   char *online_resource = NULL;
-  const char *value, *hostname, *port, *script, *protocol = "http",
-                                                *mapparam = NULL;
+  const char *value, *protocol = "http", *mapparam = NULL;
   char **hostname_array = NULL;
   int mapparam_len = 0, hostname_array_len = 0;
 
-  hostname = getenv("HTTP_X_FORWARDED_HOST");
+  const char *hostname = getenv("HTTP_X_FORWARDED_HOST");
   if (!hostname)
     hostname = getenv("SERVER_NAME");
   else {
@@ -2617,11 +2616,16 @@ char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req) {
     }
   }
 
-  port = getenv("HTTP_X_FORWARDED_PORT");
+  const char *port = getenv("HTTP_X_FORWARDED_PORT");
   if (!port)
     port = getenv("SERVER_PORT");
 
-  script = getenv("SCRIPT_NAME");
+  const char *pathinfo = getenv("PATH_INFO");
+  if (!pathinfo) {
+    pathinfo = "";
+  }
+
+  const char *script = getenv("SCRIPT_NAME");
 
   /* HTTPS is set by Apache to "on" in an HTTPS server ... if not set */
   /* then check SERVER_PORT: 443 is the default https port. */
@@ -2648,18 +2652,19 @@ char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req) {
 
   if (hostname && port && script) {
     size_t buffer_size;
-    buffer_size =
-        strlen(hostname) + strlen(port) + strlen(script) + mapparam_len +
-        11; /* 11 comes from https://[host]:[port][scriptname]?[map]\0, i.e.
-               "https://:?\0" */
+    buffer_size = strlen(hostname) + strlen(port) + strlen(pathinfo) +
+                  strlen(script) + mapparam_len +
+                  11; /* 11 comes from
+                         https://[host]:[port][scriptname][pathinfo]?[map]\0,
+                         i.e. "https://:?\0" */
     online_resource = (char *)msSmallMalloc(buffer_size);
     if ((atoi(port) == 80 && strcmp(protocol, "http") == 0) ||
         (atoi(port) == 443 && strcmp(protocol, "https") == 0))
-      snprintf(online_resource, buffer_size, "%s://%s%s?", protocol, hostname,
-               script);
+      snprintf(online_resource, buffer_size, "%s://%s%s%s?", protocol, hostname,
+               script, pathinfo);
     else
-      snprintf(online_resource, buffer_size, "%s://%s:%s%s?", protocol,
-               hostname, port, script);
+      snprintf(online_resource, buffer_size, "%s://%s:%s%s%s?", protocol,
+               hostname, port, script, pathinfo);
 
     if (mapparam) {
       int baselen;

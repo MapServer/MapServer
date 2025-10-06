@@ -59,6 +59,10 @@
 
 MS_DLL_EXPORT void msCGIWriteError(mapservObj *mapserv);
 MS_DLL_EXPORT mapObj *msCGILoadMap(mapservObj *mapserv, configObj *context);
+MS_DLL_EXPORT int msCGIDispatchMapIndexRequest(mapservObj *mapserv,
+                                               configObj *config);
+MS_DLL_EXPORT int msCGIDispatchIndexRequest(mapservObj *mapserv,
+                                            configObj *config);
 int msCGISetMode(mapservObj *mapserv);
 int msCGILoadForm(mapservObj *mapserv);
 int msCGIDispatchBrowseRequest(mapservObj *mapserv);
