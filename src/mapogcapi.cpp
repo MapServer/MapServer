@@ -1027,9 +1027,12 @@ outputResponse(mapObj *map, cgiRequestObj *request, OGCAPIFormat format,
                               // object in the template
 
     // extend the JSON with a few things that we need for templating
+    const std::string extra_params = getExtraParameters(map, nullptr);
+
     j["template"] = {{"path", json::array()},
                      {"params", json::object()},
                      {"api_root", msOGCAPIGetApiRootUrl(map, request)},
+                     {"extra_params", extra_params},
                      {"title", getTitle(map)},
                      {"tags", json::object()}};
 
@@ -1081,7 +1084,7 @@ static int processLandingRequest(mapObj *map, cgiRequestObj *request,
         msOWSLookupMetadata(&(map->web.metadata), "OF",
                             "abstract"); // fallback on abstract if necessary
 
-  std::string extra_params = getExtraParameters(map, nullptr);
+  const std::string extra_params = getExtraParameters(map, nullptr);
 
   // define api root url
   std::string api_root = msOGCAPIGetApiRootUrl(map, request);
@@ -1346,27 +1349,6 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
       return MS_SUCCESS;
     }
   } else { // bbox query
-
-    const char *compliance_mode =
-        msOWSLookupMetadata(&(map->web.metadata), "A", "compliance_mode");
-    if (compliance_mode != NULL && strcasecmp(compliance_mode, "true") == 0) {
-      for (int j = 0; j < request->NumParams; j++) {
-        const char *paramName = request->ParamNames[j];
-        if (strcmp(paramName, "f") == 0 || strcmp(paramName, "bbox") == 0 ||
-            strcmp(paramName, "bbox-crs") == 0 ||
-            strcmp(paramName, "datetime") == 0 ||
-            strcmp(paramName, "limit") == 0 ||
-            strcmp(paramName, "offset") == 0 || strcmp(paramName, "crs") == 0) {
-          // ok
-        } else {
-          msOGCAPIOutputError(
-              OGCAPI_PARAM_ERROR,
-              (std::string("Unknown query parameter: ") + paramName).c_str());
-          return MS_SUCCESS;
-        }
-      }
-    }
-
     map->query.type = MS_QUERY_BY_RECT;
     map->query.mode = MS_QUERY_MULTIPLE;
     map->query.layer = i;
