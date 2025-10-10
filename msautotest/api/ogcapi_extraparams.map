@@ -1,0 +1,94 @@
+# RUN_PARMS: ogcapi_extraparams_collections.html PATH_INFO="/[MAPFILE]/ogcapi/collections" "QUERY_STRING=f=html&token=eyJ9.e30.SflKxw&user_id=12345" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_extraparams_collections.json PATH_INFO="/[MAPFILE]/ogcapi/collections" "QUERY_STRING=f=json&token=eyJ9.e30.SflKxw&user_id=12345" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_extraparams_collections_mn_population_centers.html PATH_INFO="/[MAPFILE]/ogcapi/collections/mn_population_centers" "QUERY_STRING=f=html&token=eyJ9.e30.SflKxw&user_id=12345" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_extraparams_collections_mn_population_centers.json PATH_INFO="/[MAPFILE]/ogcapi/collections/mn_population_centers" "QUERY_STRING=f=json&token=eyJ9.e30.SflKxw&user_id=12345" > [RESULT_DEMIME]
+
+# RUN_PARMS: ogcapi_extraparams_collection_items.html PATH_INFO="/[MAPFILE]/ogcapi/collections/mn_population_centers/items" "QUERY_STRING=f=html&token=eyJ9.e30.SflKxw&user_id=12345" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_extraparams_collection_items.json PATH_INFO="/[MAPFILE]/ogcapi/collections/mn_population_centers/items" "QUERY_STRING=f=json&token=eyJ9.e30.SflKxw&user_id=12345" > [RESULT_DEMIME]
+
+# test with invalid parameter
+# RUN_PARMS: ogcapi_extraparams_invalid_parameter.json PATH_INFO="/[MAPFILE]/ogcapi" "QUERY_STRING=f=json&token=@@@@@&user_id=12345" > [RESULT_DEMIME]
+# test with missing paramters (defaults will be used)
+# RUN_PARMS: ogcapi_extraparams_no_parameters.json PATH_INFO="/[MAPFILE]/ogcapi" "QUERY_STRING=f=json" > [RESULT_DEMIME]
+
+# test with layer level parameters, and an empty token
+# RUN_PARMS: ogcapi_extraparams_collections_mn_major_rivers.html PATH_INFO="/[MAPFILE]/ogcapi/collections/mn_major_rivers" "QUERY_STRING=f=html&token=&user_id=" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_extraparams_collections_mn_major_rivers.json PATH_INFO="/[MAPFILE]/ogcapi/collections/mn_major_rivers" "QUERY_STRING=f=json&token=&user_id=BBB" > [RESULT_DEMIME]
+
+# test with limit parameter and empty token
+# RUN_PARMS: ogcapi_extraparams_collection_items_limit.json PATH_INFO="/[MAPFILE]/ogcapi/collections/mn_population_centers/items" "QUERY_STRING=f=json&limit=2" > [RESULT_DEMIME]
+
+
+MAP
+  EXTENT 190012.242200 4816648.737800 762254.477900 5472427.737000
+  SIZE 800 800
+  
+  PROJECTION "+init=epsg:26915" END
+  UNITS METERS
+
+  WEB
+
+    VALIDATION
+      'token' '^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$'
+      'user_id' '^[0-9]+$' # only allow integers
+      'default_token' 'MISSING'
+      'default_user_id' '-1'
+    END
+
+    METADATA
+      # "oga_onlineresource"    "http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi" ## REQUIRED
+      #"oga_html_template_directory" "../../share/ogcapi/templates/html-plain/"
+      "ows_extra_params"        "token=%TOKEN%&user_id=%USER_ID%"
+      "oga_title"               "OGC API Test"
+      "oga_tag_debug"           "true"
+      "oga_server_description"  "Server description"
+      "oga_links"               "link1"
+      "oga_link1_href"          "https://mapserver.org"
+      "oga_link1_title"         "MapServer project website"
+      "oga_enable_request"      "OGCAPI" ## REQUIRED
+    END
+  END
+
+  LAYER
+    NAME "mn_major_rivers"
+    DATA "data/mn_major_rivers"
+    TYPE LINE
+    STATUS OFF
+    METADATA
+      "oga_description" "This dataset represents stream centerlines for major rivers in Minnesota."
+      "oga_title" "Minnesota Major River Centerlines"
+      "gml_include_items" "kittle_name,kittle_nbr,length_mi"
+      "gml_featureid" "fw_id"
+      "ows_extra_params" "token=%TOKEN%&user_id=%USER_ID%&layer_param=%LAYER_PARAM%"
+    END
+    VALIDATION
+      'user_id' '.' # allow any value
+      'default_user_id' 'AAA'
+      'layer_param' '.'
+      'default_layer_param' 'rivers'
+    END
+    PROJECTION "+init=epsg:26915" END
+    TEMPLATE VOID
+  END
+
+  LAYER
+    NAME "mn_population_centers"
+    DATA "data/mn_population_centers"
+    TYPE POINT
+    STATUS OFF
+    METADATA
+      "oga_title" "Minnesota Population Centers"
+      "oga_description" "This dataset contains cities, townships, reservations, county seats and unorganized Territories in Minnesota, represented with point geometry for cartographic purposes."
+
+      "oga_links" "link1"
+      "oga_link1_href" "https://gisdata.mn.gov/dataset/loc-pop-centers"
+      "oga_link1_title" "Layer in Minnesota Geocommons"
+
+      "oga_include_items" "name,ctu_type,county,population"
+      "oga_featureid" "fips_code"
+    END
+    PROJECTION "+init=epsg:26915" END
+    TEMPLATE VOID
+  END
+
+END
