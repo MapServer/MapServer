@@ -15,15 +15,7 @@
 {%- for collection in response.collections %}
     <tr>
       <td>{{ loop.index1 }}</td>
-      <td>
-          {%- set items_href = "" -%}
-          {%- for link in collection.links -%}
-          {%- if existsIn(link, "rel") and link.rel == "items" -%}
-          {%- set items_href = link.href -%}
-          {%- endif -%}
-          {%- endfor -%}
-          <a href="{{ items_href }}">{{ collection.title }}</a>
-      </td>
+      <td><a href="{{ template.api_root }}/collections/{{ collection.id }}?f=html{{ template.extra_params }}">{{ collection.title }}</a></td>
       <td>{{ collection.itemType }}</td>
       <td>{{ collection.description }}</td>
     </tr>

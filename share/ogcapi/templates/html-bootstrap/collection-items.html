@@ -10,9 +10,9 @@
 
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb bg-light">
-    <li class="breadcrumb-item"><a href="{{ template.api_root }}?f=html">Home</a></li>
-    <li class="breadcrumb-item"><a href="{{ template.api_root }}/collections?f=html">Collections</a></li>
-    <li class="breadcrumb-item"><a href="{{ template.api_root }}/collections/{{ response.collection.id }}?f=html">{{ response.collection.title }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}?f=html{{ template.extra_params }}">Home</a></li>
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}/collections?f=html{{ template.extra_params }}">Collections</a></li>
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}/collections/{{ response.collection.id }}?f=html{{ template.extra_params }}">{{ response.collection.title }}</a></li>
     <li class="breadcrumb-item active" aria-current="page">items</li>
     <li class="ms-auto json-link"><a target="_blank" href="{{ json_link.href }}">JSON</a></li>
   </ol>
@@ -60,7 +60,7 @@
   <tbody>
 {% for feature in response.features %}
     <tr>
-      <td><a target="_blank" href="{{ template.api_root }}/collections/{{ response.collection.id }}/items/{{ feature.id }}?f=html">{{ feature.id }}</a></td>
+      <td><a target="_blank" href="{{ template.api_root }}/collections/{{ response.collection.id }}/items/{{ feature.id }}?f=html{{ template.extra_params }}">{{ feature.id }}</a></td>
   {% for key, value in feature.properties %}
       <td>{{ value }}</td>
   {% endfor %}
@@ -73,7 +73,7 @@
 <script>
 function changePageSize() {
     const limitSelect = document.getElementById("limit");
-    const url = "{{ template.api_root }}/collections/{{ response.collection.id }}/items?limit=" + limitSelect.value;
+    const url = "{{ template.api_root }}/collections/{{ response.collection.id }}/items?limit=" + limitSelect.value + "{{ template.extra_params }}";
     window.location.href = url;
 }
 document.addEventListener("DOMContentLoaded", function () {

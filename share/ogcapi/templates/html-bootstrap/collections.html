@@ -2,9 +2,9 @@
 
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb bg-light">
-    <li class="breadcrumb-item"><a href="{{ template.api_root }}?f=html">Home</a></li>
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}?f=html{{ template.extra_params }}">Home</a></li>
     <li class="breadcrumb-item active" aria-current="page">Collections</li>
-    <li class="ms-auto json-link"><a target="_blank" href="{{ template.api_root }}/collections?f=json">JSON</a></li>
+    <li class="ms-auto json-link"><a target="_blank" href="{{ template.api_root }}/collections?f=json{{ template.extra_params }}">JSON</a></li>
   </ol>
 </nav>
 
@@ -25,13 +25,7 @@
       <tr>
         <td>{{ loop.index1 }}</td>
         <td>
-            {%- set items_href = "" -%}
-            {%- for link in collection.links -%}
-            {%- if existsIn(link, "rel") and link.rel == "items" -%}
-            {%- set items_href = link.href -%}
-            {%- endif -%}
-            {%- endfor -%}
-            <a href="{{ items_href }}">{{ collection.title }}</a>
+        <td><a href="{{ template.api_root }}/collections/{{ collection.id }}?f=html{{ template.extra_params }}">{{ collection.title }}</a></td>
         </td>
         <td>{{ collection.itemType }}</td>
         <td>{{ collection.description }}</td>
