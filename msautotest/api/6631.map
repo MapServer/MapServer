@@ -23,7 +23,6 @@ MAP
       "oga_server_description" "Server description"
       "oga_enable_request" "OGCAPI" ## REQUIRED
       "oga_geometry_precision" "4"
-      "oga_compliance_mode" "true"
     END
   END
   

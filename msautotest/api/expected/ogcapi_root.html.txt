@@ -46,6 +46,7 @@ Content-Type: text/html
   API Root: http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi<br>
   Path: ["ogcapi.map","ogcapi"]<br>
   Params: {}<br>
+  Extra Params: <br>
   Title: OGC API Test<br>
   Tags: {"debug":"true","sample":"sample tag"}<br>
 </p>
