@@ -1,22 +1,22 @@
-# RUN_PARMS: ogcapi_extraparams_collections.html PATH_INFO="/[MAPFILE]/ogcapi/collections" "QUERY_STRING=f=html&token=eyJ9.e30.SflKxw&user_id=12345" > [RESULT_DEMIME]
-# RUN_PARMS: ogcapi_extraparams_collections.json PATH_INFO="/[MAPFILE]/ogcapi/collections" "QUERY_STRING=f=json&token=eyJ9.e30.SflKxw&user_id=12345" > [RESULT_DEMIME]
-# RUN_PARMS: ogcapi_extraparams_collections_mn_population_centers.html PATH_INFO="/[MAPFILE]/ogcapi/collections/mn_population_centers" "QUERY_STRING=f=html&token=eyJ9.e30.SflKxw&user_id=12345" > [RESULT_DEMIME]
-# RUN_PARMS: ogcapi_extraparams_collections_mn_population_centers.json PATH_INFO="/[MAPFILE]/ogcapi/collections/mn_population_centers" "QUERY_STRING=f=json&token=eyJ9.e30.SflKxw&user_id=12345" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_extraparams_collections.html [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections" "QUERY_STRING=f=html&token=eyJ9.e30.SflKxw&user_id=12345" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_extraparams_collections.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections" "QUERY_STRING=f=json&token=eyJ9.e30.SflKxw&user_id=12345" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_extraparams_collections_mn_population_centers.html [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_population_centers" "QUERY_STRING=f=html&token=eyJ9.e30.SflKxw&user_id=12345" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_extraparams_collections_mn_population_centers.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_population_centers" "QUERY_STRING=f=json&token=eyJ9.e30.SflKxw&user_id=12345" > [RESULT_DEMIME]
 
-# RUN_PARMS: ogcapi_extraparams_collection_items.html PATH_INFO="/[MAPFILE]/ogcapi/collections/mn_population_centers/items" "QUERY_STRING=f=html&token=eyJ9.e30.SflKxw&user_id=12345" > [RESULT_DEMIME]
-# RUN_PARMS: ogcapi_extraparams_collection_items.json PATH_INFO="/[MAPFILE]/ogcapi/collections/mn_population_centers/items" "QUERY_STRING=f=json&token=eyJ9.e30.SflKxw&user_id=12345" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_extraparams_collection_items.html [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_population_centers/items" "QUERY_STRING=f=html&token=eyJ9.e30.SflKxw&user_id=12345" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_extraparams_collection_items.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_population_centers/items" "QUERY_STRING=f=json&token=eyJ9.e30.SflKxw&user_id=12345" > [RESULT_DEMIME]
 
 # test with invalid parameter
-# RUN_PARMS: ogcapi_extraparams_invalid_parameter.json PATH_INFO="/[MAPFILE]/ogcapi" "QUERY_STRING=f=json&token=@@@@@&user_id=12345" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_extraparams_invalid_parameter.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi" "QUERY_STRING=f=json&token=@@@@@&user_id=12345" > [RESULT_DEMIME]
 # test with missing paramters (defaults will be used)
-# RUN_PARMS: ogcapi_extraparams_no_parameters.json PATH_INFO="/[MAPFILE]/ogcapi" "QUERY_STRING=f=json" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_extraparams_no_parameters.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 
 # test with layer level parameters, and an empty token
-# RUN_PARMS: ogcapi_extraparams_collections_mn_major_rivers.html PATH_INFO="/[MAPFILE]/ogcapi/collections/mn_major_rivers" "QUERY_STRING=f=html&token=&user_id=" > [RESULT_DEMIME]
-# RUN_PARMS: ogcapi_extraparams_collections_mn_major_rivers.json PATH_INFO="/[MAPFILE]/ogcapi/collections/mn_major_rivers" "QUERY_STRING=f=json&token=&user_id=BBB" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_extraparams_collections_mn_major_rivers.html [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_major_rivers" "QUERY_STRING=f=html&token=&user_id=" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_extraparams_collections_mn_major_rivers.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_major_rivers" "QUERY_STRING=f=json&token=&user_id=BBB" > [RESULT_DEMIME]
 
 # test with limit parameter and empty token
-# RUN_PARMS: ogcapi_extraparams_collection_items_limit.json PATH_INFO="/[MAPFILE]/ogcapi/collections/mn_population_centers/items" "QUERY_STRING=f=json&limit=2" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_extraparams_collection_items_limit.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_population_centers/items" "QUERY_STRING=f=json&limit=2" > [RESULT_DEMIME]
 
 
 MAP
@@ -36,8 +36,8 @@ MAP
     END
 
     METADATA
-      # "oga_onlineresource"    "http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi" ## REQUIRED
-      #"oga_html_template_directory" "../../share/ogcapi/templates/html-plain/"
+      "oga_onlineresource"    "http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi" ## REQUIRED
+      "oga_html_template_directory" "../../share/ogcapi/templates/html-plain/"
       "ows_extra_params"        "token=%TOKEN%&user_id=%USER_ID%"
       "oga_title"               "OGC API Test"
       "oga_tag_debug"           "true"
