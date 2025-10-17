@@ -21,7 +21,7 @@
   <tbody>
 {% for feature in response.features %}
     <tr>
-      <td><a target="_blank" href="{{ template.api_root }}/collections/{{ response.collection.id }}/items/{{ feature.id }}?f=html">{{ feature.id }}</a></td>
+      <td><a target="_blank" href="{{ template.api_root }}/collections/{{ response.collection.id }}/items/{{ feature.id }}?f=html{{ template.extra_params }}">{{ feature.id }}</a></td>
   {% for key, value in feature.properties %}
       <td>{{ value }}</td>
   {% endfor %}

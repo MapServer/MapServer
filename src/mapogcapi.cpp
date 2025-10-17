@@ -174,6 +174,28 @@ static int getDefaultLimit(mapObj *map, layerObj *layer) {
   return default_limit;
 }
 
+static std::string getExtraParameters(mapObj *map, layerObj *layer) {
+
+  std::string extra_params;
+
+  // first check layer metadata if layer is not null
+  if (layer) {
+    const char *layerVal =
+        msOWSLookupMetadata(&(layer->metadata), "AO", "extra_params");
+    if (layerVal) // only check for null
+      extra_params = std::string("&") + layerVal;
+  }
+
+  if (extra_params.empty() && map) {
+    const char *mapVal =
+        msOWSLookupMetadata(&(map->web.metadata), "AO", "extra_params");
+    if (mapVal)
+      extra_params = std::string("&") + mapVal;
+  }
+
+  return extra_params;
+}
+
 /*
 ** Returns the limit as an int - between 1 and getMaxLimit(). We always return a
 *valid value...
@@ -817,42 +839,45 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format,
 
   const int geometry_precision = getGeometryPrecision(map, layer);
 
-  // build collection object
-  collection = {{"id", id},
-                {"description", description},
-                {"title", title},
-                {"extent",
-                 {{"spatial",
-                   {{"bbox",
-                     {{round_down(bbox.minx, geometry_precision),
-                       round_down(bbox.miny, geometry_precision),
-                       round_up(bbox.maxx, geometry_precision),
-                       round_up(bbox.maxy, geometry_precision)}}},
-                    {"crs", CRS84_URL}}}}},
-                {"links",
-                 {{{"rel", format == OGCAPIFormat::JSON ? "self" : "alternate"},
-                   {"type", OGCAPI_MIMETYPE_JSON},
-                   {"title", "This collection as JSON"},
-                   {"href", api_root + "/collections/" +
-                                std::string(id_encoded) + "?f=json"}},
-                  {{"rel", format == OGCAPIFormat::HTML ? "self" : "alternate"},
-                   {"type", OGCAPI_MIMETYPE_HTML},
-                   {"title", "This collection as HTML"},
-                   {"href", api_root + "/collections/" +
-                                std::string(id_encoded) + "?f=html"}},
-                  {{"rel", "items"},
-                   {"type", OGCAPI_MIMETYPE_GEOJSON},
-                   {"title", "Items for this collection as GeoJSON"},
-                   {"href", api_root + "/collections/" +
-                                std::string(id_encoded) + "/items?f=json"}},
-                  {{"rel", "items"},
-                   {"type", OGCAPI_MIMETYPE_HTML},
-                   {"title", "Items for this collection as HTML"},
-                   {"href", api_root + "/collections/" +
-                                std::string(id_encoded) + "/items?f=html"}}
+  const std::string extra_params = getExtraParameters(map, layer);
 
-                 }},
-                {"itemType", "feature"}};
+  // build collection object
+  collection = {
+      {"id", id},
+      {"description", description},
+      {"title", title},
+      {"extent",
+       {{"spatial",
+         {{"bbox",
+           {{round_down(bbox.minx, geometry_precision),
+             round_down(bbox.miny, geometry_precision),
+             round_up(bbox.maxx, geometry_precision),
+             round_up(bbox.maxy, geometry_precision)}}},
+          {"crs", CRS84_URL}}}}},
+      {"links",
+       {{{"rel", format == OGCAPIFormat::JSON ? "self" : "alternate"},
+         {"type", OGCAPI_MIMETYPE_JSON},
+         {"title", "This collection as JSON"},
+         {"href", api_root + "/collections/" + std::string(id_encoded) +
+                      "?f=json" + extra_params}},
+        {{"rel", format == OGCAPIFormat::HTML ? "self" : "alternate"},
+         {"type", OGCAPI_MIMETYPE_HTML},
+         {"title", "This collection as HTML"},
+         {"href", api_root + "/collections/" + std::string(id_encoded) +
+                      "?f=html" + extra_params}},
+        {{"rel", "items"},
+         {"type", OGCAPI_MIMETYPE_GEOJSON},
+         {"title", "Items for this collection as GeoJSON"},
+         {"href", api_root + "/collections/" + std::string(id_encoded) +
+                      "/items?f=json" + extra_params}},
+        {{"rel", "items"},
+         {"type", OGCAPI_MIMETYPE_HTML},
+         {"title", "Items for this collection as HTML"},
+         {"href", api_root + "/collections/" + std::string(id_encoded) +
+                      "/items?f=html" + extra_params}}
+
+       }},
+      {"itemType", "feature"}};
 
   msFree(id_encoded); // done
 
@@ -1002,9 +1027,12 @@ outputResponse(mapObj *map, cgiRequestObj *request, OGCAPIFormat format,
                               // object in the template
 
     // extend the JSON with a few things that we need for templating
+    const std::string extra_params = getExtraParameters(map, nullptr);
+
     j["template"] = {{"path", json::array()},
                      {"params", json::object()},
                      {"api_root", msOGCAPIGetApiRootUrl(map, request)},
+                     {"extra_params", extra_params},
                      {"title", getTitle(map)},
                      {"tags", json::object()}};
 
@@ -1056,6 +1084,8 @@ static int processLandingRequest(mapObj *map, cgiRequestObj *request,
         msOWSLookupMetadata(&(map->web.metadata), "OF",
                             "abstract"); // fallback on abstract if necessary
 
+  const std::string extra_params = getExtraParameters(map, nullptr);
+
   // define api root url
   std::string api_root = msOGCAPIGetApiRootUrl(map, request);
 
@@ -1068,38 +1098,38 @@ static int processLandingRequest(mapObj *map, cgiRequestObj *request,
        {{{"rel", format == OGCAPIFormat::JSON ? "self" : "alternate"},
          {"type", OGCAPI_MIMETYPE_JSON},
          {"title", "This document as JSON"},
-         {"href", api_root + "?f=json"}},
+         {"href", api_root + "?f=json" + extra_params}},
         {{"rel", format == OGCAPIFormat::HTML ? "self" : "alternate"},
          {"type", OGCAPI_MIMETYPE_HTML},
          {"title", "This document as HTML"},
-         {"href", api_root + "?f=html"}},
+         {"href", api_root + "?f=html" + extra_params}},
         {{"rel", "conformance"},
          {"type", OGCAPI_MIMETYPE_JSON},
          {"title",
           "OCG API conformance classes implemented by this server (JSON)"},
-         {"href", api_root + "/conformance?f=json"}},
+         {"href", api_root + "/conformance?f=json" + extra_params}},
         {{"rel", "conformance"},
          {"type", OGCAPI_MIMETYPE_HTML},
          {"title", "OCG API conformance classes implemented by this server"},
-         {"href", api_root + "/conformance?f=html"}},
+         {"href", api_root + "/conformance?f=html" + extra_params}},
         {{"rel", "data"},
          {"type", OGCAPI_MIMETYPE_JSON},
          {"title", "Information about feature collections available from this "
                    "server (JSON)"},
-         {"href", api_root + "/collections?f=json"}},
+         {"href", api_root + "/collections?f=json" + extra_params}},
         {{"rel", "data"},
          {"type", OGCAPI_MIMETYPE_HTML},
          {"title",
           "Information about feature collections available from this server"},
-         {"href", api_root + "/collections?f=html"}},
+         {"href", api_root + "/collections?f=html" + extra_params}},
         {{"rel", "service-desc"},
          {"type", OGCAPI_MIMETYPE_OPENAPI_V3},
          {"title", "OpenAPI document"},
-         {"href", api_root + "/api?f=json"}},
+         {"href", api_root + "/api?f=json" + extra_params}},
         {{"rel", "service-doc"},
          {"type", OGCAPI_MIMETYPE_HTML},
          {"title", "API documentation"},
-         {"href", api_root + "/api?f=html"}}}}};
+         {"href", api_root + "/api?f=html" + extra_params}}}}};
 
   // handle custom links (optional)
   const char *links = msOWSLookupMetadata(&(map->web.metadata), "A", "links");
@@ -1319,27 +1349,6 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
       return MS_SUCCESS;
     }
   } else { // bbox query
-
-    const char *compliance_mode =
-        msOWSLookupMetadata(&(map->web.metadata), "A", "compliance_mode");
-    if (compliance_mode != NULL && strcasecmp(compliance_mode, "true") == 0) {
-      for (int j = 0; j < request->NumParams; j++) {
-        const char *paramName = request->ParamNames[j];
-        if (strcmp(paramName, "f") == 0 || strcmp(paramName, "bbox") == 0 ||
-            strcmp(paramName, "bbox-crs") == 0 ||
-            strcmp(paramName, "datetime") == 0 ||
-            strcmp(paramName, "limit") == 0 ||
-            strcmp(paramName, "offset") == 0 || strcmp(paramName, "crs") == 0) {
-          // ok
-        } else {
-          msOGCAPIOutputError(
-              OGCAPI_PARAM_ERROR,
-              (std::string("Unknown query parameter: ") + paramName).c_str());
-          return MS_SUCCESS;
-        }
-      }
-    }
-
     map->query.type = MS_QUERY_BY_RECT;
     map->query.mode = MS_QUERY_MULTIPLE;
     map->query.layer = i;
@@ -1391,6 +1400,8 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
     }
   }
 
+  const std::string extra_params = getExtraParameters(map, layer);
+
   // build response object
   if (!featureId) {
     const char *id = layer->name;
@@ -1409,22 +1420,23 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
     if (bboxCrs)
       other_extra_kvp += "&bbox-crs=" + std::string(bboxCrs);
 
-    response = {
-        {"type", "FeatureCollection"},
-        {"numberMatched", numberMatched},
-        {"numberReturned", layer->resultcache->numresults},
-        {"features", json::array()},
-        {"links",
-         {{{"rel", format == OGCAPIFormat::JSON ? "self" : "alternate"},
-           {"type", OGCAPI_MIMETYPE_GEOJSON},
-           {"title", "Items for this collection as GeoJSON"},
-           {"href", api_root + "/collections/" + std::string(id_encoded) +
-                        "/items?f=json" + extra_kvp + other_extra_kvp}},
-          {{"rel", format == OGCAPIFormat::HTML ? "self" : "alternate"},
-           {"type", OGCAPI_MIMETYPE_HTML},
-           {"title", "Items for this collection as HTML"},
-           {"href", api_root + "/collections/" + std::string(id_encoded) +
-                        "/items?f=html" + extra_kvp + other_extra_kvp}}}}};
+    response = {{"type", "FeatureCollection"},
+                {"numberMatched", numberMatched},
+                {"numberReturned", layer->resultcache->numresults},
+                {"features", json::array()},
+                {"links",
+                 {{{"rel", format == OGCAPIFormat::JSON ? "self" : "alternate"},
+                   {"type", OGCAPI_MIMETYPE_GEOJSON},
+                   {"title", "Items for this collection as GeoJSON"},
+                   {"href", api_root + "/collections/" +
+                                std::string(id_encoded) + "/items?f=json" +
+                                extra_kvp + other_extra_kvp + extra_params}},
+                  {{"rel", format == OGCAPIFormat::HTML ? "self" : "alternate"},
+                   {"type", OGCAPI_MIMETYPE_HTML},
+                   {"title", "Items for this collection as HTML"},
+                   {"href", api_root + "/collections/" +
+                                std::string(id_encoded) + "/items?f=html" +
+                                extra_kvp + other_extra_kvp + extra_params}}}}};
 
     if (offset + layer->resultcache->numresults < numberMatched) {
       response["links"].push_back(
@@ -1435,8 +1447,9 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
            {"href",
             api_root + "/collections/" + std::string(id_encoded) +
                 "/items?f=" + (format == OGCAPIFormat::JSON ? "json" : "html") +
-                "&limit=" + std::to_string(limit) + "&offset=" +
-                std::to_string(offset + limit) + other_extra_kvp}});
+                "&limit=" + std::to_string(limit) +
+                "&offset=" + std::to_string(offset + limit) + other_extra_kvp +
+                extra_params}});
     }
 
     if (offset > 0) {
@@ -1450,7 +1463,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
                 "/items?f=" + (format == OGCAPIFormat::JSON ? "json" : "html") +
                 "&limit=" + std::to_string(limit) +
                 "&offset=" + std::to_string(MS_MAX(0, (offset - limit))) +
-                other_extra_kvp}});
+                other_extra_kvp + extra_params}});
     }
 
     msFree(id_encoded); // done
@@ -1537,22 +1550,22 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
          {"type", OGCAPI_MIMETYPE_GEOJSON},
          {"title", "This document as GeoJSON"},
          {"href", api_root + "/collections/" + std::string(id_encoded) +
-                      "/items/" + featureId + "?f=json"}},
+                      "/items/" + featureId + "?f=json" + extra_params}},
         {{"rel", format == OGCAPIFormat::HTML ? "self" : "alternate"},
          {"type", OGCAPI_MIMETYPE_HTML},
          {"title", "This document as HTML"},
          {"href", api_root + "/collections/" + std::string(id_encoded) +
-                      "/items/" + featureId + "?f=html"}},
+                      "/items/" + featureId + "?f=html" + extra_params}},
         {{"rel", "collection"},
          {"type", OGCAPI_MIMETYPE_JSON},
          {"title", "This collection as JSON"},
-         {"href",
-          api_root + "/collections/" + std::string(id_encoded) + "?f=json"}},
+         {"href", api_root + "/collections/" + std::string(id_encoded) +
+                      "?f=json" + extra_params}},
         {{"rel", "collection"},
          {"type", OGCAPI_MIMETYPE_HTML},
          {"title", "This collection as HTML"},
-         {"href",
-          api_root + "/collections/" + std::string(id_encoded) + "?f=html"}}};
+         {"href", api_root + "/collections/" + std::string(id_encoded) +
+                      "?f=html" + extra_params}}};
 
     msFree(id_encoded);
 
@@ -1610,17 +1623,18 @@ static int processCollectionsRequest(mapObj *map, cgiRequestObj *request,
 
   // define api root url
   std::string api_root = msOGCAPIGetApiRootUrl(map, request);
+  const std::string extra_params = getExtraParameters(map, nullptr);
 
   // build response object
   response = {{"links",
                {{{"rel", format == OGCAPIFormat::JSON ? "self" : "alternate"},
                  {"type", OGCAPI_MIMETYPE_JSON},
                  {"title", "This document as JSON"},
-                 {"href", api_root + "/collections?f=json"}},
+                 {"href", api_root + "/collections?f=json" + extra_params}},
                 {{"rel", format == OGCAPIFormat::HTML ? "self" : "alternate"},
                  {"type", OGCAPI_MIMETYPE_HTML},
                  {"title", "This document as HTML"},
-                 {"href", api_root + "/collections?f=html"}}}},
+                 {"href", api_root + "/collections?f=html" + extra_params}}}},
               {"collections", json::array()}};
 
   for (i = 0; i < map->numlayers; i++) {

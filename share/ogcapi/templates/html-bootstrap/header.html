@@ -52,14 +52,14 @@
         <div class="collapse navbar-collapse" id="navbar">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="{{ template.api_root }}?f=html"
+                    <a class="nav-link dropdown-toggle" href="{{ template.api_root }}?f=html{{ template.extra_params }}"
                        id="linksDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Links
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="linksDropdown">
-                        <li><a class="dropdown-item" href="{{ template.api_root }}?f=html">Home</a></li>
-                        <li><a class="dropdown-item" href="{{ template.api_root }}/conformance?f=html">Conformance</a></li>
-                        <li><a class="dropdown-item" href="{{ template.api_root }}/collections?f=html">Collections</a></li>
+                        <li><a class="dropdown-item" href="{{ template.api_root }}?f=html{{ template.extra_params }}">Home</a></li>
+                        <li><a class="dropdown-item" href="{{ template.api_root }}/conformance?f=html{{ template.extra_params }}">Conformance</a></li>
+                        <li><a class="dropdown-item" href="{{ template.api_root }}/collections?f=html{{ template.extra_params }}">Collections</a></li>
                     </ul>
                 </li>
             </ul>

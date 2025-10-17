@@ -2,12 +2,12 @@
 
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb bg-light">
-    <li class="breadcrumb-item"><a href="{{ template.api_root }}?f=html">Home</a></li>
-    <li class="breadcrumb-item"><a href="{{ template.api_root }}/collections?f=html">Collections</a></li>
-    <li class="breadcrumb-item"><a href="{{ template.api_root }}/collections/{{ response.collection.id }}?f=html">{{ response.collection.title }}</a></li>
-    <li class="breadcrumb-item"><a href="{{ template.api_root }}/collections/{{ response.collection.id }}/items?f=html">items</a></li>
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}?f=html{{ template.extra_params }}">Home</a></li>
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}/collections?f=html{{ template.extra_params }}">Collections</a></li>
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}/collections/{{ response.collection.id }}?f=html{{ template.extra_params }}">{{ response.collection.title }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ template.api_root }}/collections/{{ response.collection.id }}/items?f=html{{ template.extra_params }}">items</a></li>
     <li class="breadcrumb-item active" aria-current="page">{{ response.id }}
-    <li class="ms-auto json-link"><a target="_blank" href="{{ template.api_root }}/collections/{{ response.collection.id }}/items/{{ response.id }}?f=json">JSON</a></li>
+    <li class="ms-auto json-link"><a target="_blank" href="{{ template.api_root }}/collections/{{ response.collection.id }}/items/{{ response.id }}?f=json{{ template.extra_params }}">JSON</a></li>
   </ol>
 </nav>
 
