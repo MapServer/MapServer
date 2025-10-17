@@ -1101,7 +1101,7 @@ int msWFSLayerWhichShapes(layerObj *lp, rectObj rect, int isQuery) {
     }
 
     if (psInfo->nStatus != asReqInfo[0].nStatus) {
-     /* For drawQuery, we may use a copy layer which needs to be updated */
+      /* For drawQuery, we may use a copy layer which needs to be updated */
       msWFSUpdateRequestInfo(lp, &(asReqInfo[0]));
     }
 
