@@ -277,6 +277,13 @@ int main(int argc, char *argv[]) {
 
     mapserv->map = msCGILoadMap(mapserv, config);
     if (!mapserv->map) {
+      for (int i = 0; i < mapserv->request->NumParams;
+           i++) { /* a map parameter was sent */
+        if (strcasecmp(mapserv->request->ParamNames[i], "map") == 0) {
+          msCGIWriteError(mapserv);
+          goto end_request;
+        }
+      }
       if (ms_index_dir != NULL &&
           strcmp(mapserv->request->path_info, "/") == 0) {
         // return the landing page
