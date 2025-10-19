@@ -2,6 +2,13 @@
 # RUN_PARMS: landing.json [MAPSERV] -conf index.conf "PATH_INFO=/" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 # RUN_PARMS: landing.html [MAPSERV] -conf index.conf "PATH_INFO=/" "QUERY_STRING=f=html" > [RESULT_DEMIME]
 
+# check querystrings and POST requests with Mapfiles are still processed
+# RUN_PARMS: index_map_mapfile_key.png [MAPSERV]  -conf index.conf QUERY_STRING="map=[MAPFILE]&mode=map" > [RESULT_DEMIME]
+# RUN_PARMS: index_map_mapfile_url.png [MAPSERV]  -conf index.conf "PATH_INFO=/[MAPFILE]" QUERY_STRING="mode=map" > [RESULT_DEMIME]
+# RUN_PARMS: index_map_mapfile_url_slash.png [MAPSERV]  -conf index.conf "PATH_INFO=/[MAPFILE]/" QUERY_STRING="mode=map" > [RESULT_DEMIME]
+# RUN_PARMS: index_map_post.png [MAPSERV] -conf index.conf [POST]map=[MAPFILE]&mode=map[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: index_map_mapfile_missing.txt [MAPSERV]  -conf index.conf QUERY_STRING="map=i_do_not_exist.map&mode=map" > [RESULT]
+
 # map URLs
 # RUN_PARMS: index_map_landing.json [MAPSERV] -conf index.conf "PATH_INFO=/INDEX/" QUERY_STRING="f=json" > [RESULT_DEMIME]
 # RUN_PARMS: index_map_landing_no_slash.json [MAPSERV] -conf index.conf "PATH_INFO=/INDEX" QUERY_STRING="f=json" > [RESULT_DEMIME]

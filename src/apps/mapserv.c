@@ -207,6 +207,9 @@ int main(int argc, char *argv[]) {
     exit(0);
   }
 
+  const char *ms_index_dir =
+      msConfigGetEnv(config, "MS_INDEX_TEMPLATE_DIRECTORY");
+
   if (msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_TUNING)
     msGettimeofday(&execstarttime, NULL);
 
@@ -261,23 +264,32 @@ int main(int argc, char *argv[]) {
     mapserv->request->NumParams =
         loadParams(mapserv->request, NULL, NULL, 0, NULL);
 
-    const char *path_info = getenv("PATH_INFO");
-    if (path_info != NULL && strcmp(path_info, "/") == 0) {
-      if (msConfigGetEnv(config, "MS_INDEX_TEMPLATE_DIRECTORY") != NULL) {
-        // return the landing page if MS_INDEX_TEMPLATE_DIRECTORY is set
+    if (msCGIIsAPIRequest(mapserv) == MS_FALSE &&
+        mapserv->request->NumParams == -1) { /* no QUERY_STRING or PATH_INFO */
+      if (ms_index_dir != NULL) {
+        // return the landing page
         msCGIDispatchIndexRequest(mapserv, config);
         goto end_request;
       }
-    }
-
-    if (msCGIIsAPIRequest(mapserv) == MS_FALSE &&
-        mapserv->request->NumParams == -1) { /* no QUERY_STRING or PATH_INFO */
       msCGIWriteError(mapserv);
       goto end_request;
     }
 
     mapserv->map = msCGILoadMap(mapserv, config);
     if (!mapserv->map) {
+      for (int i = 0; i < mapserv->request->NumParams;
+           i++) { /* a map parameter was sent */
+        if (strcasecmp(mapserv->request->ParamNames[i], "map") == 0) {
+          msCGIWriteError(mapserv);
+          goto end_request;
+        }
+      }
+      if (ms_index_dir != NULL &&
+          strcmp(mapserv->request->path_info, "/") == 0) {
+        // return the landing page
+        msCGIDispatchIndexRequest(mapserv, config);
+        goto end_request;
+      }
       msCGIWriteError(mapserv);
       goto end_request;
     }
@@ -304,7 +316,7 @@ int main(int argc, char *argv[]) {
         break;
 
       case 1:
-        if (msConfigGetEnv(config, "MS_INDEX_TEMPLATE_DIRECTORY") != NULL) {
+        if (ms_index_dir != NULL) {
           // Try normal dispatch first
           if (msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
             // Fallback to landing page
