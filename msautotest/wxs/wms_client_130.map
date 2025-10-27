@@ -11,6 +11,11 @@
 # RUN_PARMS: wms_client_crs_32633.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=client&STYLES=&WIDTH=300&HEIGHT=200&FORMAT=image/png&CRS=EPSG:32633&BBOX=920482.6044580448652,7662266.090040001087,1317920.914512843126,8079762.906353433616" > [RESULT_DEMIME]
 # RUN_PARMS: wms_client_crs_32633.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=client&STYLES=&WIDTH=300&HEIGHT=200&FORMAT=image/png&SRS=EPSG:32633&BBOX=920482.6044580448652,7662266.090040001087,1317920.914512843126,8079762.906353433616" > [RESULT_DEMIME]
 #
+# Request with STYLES. Note that the remote server does not publish any styles.
+# RUN_PARMS: wms_client_undefined_style_exception.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wms_style&STYLES=undefined_style&WIDTH=300&HEIGHT=200&FORMAT=image/png&CRS=EPSG:4326&BBOX=-90,-180,90,180" > [RESULT_DEMIME]
+# Tests that the request is valid, but resulting image contains error as 'named_style' is not defined in remote server.
+# RUN_PARMS: wms_client_style_remote_exception.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wms_style&STYLES=named_style&WIDTH=300&HEIGHT=200&FORMAT=image/png&CRS=EPSG:4326&BBOX=-90,-180,90,180" > [RESULT_DEMIME]
+#
 # GetFeatureInfo
 # RUN_PARMS: wms_client_130.html [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&LAYERS=client&STYLES=&WIDTH=300&HEIGHT=200&FORMAT=image/png&CRS=EPSG:4326&BBOX=-90,-180,90,180&QUERY_LAYERS=client&I=100&J=150&INFO_FORMAT=text/html&FEATURE_COUNT=5" > [RESULT]
 # RUN_PARMS: wms_client_130.html [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=client&STYLES=&WIDTH=300&HEIGHT=200&FORMAT=image/png&SRS=EPSG:4326&BBOX=-180,-90,180,90&QUERY_LAYERS=client&I=100&J=150&INFO_FORMAT=text/html&FEATURE_COUNT=5" > [RESULT]
@@ -63,6 +68,24 @@ MAP
 			"wms_server_version"	"1.3.0"
 			"wms_format"	"image/png"
 			"wms_enable_request" "*"
+		END
+	END
+
+    LAYER
+		NAME wms_style
+		TYPE RASTER
+		STATUS ON
+		CONNECTION "https://demo.mapserver.org/cgi-bin/wms?"
+		CONNECTIONTYPE WMS
+		TEMPLATE "dummy"
+		EXTENT -180 -90 180 90
+		METADATA
+			"wms_srs"	"EPSG:4326 EPSG:32633"
+			"wms_name"	"cities"
+			"wms_server_version"	"1.3.0"
+			"wms_format"	"image/png"
+			"wms_enable_request" "*"
+            "wms_style" "named_style"
 		END
 	END
 END		
