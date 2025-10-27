@@ -1863,15 +1863,29 @@ this request. Check wms/ows_enable_request settings.",
                 (lp->group &&
                  strcasecmp(lp->group, wmslayers[i].c_str()) == 0)) {
               bool found = false;
-              for (int k = 0; k < lp->numclasses; k++) {
-                if (lp->_class[k]->group &&
-                    strcasecmp(lp->_class[k]->group, tokens[i]) == 0) {
-                  msFree(lp->classgroup);
-                  lp->classgroup = msStrdup(tokens[i]);
+
+#ifdef USE_WMS_LYR
+              if (lp->connectiontype == MS_WMS) {
+                const char *pszWmsStyle =
+                    msOWSLookupMetadata(&(lp->metadata), "MO", "style");
+                if (pszWmsStyle != NULL &&
+                    strcasecmp(pszWmsStyle, tokens[i]) == 0)
                   found = true;
-                  break;
+              }
+#endif // USE_WMS_LYR
+
+              if (!found) {
+                for (int k = 0; k < lp->numclasses; k++) {
+                  if (lp->_class[k]->group &&
+                      strcasecmp(lp->_class[k]->group, tokens[i]) == 0) {
+                    msFree(lp->classgroup);
+                    lp->classgroup = msStrdup(tokens[i]);
+                    found = true;
+                    break;
+                  }
                 }
               }
+
               if (!found) {
                 msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
                                      "Style (%s) not defined on layer.",
