@@ -47,6 +47,7 @@ typedef struct http_request_info {
   int nLayerId;
   char *pszGetUrl;
   char *pszOutputFile;
+  char *pszEPSG;
   int nTimeout;
   int nMaxBytes;
   rectObj bbox;
