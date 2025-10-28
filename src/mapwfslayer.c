@@ -1100,6 +1100,11 @@ int msWFSLayerWhichShapes(layerObj *lp, rectObj rect, int isQuery) {
       return MS_FAILURE;
     }
 
+    if (psInfo->nStatus != asReqInfo[0].nStatus) {
+      /* For drawQuery, we may use a copy layer which needs to be updated */
+      msWFSUpdateRequestInfo(lp, &(asReqInfo[0]));
+    }
+
     /* Cleanup */
     msHTTPFreeRequestObj(asReqInfo, numReq);
   }
