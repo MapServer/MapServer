@@ -431,6 +431,7 @@ static int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
       *pszSrsParamName = "SRS", *pszLayer = NULL, *pszQueryLayers = NULL,
       *pszUseStrictAxisOrder;
   rectObj bbox;
+  projectionObj layerRequestProjection;
   int bbox_width = map->width, bbox_height = map->height;
   int nVersion = OWS_VERSION_NOTSET;
   int bUseStrictAxisOrder = MS_FALSE; /* this is the assumption up to 1.1.0 */
@@ -630,45 +631,11 @@ static int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     bFlipAxisOrder = MS_TRUE;
   }
 
-  /* ------------------------------------------------------------------
-   * Set layer SRS.
-   * ------------------------------------------------------------------ */
-  /* No need to set lp->proj if it's already set to the right EPSG code */
-  {
-    char *pszEPSGCodeFromLayer = NULL;
-    msOWSGetEPSGProj(&(lp->projection), NULL, "MO", MS_TRUE,
-                     &pszEPSGCodeFromLayer);
-    if (pszEPSGCodeFromLayer == NULL ||
-        strcasecmp(pszEPSG, pszEPSGCodeFromLayer) != 0) {
-      char *ows_srs = NULL;
-      msOWSGetEPSGProj(NULL, &(lp->metadata), "MO", MS_FALSE, &ows_srs);
-      /* no need to set lp->proj if it is already set and there is only
-      one item in the _srs metadata for this layer - we will assume
-      the projection block matches the _srs metadata (the search for ' '
-      in ows_srs is a test to see if there are multiple EPSG: codes) */
-      if (lp->projection.numargs == 0 || ows_srs == NULL ||
-          (strchr(ows_srs, ' ') != NULL)) {
-        if (strncasecmp(pszEPSG, "EPSG:", 5) == 0) {
-          char szProj[20];
-          snprintf(szProj, sizeof(szProj), "init=epsg:%s", pszEPSG + 5);
-          if (msLoadProjectionString(&(lp->projection), szProj) != 0) {
-            msFree(pszEPSGCodeFromLayer);
-            msFree(ows_srs);
-            free(pszEPSG);
-            return MS_FAILURE;
-          }
-        } else {
-          if (msLoadProjectionString(&(lp->projection), pszEPSG) != 0) {
-            msFree(pszEPSGCodeFromLayer);
-            msFree(ows_srs);
-            free(pszEPSG);
-            return MS_FAILURE;
-          }
-        }
-      }
-      msFree(ows_srs);
-    }
-    msFree(pszEPSGCodeFromLayer);
+  msInitProjection(&layerRequestProjection);
+  if (msLoadProjectionString(&layerRequestProjection, pszEPSG) != 0) {
+    free(pszEPSG);
+    msFreeProjection(&layerRequestProjection);
+    return MS_FAILURE;
   }
 
   /* ------------------------------------------------------------------
@@ -685,8 +652,8 @@ static int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
   /* -------------------------------------------------------------------- */
   /*      Reproject if needed.                                            */
   /* -------------------------------------------------------------------- */
-  if (msProjectionsDiffer(&(map->projection), &(lp->projection))) {
-    msProjectRect(&(map->projection), &(lp->projection), &bbox);
+  if (msProjectionsDiffer(&(map->projection), &layerRequestProjection)) {
+    msProjectRect(&(map->projection), &layerRequestProjection, &bbox);
 
     /* -------------------------------------------------------------------- */
     /*      Sometimes our remote WMS only accepts square pixel              */
@@ -743,7 +710,8 @@ static int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
                      &ows_srs);
 
     if (ows_srs && strchr(ows_srs, ' ') == NULL &&
-        msOWSGetLayerExtent(map, lp, "MO", &layer_rect) == MS_SUCCESS) {
+        msOWSGetLayerExtent(map, lp, "MO", &layer_rect) == MS_SUCCESS &&
+        !msProjectionsDiffer(&(lp->projection), &layerRequestProjection)) {
       /* fulloverlap */
       if (msRectContained(&bbox, &layer_rect)) {
         /* no changes */
@@ -774,9 +742,6 @@ static int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     }
     msFree(ows_srs);
   }
-
-  /* Set layer extent to wms bbox */
-  lp->extent = bbox;
 
   /* -------------------------------------------------------------------- */
   /*      Potentially return the bbox.                                    */
@@ -966,7 +931,7 @@ static int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
   }
 
   free(pszEPSG);
-
+  msFreeProjection(&layerRequestProjection);
   return MS_SUCCESS;
 
 #else
@@ -1024,6 +989,8 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
   char *pszURL = NULL, *pszHTTPCookieData = NULL;
   const char *pszTmp;
   rectObj bbox = {0};
+  projectionObj lyrRequestProjection;
+  const char *pszEPSG;
   int bbox_width = 0, bbox_height = 0;
   int nTimeout, bOkToMerge, bForceSeparateRequest, bCacheToDisk;
   wmsParamsObj sThisWMSParams;
@@ -1035,8 +1002,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
   msInitWmsParamsObj(&sThisWMSParams);
 
   /* ------------------------------------------------------------------
-   * Build the request URL, this will also set layer projection and
-   * compute BBOX in that projection.
+   * Build the request URL
    * ------------------------------------------------------------------ */
 
   switch (nRequestType) {
@@ -1067,12 +1033,31 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     return MS_FAILURE;
   }
 
+  /* Load projection that we will request, it may differ from current layer
+   * projection */
+  char *srsKeys[] = {"SRS", "CRS"};
+  int i;
+  for (i = 0; i < 2; i++) {
+    pszEPSG = msLookupHashTable(sThisWMSParams.params, srsKeys[i]);
+    if (pszEPSG != NULL && strlen(pszEPSG) > 0)
+      break;
+  }
+
+  msInitProjection(&lyrRequestProjection);
+  if (pszEPSG == NULL || msLoadProjectionStringEPSG(&lyrRequestProjection,
+                                                    pszEPSG) != MS_SUCCESS) {
+    msFreeWmsParamsObj(&sThisWMSParams);
+    msFreeProjection(&lyrRequestProjection);
+    return MS_FAILURE;
+  }
+
   /* ------------------------------------------------------------------
    * Check if the request is empty, perhaps due to reprojection problems
    * or wms_extents restrictions.
    * ------------------------------------------------------------------ */
   if ((nRequestType == WMS_GETMAP) && (bbox_width == 0 || bbox_height == 0)) {
     msFreeWmsParamsObj(&sThisWMSParams);
+    msFreeProjection(&lyrRequestProjection);
     return MS_SUCCESS; /* No overlap. */
   }
 
@@ -1105,10 +1090,10 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     /* Reproject latlonboundingbox to the selected SRS for the layer and */
     /* check if it overlaps the bbox that we calculated for the request */
 
-    msProjectRect(&(map->latlon), &(lp->projection), &ext);
+    msProjectRect(&(map->latlon), &lyrRequestProjection, &ext);
     if (!msRectOverlap(&bbox, &ext)) {
       /* No overlap... nothing to do */
-
+      msFreeProjection(&lyrRequestProjection);
       msFreeWmsParamsObj(&sThisWMSParams);
       return MS_SUCCESS; /* No overlap. */
     }
@@ -1144,6 +1129,8 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
       msSetError(MS_WMSERR,
                  "WEB.IMAGEPATH must be set to use WMS client connections.",
                  "msPrepareWMSLayerRequest()");
+      msFreeProjection(&lyrRequestProjection);
+      msFreeWmsParamsObj(&sThisWMSParams);
       return MS_FAILURE;
     }
   }
@@ -1286,6 +1273,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     pasReqInfo[(*numRequests)].width = bbox_width;
     pasReqInfo[(*numRequests)].height = bbox_height;
     pasReqInfo[(*numRequests)].debug = lp->debug;
+    pasReqInfo[(*numRequests)].pszEPSG = msStrdup(pszEPSG);
 
     if (msHTTPAuthProxySetup(&(map->web.metadata), &(lp->metadata), pasReqInfo,
                              *numRequests, map, "MO") != MS_SUCCESS)
@@ -1308,6 +1296,8 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     /* Can't copy it, so we just free it */
     msFreeWmsParamsObj(&sThisWMSParams);
   }
+
+  msFreeProjection(&lyrRequestProjection);
 
   return MS_SUCCESS;
 
@@ -1335,6 +1325,8 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, int numRequests,
   char szPath[MS_MAXPATHLEN];
   int currenttype;
   int currentconnectiontype;
+  projectionObj currentprojectionobject;
+  rectObj currentextent;
   int numclasses;
   char *mem_filename = NULL;
   const char *pszTmp;
@@ -1462,8 +1454,28 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, int numRequests,
   /* function. */
   currenttype = lp->type;
   currentconnectiontype = lp->connectiontype;
+  currentprojectionobject = lp->projection;
+  currentextent = lp->extent;
   lp->type = MS_LAYER_RASTER;
   lp->connectiontype = MS_RASTER;
+  lp->extent = pasReqInfo[iReq].bbox;
+
+  if (pasReqInfo[iReq].pszEPSG == NULL) {
+    msSetError(MS_WMSERR,
+               "WMS GetMap ESPG is not determined on request info '%s': .",
+               "msDrawWMSLayerLow()", (lp->name ? lp->name : "(null)"));
+    status = MS_FALSE;
+  }
+
+  // Aassign requested projection temporarily to layer
+  msInitProjection(&(lp->projection));
+  if (pasReqInfo[iReq].pszEPSG == NULL ||
+      msLoadProjectionString(&(lp->projection), pasReqInfo[iReq].pszEPSG) !=
+          MS_SUCCESS) {
+    msSetError(MS_WMSERR, "WMS GetMap failed to load projection  '%s': %s.",
+               "msDrawWMSLayerLow()", (lp->name ? lp->name : "(null)"),
+               pasReqInfo[iReq].pszEPSG);
+  }
 
   /* set the classes to 0 so that It won't do client side */
   /* classification if an sld was set. */
@@ -1555,6 +1567,10 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, int numRequests,
   /* restore prveious type */
   lp->type = currenttype;
   lp->connectiontype = currentconnectiontype;
+  lp->extent = currentextent;
+
+  msFreeProjection(&(lp->projection));
+  lp->projection = currentprojectionobject;
 
   /* restore previous numclasses */
   lp->numclasses = numclasses;
