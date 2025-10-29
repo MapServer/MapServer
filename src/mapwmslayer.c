@@ -1464,32 +1464,35 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, int numRequests,
    * Prepare layer for drawing, reprojecting the image received from the
    * server if needed...
    * ------------------------------------------------------------------ */
-  /* keep the current type that will be restored at the end of this  */
-  /* function. */
-  currenttype = lp->type;
-  currentconnectiontype = lp->connectiontype;
-  currentprojectionobject = lp->projection;
-  currentextent = lp->extent;
-  lp->type = MS_LAYER_RASTER;
-  lp->connectiontype = MS_RASTER;
-  lp->extent = pasReqInfo[iReq].bbox;
-
-  if (pasReqInfo[iReq].pszEPSG == NULL) {
-    msSetError(MS_WMSERR,
-               "WMS GetMap ESPG is not determined on request info '%s': .",
-               "msDrawWMSLayerLow()", (lp->name ? lp->name : "(null)"));
-    status = MS_FALSE;
-  }
 
   // Aassign requested projection temporarily to layer
+  currentprojectionobject = lp->projection;
   msInitProjection(&(lp->projection));
   if (pasReqInfo[iReq].pszEPSG == NULL ||
       msLoadProjectionString(&(lp->projection), pasReqInfo[iReq].pszEPSG) !=
           MS_SUCCESS) {
-    msSetError(MS_WMSERR, "WMS GetMap failed to load projection  '%s': %s.",
-               "msDrawWMSLayerLow()", (lp->name ? lp->name : "(null)"),
-               pasReqInfo[iReq].pszEPSG);
+    msSetError(
+        MS_WMSERR, "WMS GetMap failed to load projection for layer '%s': %s.",
+        "msDrawWMSLayerLow()", (lp->name ? lp->name : "(null)"),
+        (pasReqInfo[iReq].pszEPSG ? pasReqInfo[iReq].pszEPSG : "(null)"));
+
+    // Restore layer projection
+    msFreeProjection(&(lp->projection));
+    lp->projection = currentprojectionobject;
+    if (!bIsEssential)
+      return MS_SUCCESS;
+    else
+      return MS_FAILURE;
   }
+
+  /* keep the current type that will be restored at the end of this  */
+  /* function. */
+  currenttype = lp->type;
+  currentconnectiontype = lp->connectiontype;
+  currentextent = lp->extent;
+  lp->type = MS_LAYER_RASTER;
+  lp->connectiontype = MS_RASTER;
+  lp->extent = pasReqInfo[iReq].bbox;
 
   /* set the classes to 0 so that It won't do client side */
   /* classification if an sld was set. */
