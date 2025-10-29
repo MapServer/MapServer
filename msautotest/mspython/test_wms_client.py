@@ -8,7 +8,6 @@ try:
 
     mapscript_available = True
 except ImportError:
-    print("no")
     pass
 
 pytestmark = [
