@@ -1,0 +1,51 @@
+
+
+MAP
+	NAME WMS_CLIENT_TEST_130
+	STATUS ON
+	SIZE 400 300
+	EXTENT -180 -90 180 90
+	UNITS DD
+	PROJECTION
+		"init=epsg:4326"
+	END
+	IMAGECOLOR 255 255 255
+	#SYMBOLSET etc/symbols.sym
+	#FONTSET etc/fonts.txt
+
+	RESOLUTION 96
+	IMAGETYPE png24
+
+	WEB
+		IMAGEPATH "/tmp/ms_tmp/"
+		IMAGEURL "/ms_tmp/"
+		METADATA
+			"ows_updatesequence"	"123"
+			"wms_title"	"Test WMS 1.3.0 client"
+			"wms_srs"	"EPSG:4326"
+			"ows_enable_request"	"*"
+			"wms_getmap_formatlist"	"image/png,image/png; mode=24bit"
+			"ows_onlineresource" "http://localhost/wmsclient?"
+		END
+	END
+
+	LAYER
+		NAME client
+		TYPE RASTER
+		STATUS ON
+		CONNECTION "https://demo.mapserver.org/cgi-bin/wms?"
+		CONNECTIONTYPE WMS
+		TEMPLATE "dummy"
+		EXTENT -180 -90 180 90
+		METADATA
+			"wms_srs"	"EPSG:4326 EPSG:32633"
+			"wms_name"	"cities"
+			"wms_server_version"	"1.3.0"
+			"wms_format"	"image/png"
+			"wms_enable_request" "*"
+		END
+        PROJECTION
+		    "init=epsg:4326"
+	    END
+	END
+END		
