@@ -127,6 +127,7 @@ void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests) {
     pasReqInfo[i].pszPostRequest = NULL;
     pasReqInfo[i].pszPostContentType = NULL;
     pasReqInfo[i].pszOutputFile = NULL;
+    pasReqInfo[i].pszEPSG = NULL;
     pasReqInfo[i].nLayerId = 0;
     pasReqInfo[i].nTimeout = 0;
     pasReqInfo[i].nMaxBytes = 0;
@@ -173,6 +174,10 @@ void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests) {
     if (pasReqInfo[i].pszOutputFile)
       free(pasReqInfo[i].pszOutputFile);
     pasReqInfo[i].pszOutputFile = NULL;
+
+    if (pasReqInfo[i].pszEPSG)
+      free(pasReqInfo[i].pszEPSG);
+    pasReqInfo[i].pszEPSG = NULL;
 
     if (pasReqInfo[i].pszContentType)
       free(pasReqInfo[i].pszContentType);
