@@ -1217,7 +1217,7 @@ static char *osAggrGetExtent(layerObj *layer, char *query_str,
   size_t tmpFromSize =
       sizeof(char) * (7 + strlen(geom_column_name) + strlen(table_name) + 1);
   char *tmpFrom = msSmallMalloc(tmpFromSize);
-  snprintf(tmpFrom, tmpFromSize, "%s FROM %s", geom_column_name, table_name);
+  snprintf(tmpFrom, tmpFromSize, " %s FROM %s", geom_column_name, table_name);
 
   query_str2 = msStringConcatenate(query_str2, tmpFrom);
 
