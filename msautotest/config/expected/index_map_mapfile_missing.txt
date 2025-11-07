@@ -1,4 +1,3 @@
-Status: 500 Internal Server Error
 Content-Type: text/html
 
 <HTML>
