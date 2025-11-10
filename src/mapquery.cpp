@@ -1170,6 +1170,7 @@ int msQueryByRect(mapObj *map) {
   int paging;
   int nclasses = 0;
   int *classgroup = NULL;
+  int numresultstotal;
   double minfeaturesize = -1;
   queryCacheObj queryCache;
 
@@ -1366,9 +1367,10 @@ int msQueryByRect(mapObj *map) {
     if (lp->minfeaturesize > 0)
       minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
 
+    numresultstotal = 0;
     while ((status = msLayerNextShape(lp, &shape)) ==
            MS_SUCCESS) { /* step through the shapes */
-
+      numresultstotal++;
       /* Check if the shape size is ok to be drawn */
       if ((shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) &&
           (minfeaturesize > 0)) {
@@ -1458,6 +1460,10 @@ int msQueryByRect(mapObj *map) {
       }
 
     } /* next shape */
+
+    if (paging && lp->maxfeatures > 0 && numresultstotal == lp->maxfeatures &&
+        numresultstotal > lp->resultcache->numresults)
+      lp->resultcache->hasnext = MS_TRUE;
 
     if (classgroup)
       msFree(classgroup);

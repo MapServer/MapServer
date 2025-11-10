@@ -1939,8 +1939,16 @@ static int msWFSGetFeature_GMLPreamble(
                                              encoded_version, encoded_typename,
                                              encoded_mime_type);
 
-        if (iResultTypeHits != 1)
-          nNextStartIndex += iNumberOfFeatures;
+        if (iResultTypeHits != 1) {
+          if (bHasNextFeatures && iNumberOfFeatures < maxfeatures)
+            /**
+             * There are potentially more features to be found here, even
+             * though result contain less than asked for.
+             */
+            nNextStartIndex += maxfeatures;
+          else
+            nNextStartIndex += iNumberOfFeatures;
+        }
 
         if (nNextStartIndex > 0)
           msIO_printf("&amp;STARTINDEX=%d", nNextStartIndex);
@@ -2325,6 +2333,7 @@ static int msWFSRetrieveFeatures(
     int *pnOutTotalFeatures, int *pnHasNext) {
   int i, j;
   int iNumberOfFeatures = 0;
+  int anyLyrHasNext = MS_FALSE;
 
   if (pszFilter && strlen(pszFilter) > 0) {
     int nFilters;
@@ -2701,6 +2710,8 @@ this request. Check wfs/ows_enable_request settings.",
     if (GET_LAYER(map, j)->resultcache &&
         GET_LAYER(map, j)->resultcache->numresults > 0) {
       iNumberOfFeatures += GET_LAYER(map, j)->resultcache->numresults;
+      if (GET_LAYER(map, j)->resultcache->hasnext == MS_TRUE)
+        anyLyrHasNext = MS_TRUE;
     }
   }
 
@@ -2722,8 +2733,9 @@ this request. Check wfs/ows_enable_request settings.",
     iNumberOfFeatures--;
     if (pnHasNext)
       *pnHasNext = MS_TRUE;
-  } else if (pnHasNext)
-    *pnHasNext = MS_FALSE;
+  } else if (pnHasNext) {
+    *pnHasNext = anyLyrHasNext;
+  }
 
   *pnOutTotalFeatures = iNumberOfFeatures;
 
