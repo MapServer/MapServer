@@ -374,7 +374,11 @@ static mapObj *getMapFromConfig(configObj *config, const char *key) {
   char pathBuf[MS_MAXPATHLEN];
   mapfilePath = msConfigGetMap(config, key, pathBuf);
 
-  return msLoadMap(mapfilePath, nullptr, config);
+  char *mapfilePathCopy = msStrdup(mapfilePath);
+  mapObj *map = msLoadMap(mapfilePathCopy, nullptr, config);
+  msFree(mapfilePathCopy);
+
+  return map;
 }
 
 /**
