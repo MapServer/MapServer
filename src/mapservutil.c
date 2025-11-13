@@ -184,6 +184,7 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config) {
     ms_map_bad_pattern = ms_map_bad_pattern_default;
 
   const char *map_value = NULL;
+  char pathBuf[MS_MAXPATHLEN];
 
   // Determine if it is a WMS query so that errors emitted look for the
   // MS_WMS_ERROR_STATUS_CODE configuration option to determine if a HTTP
@@ -222,11 +223,11 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config) {
     }
     ms_mapfile_tainted = MS_FALSE;
   } else {
-    char pathBuf[MS_MAXPATHLEN];
-    ms_mapfile = msConfigGetMap(
+    const char *mapPath = msConfigGetMap(
         config, map_value,
         pathBuf); /* does NOT check the environment, only the config */
-    if (ms_mapfile) {
+    if (mapPath) {
+      ms_mapfile = pathBuf;
       ms_mapfile_tainted = MS_FALSE;
     } else {
       /* by now we know the map parameter isn't referencing something in the

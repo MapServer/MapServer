@@ -449,6 +449,7 @@ int msOGCAPIDispatchMapIndexRequest(mapservObj *mapserv, configObj *config) {
     msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
   }
 
+  msFreeMap(map);
   return MS_SUCCESS;
 
 #else
