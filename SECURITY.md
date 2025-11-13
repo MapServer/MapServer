@@ -28,7 +28,7 @@ Currently, the following versions are supported:
 | 8.4.x   | :white_check_mark: |               |
 | 8.2.x   | :x:                |               |
 | 8.0.x   | :x:                |               |
-| 7.6.x   | :white_check_mark: | 2025-09-12    |
+| 7.6.x   | :x:                | 2025-09-12    |
 | 7.4.x   | :x:                |               |
 | 7.2.x   | :x:                |               |
 | 7.0.x   | :x:                |               |

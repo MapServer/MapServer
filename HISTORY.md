@@ -13,6 +13,19 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.6.0-beta1 release (2025-11-13)
+--------------------------------
+
+- new MapServer index page (#7350)
+
+- WMS GetFeatureInfo: add options to precisely identify points through their symbols (#7318)
+
+- add FALLBACK parameter for CLASS object, to be applied if none of the previously defined classes has been applied (#7309)
+
+- add vendorSpecificParameters to OpenAPI document (#7295)
+
+see detailed changelog for other fixes                                
+
 8.4.1 release (2025-09-19)
 --------------------------
 
