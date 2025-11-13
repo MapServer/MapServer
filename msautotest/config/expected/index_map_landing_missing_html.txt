@@ -1,0 +1,5 @@
+<HTML>
+<HEAD><TITLE>MapServer Message</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF">
+msLoadMap(): Unable to access file. (./missing.map)
+</BODY></HTML>

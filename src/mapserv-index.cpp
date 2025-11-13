@@ -374,7 +374,14 @@ static mapObj *getMapFromConfig(configObj *config, const char *key) {
   char pathBuf[MS_MAXPATHLEN];
   mapfilePath = msConfigGetMap(config, key, pathBuf);
 
-  return msLoadMap(mapfilePath, nullptr, config);
+  if (!mapfilePath) {
+    return nullptr;
+  }
+  char *mapfilePathCopy = msStrdup(mapfilePath);
+  mapObj *map = msLoadMap(mapfilePathCopy, nullptr, config);
+  msFree(mapfilePathCopy);
+
+  return map;
 }
 
 /**
@@ -419,6 +426,10 @@ int msOGCAPIDispatchMapIndexRequest(mapservObj *mapserv, configObj *config) {
   const char *key = request->api_path[0];
 
   mapObj *map = getMapFromConfig(config, key);
+  if (!map) {
+    msOGCAPIOutputError(OGCAPI_CONFIG_ERROR, "Mapfile not found in config.");
+    return MS_FAILURE;
+  }
   json response = createMapDetails(map, request);
 
   // add in summary map details
@@ -438,6 +449,7 @@ int msOGCAPIDispatchMapIndexRequest(mapservObj *mapserv, configObj *config) {
     msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
   }
 
+  msFreeMap(map);
   return MS_SUCCESS;
 
 #else
