@@ -155,6 +155,7 @@ option(WITH_WMS "Enable WMS Server support (requires PROJ support)" ON)
 option(WITH_FRIBIDI "Choose if FriBidi glyph shaping support should be built in (useful for right-to-left languages) (requires HARFBUZZ)" ON)
 option(WITH_HARFBUZZ "Choose if Harfbuzz complex text layout should be included (needed for e.g. arabic and hindi) (requires FRIBIDI)" ON)
 option(WITH_ICONV "Choose if Iconv Internationalization support should be built in" ON)
+option(WITH_SKIA "Choose if Skia rendering support should be built in" ON)
 option(WITH_CAIRO "Choose if CAIRO  rendering support should be built in (required for SVG and PDF output)" ON)
 option(WITH_SVGCAIRO "Choose if SVG symbology support (via libsvgcairo) should be built in (requires cairo, libsvg, libsvg-cairo. Incompatible with librsvg)" OFF)
 option(WITH_RSVG "Choose if SVG symbology support (via librsvg) should be built in (requires cairo, librsvg. Incompatible with libsvg-cairo)" OFF)
@@ -340,14 +341,14 @@ src/mapraster.c src/mapuvraster.cpp src/mapdummyrenderer.c src/mapobject.c src/m
 src/mapwcs.cpp src/maperror.c src/mapogcfilter.cpp src/mapregex.c src/mapwcs11.cpp src/mapfile.c
 src/mapogcfiltercommon.cpp src/maprendering.c src/mapwcs20.cpp src/mapogcsld.cpp src/mapmetadata.c
 src/mapresample.c src/mapwfs.cpp src/mapgdal.cpp src/mapogcsos.c src/mapscale.c src/mapwfs11.cpp src/mapwfs20.c
-src/mapgeomtransform.c src/mapogroutput.cpp src/mapwfslayer.c src/mapagg.cpp src/mapkml.cpp
+src/mapgeomtransform.c src/mapogroutput.cpp src/mapwfslayer.c src/mapagg.cpp src/mapskia.cpp src/mapkml.cpp
 src/mapgeomutil.cpp src/mapkmlrenderer.cpp src/fontcache.c src/textlayout.c src/maputfgrid.cpp
 src/mapogr.cpp src/mapcontour.c src/mapsmoothing.c src/mapv8.cpp ${REGEX_SOURCES} src/kerneldensity.c
 src/idw.c src/interpolation.c src/mapflatgeobuf.c src/mapcompositingfilter.c src/mapmvt.c src/mapiconv.c
 src/mapgraph.cpp src/mapserv-config.cpp src/maprasterlabel.cpp src/mapserv-index.cpp)
 
 set(mapserver_HEADERS
-src/cgiutil.h src/dejavu-sans-condensed.h src/dxfcolor.h src/fontcache.h src/hittest.h src/mapagg.h
+src/cgiutil.h src/dejavu-sans-condensed.h src/dxfcolor.h src/fontcache.h src/hittest.h src/mapagg.h src/mapskia.h
 src/mapaxisorder.h src/mapcopy.h src/mapentities.h src/maperror.h src/mapfile.h src/mapgml.h src/maphash.h
 src/maphttp.h src/mapio.h src/mapkmlrenderer.h src/maplibxml2.h src/mapogcfilter.h src/mapogcsld.h
 src/mapoglcontext.h src/mapoglrenderer.h src/mapowscommon.h src/mapows.h src/mapparser.h src/mapogcapi.h
@@ -562,6 +563,19 @@ if(WITH_CAIRO)
     report_optional_not_found(CAIRO)
   endif(CAIRO_FOUND)
 endif (WITH_CAIRO)
+
+
+if(WITH_SKIA)
+  find_package(Skia)
+  if(SKIA_FOUND)
+    include_directories(${SKIA_INCLUDE_DIRS})
+    ms_link_libraries( ${SKIA_LIBRARY})
+    list(APPEND ALL_INCLUDE_DIRS ${SKIA_INCLUDE_DIR})
+    set (USE_SKIA 1)
+  else(SKIA_FOUND)
+    report_optional_not_found(SKIA)
+  endif(SKIA_FOUND)
+endif (WITH_SKIA)
 
 if(WITH_MYSQL)
   find_package(MySQL)
@@ -984,6 +998,7 @@ status_optional_component("GIF" "${USE_GIF}" "${GIF_LIBRARY}")
 status_optional_component("MYSQL" "${USE_MYSQL}" "${MYSQL_LIBRARY}")
 status_optional_component("FRIBIDI" "${USE_FRIBIDI}" "${FRIBIDI_LIBRARY}")
 status_optional_component("HARFBUZZ" "${USE_HARFBUZZ}" "${HARFBUZZ_LIBRARY}")
+status_optional_component("SKIA" "${USE_SKIA}" "${SKIA_LIBRARY}")
 status_optional_component("CAIRO" "${USE_CAIRO}" "${CAIRO_LIBRARY}")
 status_optional_component("SVGCAIRO" "${USE_SVG_CAIRO}" "${SVGCAIRO_LIBRARY}")
 status_optional_component("RSVG" "${USE_RSVG}" "${RSVG_LIBRARY}")
