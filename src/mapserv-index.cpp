@@ -325,6 +325,12 @@ static json createMapSummary(mapObj *map, const char *key,
     onlineResource = "./"; // fallback
   }
 
+  // make sure that URLs end with '/'
+  if (!onlineResource.empty() && onlineResource != "./" &&
+      onlineResource.back() != '/') {
+    onlineResource += '/';
+  }
+
   mapJson["service-desc"] =
       json::array({{{"href", onlineResource + std::string(key) + "/?f=json"},
                     {"title", key},
