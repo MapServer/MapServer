@@ -1,0 +1,35 @@
+# RUN_PARMS: index_wms_onlineresource.json [MAPSERV] -conf index.conf "PATH_INFO=/WMS_MAP_ONLINERESOURCE/" QUERY_STRING="f=json" > [RESULT_DEMIME]
+
+MAP
+    NAME "WMSMAP"
+    IMAGETYPE "png"
+    SIZE 800 800
+    EXTENT -180.0 -90 180 90
+    PROJECTION
+        "EPSG:4326"
+    END
+    WEB
+        METADATA
+            "wms_enable_request" "GetCapabilities GetMap"
+            "wms_srs" "EPSG:4326"
+            "ows_title" "MapServer WMS Demo Map"
+            "ows_onlineresource" "http://127.0.0.1/cgi-bin/mapserv.exe?map=/my/path/index_wms_onlineresource.map&"
+        END
+        # required if using &mode=browse&template=openlayers
+        IMAGEPATH "/tmp/"
+    END
+
+    LAYER
+        NAME "ne_110m_land"
+        STATUS OFF
+        CONNECTION "./data/ne_110m_land.fgb"
+        TYPE POLYGON
+        CONNECTIONTYPE OGR
+        CLASS
+            NAME "land"
+            STYLE
+                COLOR "#556b2f"
+            END
+        END
+    END
+END
