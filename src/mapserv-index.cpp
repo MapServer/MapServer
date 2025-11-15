@@ -62,8 +62,17 @@ std::string getOnlineResource(mapObj *map, cgiRequestObj *request,
     onlineResource = "./?";
   }
 
-  if (!onlineResource.empty() && onlineResource.back() != '?') {
-    onlineResource += '?';
+  if (!onlineResource.empty()) {
+    if (onlineResource.find('?') != std::string::npos) {
+      // URL already has a query string
+      char last = onlineResource.back();
+      if (last != '?' && last != '&') {
+        onlineResource += '&';
+      }
+    } else {
+      // no query string so append '?'
+      onlineResource += '?';
+    }
   }
 
   return onlineResource;
@@ -323,6 +332,11 @@ static json createMapSummary(mapObj *map, const char *key,
   } else {
     // use a relative URL if no onlineresource cannot be created
     onlineResource = "./"; // fallback
+  }
+
+  // make sure the root URL end with a '/'
+  if (!onlineResource.empty() && onlineResource.back() != '/') {
+    onlineResource += '/';
   }
 
   mapJson["service-desc"] =
