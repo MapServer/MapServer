@@ -928,7 +928,7 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format,
 
 void msOGCAPIOutputJson(
     const json &j, const char *mimetype,
-    const std::map<std::string, std::string> &extraHeaders) {
+    const std::map<std::string, std::vector<std::string>> &extraHeaders) {
   std::string js;
 
   try {
@@ -941,7 +941,9 @@ void msOGCAPIOutputJson(
 
   msIO_setHeader("Content-Type", "%s", mimetype);
   for (const auto &kvp : extraHeaders) {
-    msIO_setHeader(kvp.first.c_str(), "%s", kvp.second.c_str());
+    for (const auto &value : kvp.second) {
+      msIO_setHeader(kvp.first.c_str(), "%s", value.c_str());
+    }
   }
   msIO_sendHeaders();
   msIO_printf("%s\n", js.c_str());
@@ -998,11 +1000,11 @@ void msOGCAPIOutputTemplate(const char *directory, const char *filename,
 /*
 ** Generic response output.
 */
-static void
-outputResponse(mapObj *map, cgiRequestObj *request, OGCAPIFormat format,
-               const char *filename, const json &response,
-               const std::map<std::string, std::string> &extraHeaders =
-                   std::map<std::string, std::string>()) {
+static void outputResponse(
+    mapObj *map, cgiRequestObj *request, OGCAPIFormat format,
+    const char *filename, const json &response,
+    const std::map<std::string, std::vector<std::string>> &extraHeaders =
+        std::map<std::string, std::vector<std::string>>()) {
   std::string path;
   char fullpath[MS_MAXPATHLEN];
 
@@ -1218,7 +1220,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
   std::string outputCrs = "EPSG:4326";
   bool outputCrsAxisInverted =
       false; // because above EPSG:4326 is meant to be OGC:CRS84 actually
-  std::map<std::string, std::string> extraHeaders;
+  std::map<std::string, std::vector<std::string>> extraHeaders;
   if (crs) {
     bool isExpectedCrs = false;
     for (const auto &crsItem : getCrsList(map, layer)) {
@@ -1231,7 +1233,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
       msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Bad value for crs.");
       return MS_SUCCESS;
     }
-    extraHeaders["Content-Crs"] = '<' + std::string(crs) + '>';
+    extraHeaders["Content-Crs"].push_back('<' + std::string(crs) + '>');
     if (std::string(crs) != CRS84_URL) {
       if (std::string(crs).find(EPSG_PREFIX_URL) == 0) {
         const char *code = crs + strlen(EPSG_PREFIX_URL);
@@ -1240,7 +1242,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
       }
     }
   } else {
-    extraHeaders["Content-Crs"] = '<' + std::string(CRS84_URL) + '>';
+    extraHeaders["Content-Crs"].push_back('<' + std::string(CRS84_URL) + '>');
   }
 
   struct ReprojectionObjects {
@@ -1465,6 +1467,19 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
                 "&offset=" + std::to_string(MS_MAX(0, (offset - limit))) +
                 other_extra_kvp + extra_params}});
     }
+
+    extraHeaders["OGC-NumberReturned"].push_back(
+        std::to_string(layer->resultcache->numresults));
+    extraHeaders["OGC-NumberMatched"].push_back(std::to_string(numberMatched));
+    std::vector<std::string> linksHeaders;
+    for (auto &link : response["links"]) {
+      linksHeaders.push_back("<" + link["href"].get<std::string>() +
+                             ">; rel=\"" + link["rel"].get<std::string>() +
+                             "\"; title=\"" + link["title"].get<std::string>() +
+                             "\"; type=\"" + link["type"].get<std::string>() +
+                             "\"");
+    }
+    extraHeaders["Link"] = std::move(linksHeaders);
 
     msFree(id_encoded); // done
   }
