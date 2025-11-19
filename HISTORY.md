@@ -16,12 +16,7 @@ The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE
 8.6.0-beta2 release (2025-11-18)
 --------------------------------
 
-- additional URL creation logic for generated index URLs (#7388)
-
-8.6.0-beta2 release (2025-11-18)
---------------------------------
-
-- additional URL creation logic for generated index URLs (#7388)
+- additional URL creation logic for generatedindex URLs (#7388)
 
 8.6.0-beta1 release (2025-11-13)
 --------------------------------
