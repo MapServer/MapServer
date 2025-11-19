@@ -21,6 +21,8 @@ The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE
 8.6.0-beta1 release (2025-11-13)
 --------------------------------
 
+- allow append of additional query parameters for OGCAPI: Features (#7360)
+
 - new MapServer index page (#7350)
 
 - WMS GetFeatureInfo: add options to precisely identify points through their symbols (#7318)
