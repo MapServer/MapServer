@@ -70,8 +70,9 @@ std::string msOGCAPIGetApiRootUrl(mapObj *map, cgiRequestObj *request,
 void msOGCAPIOutputError(OGCAPIErrorType errorType,
                          const std::string &description);
 
-void msOGCAPIOutputJson(const nlohmann::json &j, const char *mimetype,
-                        const std::map<std::string, std::string> &extraHeaders);
+void msOGCAPIOutputJson(
+    const nlohmann::json &j, const char *mimetype,
+    const std::map<std::string, std::vector<std::string>> &extraHeaders);
 
 void msOGCAPIOutputTemplate(const char *directory, const char *filename,
                             const nlohmann::json &j, const char *mimetype);
