@@ -17,7 +17,7 @@ else ()
     swig_add_module(perlmapscript perl5 ../mapscript.i)
 endif ()
 
-SWIG_LINK_LIBRARIES(perlmapscript ${PERL_LIBRARIES} ${MAPSERVER_LIBMAPSERVER})
+target_link_libraries(perlmapscript PRIVATE ${PERL_LIBRARIES} ${MAPSERVER_LIBMAPSERVER})
 set_target_properties(perlmapscript PROPERTIES OUTPUT_NAME mapscript)
 set_target_properties(perlmapscript PROPERTIES PREFIX "")
 if(APPLE)
