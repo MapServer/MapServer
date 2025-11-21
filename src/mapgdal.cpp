@@ -638,8 +638,14 @@ char *msProjectionObj2OGCWKT(projectionObj *projection)
        (projection->numargs == 2 &&
         strstr(projection->args[1], "epsgaxis=") != NULL)) &&
       (pszInitEpsg = strcasestr(projection->args[0], "init=epsg:"))) {
-    int nEpsgCode = atoi(pszInitEpsg + strlen("init=epsg:"));
+    const int nEpsgCode = atoi(pszInitEpsg + strlen("init=epsg:"));
     eErr = OSRImportFromEPSG(hSRS, nEpsgCode);
+    if (eErr != OGRERR_NONE) {
+      // In case this is a pseudo EPSG code only defined in a text 'epsg'
+      // file and not in proj.db
+      eErr = OSRSetFromUserInput(
+          hSRS, std::string("+").append(projection->args[0]).c_str());
+    }
   } else {
     /* -------------------------------------------------------------------- */
     /*      Form arguments into a full Proj.4 definition string.            */
