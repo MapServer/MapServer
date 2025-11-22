@@ -593,10 +593,16 @@ static int msContourLayerGenerateContour(layerObj *layer) {
   }
 
   /* Create the OGR DataSource */
-  hDriver = OGRGetDriverByName("Memory");
+#if GDAL_VERSION_MAJOR > 3 ||                                                  \
+    (GDAL_VERSION_MAJOR == 3 && GDAL_VERSION_MINOR >= 11)
+  const char *pszDrvName = "MEM";
+#else
+  const char *pszDrvName = "Memory";
+#endif
+  hDriver = OGRGetDriverByName(pszDrvName);
   if (hDriver == NULL) {
-    msSetError(MS_OGRERR, "Unable to get OGR driver 'Memory'.",
-               "msContourLayerCreateOGRDataSource()");
+    msSetError(MS_OGRERR, "Unable to get OGR driver '%s'.",
+               "msContourLayerCreateOGRDataSource()", pszDrvName);
     return MS_FAILURE;
   }
 
