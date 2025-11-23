@@ -57,7 +57,7 @@ if(WIN32)
   if(WITH_THREAD_SAFETY)
     target_compile_options(php_mapscriptng PRIVATE /DZTS=1)
   endif(WITH_THREAD_SAFETY)
-  SWIG_LINK_LIBRARIES(php_mapscriptng ${PHP_LIBRARY})
+  target_link_libraries(php_mapscriptng PRIVATE ${PHP_LIBRARY})
 endif(WIN32)
 
 IF(APPLE)

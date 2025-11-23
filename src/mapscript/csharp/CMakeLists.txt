@@ -53,7 +53,7 @@ else()
 	set_target_properties(mapscript PROPERTIES OUTPUT_NAME "libmapscript")
 endif()
 
-SWIG_LINK_LIBRARIES(mapscript ${MAPSERVER_LIBMAPSERVER})
+target_link_libraries(mapscript PRIVATE ${MAPSERVER_LIBMAPSERVER})
 
 
 
