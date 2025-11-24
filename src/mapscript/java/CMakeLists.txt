@@ -27,7 +27,7 @@ else ()
     swig_add_module(javamapscript java ../mapscript.i)
 endif ()
 
-swig_link_libraries(javamapscript ${MAPSERVER_LIBMAPSERVER})
+target_link_libraries(javamapscript PRIVATE ${MAPSERVER_LIBMAPSERVER})
 
 add_custom_command(TARGET javamapscript
                       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
