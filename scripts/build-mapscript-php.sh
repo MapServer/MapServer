@@ -29,7 +29,7 @@ add-apt-repository ppa:ondrej/php -y
 LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/php -y
 
 sudo apt-get -qq update
-sudo apt-get -qq install php"${PHP_VERSION}"-cli php"${PHP_VERSION}"-dev php"${PHP_VERSION}"-mbstring php"${PHP_VERSION}"-xml php"${PHP_VERSION}"-pcov
+sudo apt-get -qq install php"${PHP_VERSION}"-cli php"${PHP_VERSION}"-dev php"${PHP_VERSION}"-mbstring php"${PHP_VERSION}"-xml php"${PHP_VERSION}"-pcov php"${PHP_VERSION}"-json
 
 # install build dependencies
 ci/ubuntu/setup.sh
