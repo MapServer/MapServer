@@ -3,7 +3,7 @@ set -eu  # Exit on error and treat unset variables as errors
 
 cd "$WORK_DIR"
 
-# Ensure the Python version is provided
+# Ensure the PHP version is provided
 if [ -z "${PHP_VERSION:-}" ]; then
     echo "Error: PHP version not specified. Make sure to pass it as an environment variable."
     exit 1
@@ -29,7 +29,7 @@ add-apt-repository ppa:ondrej/php -y
 LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/php -y
 
 sudo apt-get -qq update
-sudo apt-get -qq install php"${PHP_VERSION}"-cli php"${PHP_VERSION}"-dev php"${PHP_VERSION}"-mbstring php"${PHP_VERSION}"-xml php"${PHP_VERSION}"-pcov php"${PHP_VERSION}"-xdebug
+sudo apt-get -qq install php"${PHP_VERSION}"-cli php"${PHP_VERSION}"-dev php"${PHP_VERSION}"-mbstring php"${PHP_VERSION}"-xml php"${PHP_VERSION}"-pcov
 
 # install build dependencies
 ci/ubuntu/setup.sh
