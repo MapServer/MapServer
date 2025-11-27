@@ -13,6 +13,13 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.6.0-rc1 release (2025-11-27)
+------------------------------
+
+- OGCAPI: return OGC-NumberReturned, OGC-NumberMatched and Link HTTP headers (#7390)
+
+- output GDAL files: fix from init=epsg:xxxx layers (#7392)
+
 8.6.0-beta2 release (2025-11-18)
 --------------------------------
 
