@@ -45,7 +45,7 @@ else
 fi
 
 cd swig-git-master
-wget -nc https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.44/pcre2-10.44.tar.gz
+wget -nc https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.47/pcre2-10.47.tar.gz
 ./Tools/pcre-build.sh
 ./autogen.sh
 ./configure --prefix=/usr
