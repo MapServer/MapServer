@@ -13,6 +13,12 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.6.0 release (2025-12-03)
+--------------------------
+
+- CI: upgrade PCRE2 to 10.47 release (#7400)
+(see major changes below)
+
 8.6.0-rc1 release (2025-11-27)
 ------------------------------
 
@@ -23,7 +29,7 @@ The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE
 8.6.0-beta2 release (2025-11-18)
 --------------------------------
 
-- additional URL creation logic for generatedindex URLs (#7388)
+- additional URL creation logic for generated index URLs (#7388)
 
 8.6.0-beta1 release (2025-11-13)
 --------------------------------
@@ -38,7 +44,7 @@ The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE
 
 - add vendorSpecificParameters to OpenAPI document (#7295)
 
-see detailed changelog for other fixes
+see detailed changelog for other fixes                                
 
 8.4.1 release (2025-09-19)
 --------------------------
