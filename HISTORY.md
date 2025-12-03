@@ -13,6 +13,12 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.6.0 release (2025-12-03)
+--------------------------
+
+- CI: upgrade PCRE2 to 10.47 release (#7400)
+(see major changes below)
+
 8.6.0-rc1 release (2025-11-27)
 ------------------------------
 

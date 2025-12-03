@@ -15,17 +15,17 @@ submissions, when describing the vulnerability (see https://mapserver.org/develo
 The MapServer PSC (Project Steering Committee) will release patches for security vulnerabilities 
 for the last release branch of the **two most recent release series** (such as 8.x, 7.x, 6.x, etc..., 
 where "x" is the most recent release in the series, such as: 7.6.6 being supported, but 
-not 7.6.5).  For example, once 8.6 is released, support for 8.4 will be dropped.
+not 7.6.5).  For example, once 8.8 is released, support for 8.6 will be dropped.
  
 Patches will only be provided **for a period of three years** from the release date of the current series.
-For example, as 8.4 has been released, now 8.4.x, and 7.6.x will be supported/patched, and 7.6.x will
-only be supported for three years from the date of the 8.0 series release (until 2025-09-12).
+For example, as 8.6 has been released, now 8.6.x will be supported/patched (7.6.x support ended on 2025-09-12, which was three years from the date of the 8.0 series release).
 
 Currently, the following versions are supported:
 
 | Version | Supported          | Support Until |
 | ------- | ------------------ |-------------- |
-| 8.4.x   | :white_check_mark: |               |
+| 8.6.x   | :white_check_mark: |               |
+| 8.4.x   | :x:                |               |
 | 8.2.x   | :x:                |               |
 | 8.0.x   | :x:                |               |
 | 7.6.x   | :x:                | 2025-09-12    |
@@ -35,6 +35,7 @@ Currently, the following versions are supported:
 | 6.4.x   | :x:                |               |
 | < 6.4   | :x:                |               |
 
+- _MapServer 8.6.0 was released on 2025-12-03_
 - _MapServer 8.4.0 was released on 2025-01-15_
 - _MapServer 8.2.0 was released on 2024-07-08_
 - _MapServer 8.0.0 was released on 2022-09-12_
