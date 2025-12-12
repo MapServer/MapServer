@@ -1026,7 +1026,7 @@ int msRasterLabelLayerSetTimeFilter(layerObj *layer, const char *timestring,
 }
 
 /************************************************************************/
-/*                msRASTERLayerInitializeVirtualTable()                 */
+/*                msRasterLabelLayerInitializeVirtualTable()            */
 /************************************************************************/
 
 int msRasterLabelLayerInitializeVirtualTable(layerObj *layer) {

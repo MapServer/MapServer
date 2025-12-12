@@ -1011,7 +1011,7 @@ int msContourLayerSetTimeFilter(layerObj *layer, const char *timestring,
 }
 
 /************************************************************************/
-/*                msRASTERLayerInitializeVirtualTable()                 */
+/*                msContourLayerInitializeVirtualTable()                */
 /************************************************************************/
 
 int msContourLayerInitializeVirtualTable(layerObj *layer) {

@@ -1047,7 +1047,7 @@ int msUVRASTERLayerSetTimeFilter(layerObj *layer, const char *timestring,
 }
 
 /************************************************************************/
-/*                msRASTERLayerInitializeVirtualTable()                 */
+/*                msUVRASTERLayerInitializeVirtualTable()               */
 /************************************************************************/
 
 int msUVRASTERLayerInitializeVirtualTable(layerObj *layer) {
