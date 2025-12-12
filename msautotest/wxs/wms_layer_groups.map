@@ -114,11 +114,17 @@ MAP
     END
 
     LAYER
+        TEMPLATE "ttt"
         TYPE POINT
-        NAME "g3"
+        NAME "g3l1"
         STATUS ON
         METADATA
-            "wms_title" "My g3"
+            "wms_title" "g3l1 title"
+            "wms_abstract" "g3l1 Abstract"
+
+            "wms_layer_group" "/g3"
+            "wms_group_title" "Group g3 title"
+            "wms_group_abstract" "Group g3 Abstract"
         END
         CLASS
             LABEL
@@ -126,7 +132,7 @@ MAP
                 COLOR 0 0 0
                 SIZE 8
                 POSITION cc
-                END
+            END
         END
         FEATURE POINTS 50 90 END END
     END
@@ -138,6 +144,10 @@ MAP
         STATUS ON
         METADATA
             "wms_layer_group" "/g3/sg4"
+            "wms_title" "g3sg4l1 title"
+            "wms_abstract" "g3sg4l1 Abstract"
+            "wms_group_title" "Group g3/sg4 title"
+            "wms_group_abstract" "Group g3/sg4 Abstract"
         END
         CLASS
             LABEL
@@ -145,7 +155,7 @@ MAP
                 COLOR 0 0 0
                 SIZE 8
                 POSITION cc
-                END
+            END
         END
         FEATURE POINTS 50 110 END END
     END
