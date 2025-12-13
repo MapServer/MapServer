@@ -3028,8 +3028,32 @@ void msWMSPrintNestedGroups(mapObj *map, int nVersion, char *pabLayerProcessed,
                       : "");
       msIO_printf("%s      <Name>%s</Name>\n", indent.c_str(),
                   nestedGroups[index][level]);
-      msIO_printf("%s      <Title>%s</Title>\n", indent.c_str(),
-                  nestedGroups[index][level]);
+
+      {
+        const char *value;
+        if ((value = msOWSLookupMetadataWithLanguage(
+                 &(GET_LAYER(map, index)->metadata), "MO", "GROUP_TITLE",
+                 validated_language))) {
+          char *encoded = msEncodeHTMLEntities(value);
+          msIO_printf("%s      <Title>%s</Title>\n", indent.c_str(), encoded);
+          msFree(encoded);
+        } else {
+          msIO_printf("%s      <Title>%s</Title>\n", indent.c_str(),
+                      nestedGroups[index][level]);
+        }
+      }
+      {
+        const char *value;
+        if ((value = msOWSLookupMetadataWithLanguage(
+                 &(GET_LAYER(map, index)->metadata), "MO", "GROUP_ABSTRACT",
+                 validated_language))) {
+          char *encoded = msEncodeHTMLEntities(value);
+          msIO_printf("%s      <Abstract>%s</Abstract>\n", indent.c_str(),
+                      encoded);
+          msFree(encoded);
+        }
+      }
+
       groupAdded = true;
     }
 

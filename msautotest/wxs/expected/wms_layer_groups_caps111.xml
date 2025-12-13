@@ -164,21 +164,28 @@
         </Layer>
       </Layer>
     </Layer>
-    <Layer queryable="1" opaque="0" cascaded="0">
-        <Name>g3</Name>
-        <Title>My g3</Title>
+    <Layer queryable="1">
+      <Name>g3</Name>
+      <Title>Group g3 title</Title>
+      <Abstract>Group g3 Abstract</Abstract>
+      <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>g3l1</Name>
+        <Title>g3l1 title</Title>
+        <Abstract>g3l1 Abstract</Abstract>
         <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
         <MetadataURL type="TC211">
           <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo?request=GetMetadata&amp;layer=g3"/>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo?request=GetMetadata&amp;layer=g3l1"/>
         </MetadataURL>
+      </Layer>
       <Layer queryable="1">
         <Name>sg4</Name>
-        <Title>sg4</Title>
+        <Title>Group g3/sg4 title</Title>
+        <Abstract>Group g3/sg4 Abstract</Abstract>
         <Layer queryable="1" opaque="0" cascaded="0">
         <Name>g3sg4l1</Name>
-<!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
-        <Title>g3sg4l1</Title>
+        <Title>g3sg4l1 title</Title>
+        <Abstract>g3sg4l1 Abstract</Abstract>
         <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
         <MetadataURL type="TC211">
           <Format>text/xml</Format>
