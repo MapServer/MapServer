@@ -10,9 +10,11 @@
 # RUN_PARMS: wms_uvraster_map_reprojection_extent_intersecting_layer.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=30,-200,60,-100&CRS=EPSG:4326&WIDTH=400&HEIGHT=200&LAYERS=test&STYLES=&FORMAT=image/png&TRANSPARENT=TRUE" > [RESULT_DEMIME]
 #
 # RUN_PARMS: wms_uvraster_map_reprojection_getfeatureinfo.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&BBOX=-30.28229908443537965,-68.01500508646998355,123.14801627670399853,120.98499491353001645&CRS=EPSG:4326&WIDTH=983&HEIGHT=798&LAYERS=test&STYLES=&FORMAT=image/png&QUERY_LAYERS=test&INFO_FORMAT=application/vnd.ogc.gml&I=798&J=232&FEATURE_COUNT=10" > [RESULT_DEMIME]
+#
+# RUN_PARMS: wms_uvraster_map_reprojection_geog_to_polar_stereo.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=-12367396,-12367396,12367396,12367396&CRS=EPSG:3995&WIDTH=200&HEIGHT=200&LAYERS=data_in_geographic&STYLES=&FORMAT=image/png&TRANSPARENT=TRUE" > [RESULT_DEMIME]
 
 MAP
- NAME test
+ NAME xtest
  EXTENT -180 -90 180 90
  MAXSIZE 4096
  SIZE 500 300
@@ -41,6 +43,7 @@ MAP
  WEB
   METADATA
     "ows_enable_request" "*"
+    "wms_srs"              "EPSG:4326 EPSG:3995"
     "wms_onlineresource"   "http://localhost:8080/mapserv.cgi?map=/home/even/mapserver/mapserver/msautotest/wxs/wms_uvraster_map_reprojection.map&"
   END
  END
@@ -55,8 +58,9 @@ MAP
   TOLERANCE 20
 
   METADATA
-    "wms_title"       "test"
+    "wms_title"         "test"
     "gml_include_items" "uv_angle,uv_minus_angle,uv_length,uv_length_2,u,v"
+    "wms_srs"           "EPSG:4326 EPSG:3995"
   END
 
   PROJECTION
@@ -84,4 +88,37 @@ MAP
    END
   END
  END
+ 
+
+ LAYER
+  NAME "data_in_geographic"
+  TYPE POINT
+  CONNECTIONTYPE uvraster
+  PROCESSING "BANDS=1,2"
+  PROCESSING "UV_SPACING=20"
+  TEMPLATE "ttt"
+  TOLERANCE 20
+
+  METADATA
+    "wms_title"         "data_in_geographic"
+    "gml_include_items" "uv_angle,uv_minus_angle,uv_length,uv_length_2,u,v"
+    "wms_srs"           "EPSG:4326 EPSG:3995"
+  END
+
+  PROJECTION
+   "init=epsg:4326"
+  END
+
+  DATA 'wind_to_west_north_hemisphere.tif'
+
+  CLASS
+   STYLE
+    COLOR 0 0 127
+    SYMBOL "arrow_wind"
+    ANGLE [uv_angle]
+    SIZE 12
+   END
+  END
+ END
+ 
 END

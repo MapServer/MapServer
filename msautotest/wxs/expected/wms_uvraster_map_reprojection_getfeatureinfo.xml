@@ -12,12 +12,12 @@
 					<gml:coordinates>82.689740,80.025912 82.689740,80.025912</gml:coordinates>
 				</gml:Box>
 			</gml:boundedBy>
-			<uv_angle>0.000000</uv_angle>
-			<uv_minus_angle>180.000000</uv_minus_angle>
+			<uv_angle>177.584208</uv_angle>
+			<uv_minus_angle>357.584208</uv_minus_angle>
 			<uv_length>2.378277</uv_length>
 			<uv_length_2>1.189139</uv_length_2>
-			<u>2.378277</u>
-			<v>0.000000</v>
+			<u>-2.376163</u>
+			<v>0.100247</v>
 		</test_feature>
 	</test_layer>
 </msGMLOutput>
