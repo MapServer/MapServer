@@ -158,7 +158,8 @@ MS_DLL_EXPORT void msAxisDenormalizePoints(projectionObj *proj, int count,
 MS_DLL_EXPORT void msSetPROJ_DATA(const char *, const char *);
 MS_DLL_EXPORT void msProjDataInitFromEnv();
 
-int msProjIsGeographicCRS(projectionObj *proj);
+int msProjIsGeographicCRS(const projectionObj *proj);
+double msProjGetSemiMajorAxis(const projectionObj *proj);
 int msProjectTransformPoints(reprojectionObj *reprojector, int npoints,
                              double *x, double *y);
 

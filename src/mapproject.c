@@ -2391,7 +2391,7 @@ void msAxisDenormalizePoints(projectionObj *proj, int count, double *x,
 /*      Returns whether a CRS is a geographic one.                      */
 /************************************************************************/
 
-int msProjIsGeographicCRS(projectionObj *proj) {
+int msProjIsGeographicCRS(const projectionObj *proj) {
   PJ_TYPE type;
   if (!proj->proj)
     return FALSE;
@@ -2406,6 +2406,27 @@ int msProjIsGeographicCRS(projectionObj *proj) {
            type == PJ_TYPE_GEOGRAPHIC_3D_CRS;
   }
   return FALSE;
+}
+
+/************************************************************************/
+/*                      msProjGetSemiMajorAxis()                        */
+/*                                                                      */
+/*      Returns the semi-major axis of the ellipsoid of the CRS         */
+/************************************************************************/
+
+double msProjGetSemiMajorAxis(const projectionObj *proj) {
+  const double GRS80_SEMI_MAJOR = 6378137.0;
+  if (!proj->proj)
+    return GRS80_SEMI_MAJOR;
+  PJ *ellps = proj_get_ellipsoid(proj->proj_ctx->proj_ctx, proj->proj);
+  if (!ellps)
+    return GRS80_SEMI_MAJOR;
+
+  double dfSemiMajor = 0.0;
+  proj_ellipsoid_get_parameters(proj->proj_ctx->proj_ctx, ellps, &dfSemiMajor,
+                                NULL, NULL, NULL);
+  proj_destroy(ellps);
+  return dfSemiMajor;
 }
 
 /************************************************************************/
