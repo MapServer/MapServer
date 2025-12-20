@@ -38,14 +38,6 @@ clone_depth: 5
 
 init:
   - net start MSSQL$SQL2019
-  # we can skip testing Python versions apart from for releases by updating the version below
-  - ps: |
-        if ($env:APPVEYOR_REPO_TAG -ne $TRUE) {
-            if ("c:/python37-x64" -contains $env:Python_ROOT_DIR -eq $TRUE) {
-                Write-Host "Skipping build, not a tagged release."
-                Exit-AppVeyorBuild
-            }
-        }
 
 build_script:
   - ps: Write-Host "Build tags - $env:APPVEYOR_REPO_TAG $env:APPVEYOR_REPO_TAG_NAME"
@@ -83,7 +75,7 @@ build_script:
   - cd %BUILD_FOLDER%
   - mkdir build
   - cd build
-  - set PATH=%BUILD_FOLDER%/build/Release;%SDK_BIN%;%PATH%  
+  - set PATH=%BUILD_FOLDER%/build/Release;%SDK_BIN%;%PATH%
   - set "PROJECT_BINARY_DIR=%BUILD_FOLDER%/build"
   - cmake -G "%VS_FULL%" -A %VS_ARCH% .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=%SDK_PREFIX% -DPNG_LIBRARY=%SDK_LIB%/libpng16_static.lib -DHARFBUZZ_INCLUDE_DIR=%SDK_INC%/harfbuzz -DICONV_DLL=%SDK_BIN%/iconv.dll -DFRIBIDI_INCLUDE_DIR=%SDK_INC%/fribidi -DMS_EXTERNAL_LIBS=%SDK_LIB%/harfbuzz.lib;%SDK_LIB%/uriparser.lib -DSVG_LIBRARY=%SDK_LIB%/libsvg.lib -DSVGCAIRO_LIBRARY=%SDK_LIB%/libsvg-cairo.lib -DREGEX_DIR=%REGEX_DIR% -DSWIG_EXECUTABLE=%SWIG_EXECUTABLE% -DPROTOBUFC_COMPILER=%SDK_BIN%/protoc.exe -DPROTOBUFC_LIBRARY=%SDK_LIB%/protobuf-c.lib -DPROTOBUFC_INCLUDE_DIR=%SDK_INC%/protobuf-c -DWITH_CURL=1 -DWITH_KML=1 -DWITH_SVGCAIRO=1 -DWITH_THREAD_SAFETY=1 -DWITH_SOS=1 -DWITH_CLIENT_WFS=1 -DWITH_CLIENT_WMS=1-DWITH_CSHARP=1 -DWITH_PROTOBUFC=1 -DWITH_POSTGIS=0 -DWITH_PERL=0 -DWITH_MSSQL2008=1 -DWITH_PYTHON=1 -DWITH_PHPNG=0 -DWITH_HARFBUZZ=1 -DWITH_PYMAPSCRIPT_ANNOTATIONS=1 -DPROJ_INCLUDE_DIR=%SDK_INC%/proj9 -DPROJ_LIBRARY=%SDK_LIB%/proj9.lib
   - cmake --build . --config Release
@@ -104,7 +96,7 @@ before_test:
   - set PIP_NO_PYTHON_VERSION_WARNING=1
   - "./mssql/create_mssql_db.bat"
   - "%Python_ROOT_DIR%/python -m pip install --no-warn-script-location -U -r requirements.txt"
-  - "%Python_ROOT_DIR%/python -m pip install --no-index --find-links=file://%BUILD_FOLDER%/build/src/mapscript/python/Release/dist mapscript"
+  - "%Python_ROOT_DIR%/python -m pip install --no-index --find-links=file:///%BUILD_FOLDER%/build/src/mapscript/python/Release/dist mapscript"
 
 test_script:
   - cd %BUILD_FOLDER%/msautotest/mssql
@@ -118,7 +110,7 @@ after_test:
 
 # Uncomment to enable debugging on the server
 #on_finish:
-#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))  
+#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 artifacts:
   - path: mapserver.zip
