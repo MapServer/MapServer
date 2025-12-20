@@ -2,7 +2,7 @@ Python MapScript for MapServer README
 =====================================
 
 :Author: MapServer Team
-:Last Updated: 2024-03-29
+:Last Updated: 2025-12-20
 
 Introduction
 ------------
@@ -38,11 +38,11 @@ Advantages of ready-made wheels on PyPI include:
 Wheels are built based on the `Appveyor build environments <https://github.com/MapServer/MapServer/blob/main/appveyor.yml>`_. 
 These are as follows at the time of writing:
 
-+ Python 3.9 x64
 + Python 3.10 x64
 + Python 3.11 x64
 + Python 3.12 x64
 + Python 3.13 x64
++ Python 3.14 x64
 
 The mapscript wheels have been compiled using Visual Studio 2022 version 17 (``MSVC++ 17.9 _MSC_VER == 1939``). 
 Linux Wheels may also be available in the future using the `manylinux <https://github.com/pypa/manylinux>`_ project. 
@@ -99,14 +99,14 @@ Windows Binaries
 ++++++++++++++++
 
 Windows binary packages can be downloaded from `GIS Internals <https://www.gisinternals.com/stable.php>`_. 
-To ensure compatibility with the wheels, please use identical release packages, e.g. ``release-1930-x64-gdal-3-8-4-mapserver-8-0-1``
-for mapscript 8.0.1. 
+To ensure compatibility with the wheels, please use identical release packages, e.g. ``release-1930-x64-gdal-3-11-3-mapserver-8-4-0``
+for mapscript 8.4.0. 
 
 .. NOTE::
    `MS4W <https://www.ms4w.com>`_ (MapServer for Windows) is a full installer that contains Python & Python
    MapScript already configured out-of-the-box, as well as default OGC web services and over 60 working mapfiles.
 
-When using these packages the MapServer path will be similar to ``C:\release-1930-x64-gdal-3-8-4-mapserver-8-0-1\bin``. 
+When using these packages the MapServer path will be similar to ``C:\release-1930-x64-gdal-3-11-3-mapserver-8-4-0\bin``. 
 
 Prior to installing mapscript it is recommended to update pip to the latest version with the following command:
 
@@ -131,7 +131,7 @@ Now you should be able to import mapscript:
 .. code-block:: python
 
     python -c "import mapscript;print(mapscript.msGetVersion())"
-    MapServer version 8.0.1 PROJ version 9.3 GDAL version 3.9 OUTPUT=PNG OUTPUT=JPEG SUPPORTS=PROJ SUPPORTS=AGG SUPPORTS=FREETYPE SUPPORTS=CAIRO SUPPORTS=SVG_SYMBOLS SUPPORTS=SVGCAIRO SUPPORTS=ICONV SUPPORTS=FRIBIDI SUPPORTS=WMS_SERVER SUPPORTS=WMS_CLIENT SUPPORTS=WFS_SERVER SUPPORTS=WFS_CLIENT SUPPORTS=WCS_SERVER SUPPORTS=OGCAPI_SERVER SUPPORTS=FASTCGI SUPPORTS=THREADS SUPPORTS=GEOS SUPPORTS=PBF INPUT=JPEG INPUT=POSTGIS INPUT=OGR INPUT=GDAL INPUT=SHAPEFILE INPUT=FLATGEOBUF
+    MapServer version 8.6 PROJ version 9.6 GDAL version 3.13 OUTPUT=PNG OUTPUT=JPEG SUPPORTS=PROJ SUPPORTS=AGG SUPPORTS=FREETYPE SUPPORTS=CAIRO SUPPORTS=SVG_SYMBOLS SUPPORTS=SVGCAIRO SUPPORTS=ICONV SUPPORTS=FRIBIDI SUPPORTS=WMS_SERVER SUPPORTS=WMS_CLIENT SUPPORTS=WFS_SERVER SUPPORTS=WFS_CLIENT SUPPORTS=WCS_SERVER SUPPORTS=OGCAPI_SERVER SUPPORTS=FASTCGI SUPPORTS=THREADS SUPPORTS=GEOS SUPPORTS=PBF INPUT=JPEG INPUT=POSTGIS INPUT=OGR INPUT=GDAL INPUT=SHAPEFILE INPUT=FLATGEOBUF
 
 Installation on Unix
 --------------------
@@ -274,7 +274,7 @@ SWIG can also be run manually, without using CMake. This may allow further optim
 .. code-block:: bat
 
     cd C:\Projects\mapserver\build
-    SET PATH=C:\MapServerBuild\swigwin-4.0.1;%PATH%
+    SET PATH=C:\MapServerBuild\swigwin-4.4.1;%PATH%
     swig -python -shadow -o mapscript_wrap.c ../mapscript.i
 
 SWIG has several command line options to control the output, examples of which are shown below:
@@ -299,8 +299,8 @@ Make sure the MapServer binaries are on the system path, and that the PROJ_DATA 
 
 .. code-block:: bat
 
-    SET PATH=C:\release-1930-x64-gdal-3-8-4-mapserver-8-0-1\bin;%PATH%
-    SET PROJ_DATA=C:\release-1930-x64-gdal-3-8-4-mapserver-8-0-1\bin\proj\SHARE
+    SET PATH=C:\release-1930-x64-gdal-3-11-3-mapserver-8-4-0\bin;%PATH%
+    SET PROJ_DATA=C:\release-1930-x64-gdal-3-11-3-mapserver-8-4-0\bin\proj\SHARE
 
 Finally run the command below to run the test suite: 
 
