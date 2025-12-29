@@ -73,7 +73,7 @@ void msOWSClearRequestObj(owsRequestObj *ows_request) {
   msFree(ows_request->request);
   if (ows_request->document) {
 #if defined(USE_LIBXML2)
-    xmlFreeDoc(ows_request->document);
+    xmlFreeDoc(static_cast<xmlDocPtr>(ows_request->document));
     xmlCleanupParser();
 #else
     CPLDestroyXMLNode(ows_request->document);
@@ -162,7 +162,8 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
     }
 #endif
     if (ows_request->document == NULL ||
-        (root = xmlDocGetRootElement(ows_request->document)) == NULL) {
+        (root = xmlDocGetRootElement(
+             static_cast<const xmlDoc *>(ows_request->document))) == NULL) {
       const xmlError *error = xmlGetLastError();
       msSetError(MS_OWSERR, "XML parsing error: %s", "msOWSPreParseRequest()",
                  error->message);
@@ -1123,21 +1124,22 @@ void msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata,
       return;
     }
 
-    *epsgCode = msSmallMalloc((space_ptr - value + 1) * sizeof(char));
+    *epsgCode = static_cast<char *>(
+        msSmallMalloc((space_ptr - value + 1) * sizeof(char)));
     /* caller requested only first projection code, copy up to the first space
      * character*/
     strlcpy(*epsgCode, value, space_ptr - value + 1);
     return;
   } else if (proj && proj->numargs > 0 &&
              (value = strstr(proj->args[0], "init=epsg:")) != NULL) {
-    *epsgCode = msSmallMalloc((strlen("EPSG:") + strlen(value + 10) + 1) *
-                              sizeof(char));
+    *epsgCode = static_cast<char *>(msSmallMalloc(
+        (strlen("EPSG:") + strlen(value + 10) + 1) * sizeof(char)));
     sprintf(*epsgCode, "EPSG:%s", value + 10);
     return;
   } else if (proj && proj->numargs > 0 &&
              (value = strstr(proj->args[0], "init=crs:")) != NULL) {
-    *epsgCode =
-        msSmallMalloc((strlen("CRS:") + strlen(value + 9) + 1) * sizeof(char));
+    *epsgCode = static_cast<char *>(
+        msSmallMalloc((strlen("CRS:") + strlen(value + 9) + 1) * sizeof(char)));
     sprintf(*epsgCode, "CRS:%s", value + 9);
     return;
   } else if (proj && proj->numargs > 0 &&
@@ -1763,8 +1765,8 @@ int msOWSPrintInspireCommonLanguages(FILE *stream, mapObj *map,
     msFree(buffer);
 
     /* append _exclude to our default_language*/
-    default_language = msSmallRealloc(
-        default_language, strlen(default_language) + strlen("_exclude") + 1);
+    default_language = static_cast<char *>(msSmallRealloc(
+        default_language, strlen(default_language) + strlen("_exclude") + 1));
     strcat(default_language, "_exclude");
 
     msOWSPrintEncodeMetadataList(
