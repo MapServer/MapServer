@@ -83,16 +83,16 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
     <BoundingBox SRS="EPSG:26711"
                 minx="440720" miny="3.74532e+06" maxx="446720" maxy="3.75132e+06" />
     <Layer queryable="0" opaque="0" cascaded="0">
-        <Name>grey</Name>
-        <Title>grey</Title>
-        <SRS>EPSG:26711</SRS>
-        <LatLonBoundingBox minx="-117.641169" miny="33.847955" maxx="-117.576023" maxy="33.902673" />
-        <BoundingBox SRS="EPSG:26711"
-                    minx="440682" miny="3.74525e+06" maxx="446743" maxy="3.75136e+06" />
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/?request=GetMetadata&amp;layer=grey"/>
-        </MetadataURL>
+      <Name>grey</Name>
+      <Title>grey</Title>
+      <SRS>EPSG:26711</SRS>
+      <LatLonBoundingBox minx="-117.641169" miny="33.847955" maxx="-117.576023" maxy="33.902673" />
+      <BoundingBox SRS="EPSG:26711"
+                  minx="440682" miny="3.74525e+06" maxx="446743" maxy="3.75136e+06" />
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/?request=GetMetadata&amp;layer=grey"/>
+      </MetadataURL>
     </Layer>
   </Layer>
 </Capability>

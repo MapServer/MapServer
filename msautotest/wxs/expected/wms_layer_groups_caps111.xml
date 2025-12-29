@@ -109,40 +109,42 @@
       <Title>g1</Title>
       <Layer>
         <Name>sg1</Name>
+        <!-- WARNING: Mandatory metadata "wms_GROUP_TITLE" or "ows_GROUP_TITLE" was missing in this context. -->
         <Title>sg1</Title>
         <Layer queryable="0" opaque="0" cascaded="0">
-        <Name>g1sg1l1</Name>
+          <Name>g1sg1l1</Name>
 <!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
-        <Title>g1sg1l1</Title>
-        <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo?request=GetMetadata&amp;layer=g1sg1l1"/>
-        </MetadataURL>
+          <Title>g1sg1l1</Title>
+          <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
+          <MetadataURL type="TC211">
+            <Format>text/xml</Format>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo?request=GetMetadata&amp;layer=g1sg1l1"/>
+          </MetadataURL>
         </Layer>
         <Layer queryable="0" opaque="0" cascaded="0">
-        <Name>g1sg1l2</Name>
+          <Name>g1sg1l2</Name>
 <!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
-        <Title>g1sg1l2</Title>
-        <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo?request=GetMetadata&amp;layer=g1sg1l2"/>
-        </MetadataURL>
+          <Title>g1sg1l2</Title>
+          <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
+          <MetadataURL type="TC211">
+            <Format>text/xml</Format>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo?request=GetMetadata&amp;layer=g1sg1l2"/>
+          </MetadataURL>
         </Layer>
       </Layer>
       <Layer>
         <Name>sg2</Name>
+        <!-- WARNING: Mandatory metadata "wms_GROUP_TITLE" or "ows_GROUP_TITLE" was missing in this context. -->
         <Title>sg2</Title>
         <Layer queryable="0" opaque="0" cascaded="0">
-        <Name>g1sg2l1</Name>
+          <Name>g1sg2l1</Name>
 <!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
-        <Title>g1sg2l1</Title>
-        <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo?request=GetMetadata&amp;layer=g1sg2l1"/>
-        </MetadataURL>
+          <Title>g1sg2l1</Title>
+          <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
+          <MetadataURL type="TC211">
+            <Format>text/xml</Format>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo?request=GetMetadata&amp;layer=g1sg2l1"/>
+          </MetadataURL>
         </Layer>
       </Layer>
     </Layer>
@@ -151,16 +153,17 @@
       <Title>g2</Title>
       <Layer queryable="1">
         <Name>sg3</Name>
+        <!-- WARNING: Mandatory metadata "wms_GROUP_TITLE" or "ows_GROUP_TITLE" was missing in this context. -->
         <Title>sg3</Title>
         <Layer queryable="1" opaque="0" cascaded="0">
-        <Name>g2sg3l1</Name>
+          <Name>g2sg3l1</Name>
 <!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
-        <Title>g2sg3l1</Title>
-        <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo?request=GetMetadata&amp;layer=g2sg3l1"/>
-        </MetadataURL>
+          <Title>g2sg3l1</Title>
+          <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
+          <MetadataURL type="TC211">
+            <Format>text/xml</Format>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo?request=GetMetadata&amp;layer=g2sg3l1"/>
+          </MetadataURL>
         </Layer>
       </Layer>
     </Layer>
@@ -183,14 +186,14 @@
         <Title>Group g3/sg4 title</Title>
         <Abstract>Group g3/sg4 Abstract</Abstract>
         <Layer queryable="1" opaque="0" cascaded="0">
-        <Name>g3sg4l1</Name>
-        <Title>g3sg4l1 title</Title>
-        <Abstract>g3sg4l1 Abstract</Abstract>
-        <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo?request=GetMetadata&amp;layer=g3sg4l1"/>
-        </MetadataURL>
+          <Name>g3sg4l1</Name>
+          <Title>g3sg4l1 title</Title>
+          <Abstract>g3sg4l1 Abstract</Abstract>
+          <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
+          <MetadataURL type="TC211">
+            <Format>text/xml</Format>
+            <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo?request=GetMetadata&amp;layer=g3sg4l1"/>
+          </MetadataURL>
         </Layer>
       </Layer>
     </Layer>

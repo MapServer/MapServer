@@ -166,48 +166,48 @@
        </LegendURL>
     </Style>
     <Layer queryable="1" opaque="0" cascaded="0">
-        <Name>TN.CommonTransportElements</Name>
-        <Title>TN.CommonTransportElements</Title>
-        <Abstract>Nicht verfügbar</Abstract>
-        <KeywordList>
-            <Keyword>no-keyword here</Keyword>
-        </KeywordList>
-        <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
-        <BoundingBox SRS="EPSG:25833"
-                    minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
-        <BoundingBox SRS="EPSG:4326"
-                    minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
-        <BoundingBox SRS="EPSG:4269"
-                    minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
-        <BoundingBox SRS="EPSG:3035"
-                    minx="4.49447e+06" miny="3.37095e+06" maxx="4.50436e+06" maxy="3.37372e+06" />
-        <BoundingBox SRS="EPSG:4258"
-                    minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
-        <BoundingBox SRS="EPSG:3038"
-                    minx="3.05452e+06" miny="6.67978e+06" maxx="3.06479e+06" maxy="6.68783e+06" />
-        <BoundingBox SRS="EPSG:3039"
-                    minx="2.68857e+06" miny="6.46107e+06" maxx="2.69894e+06" maxy="6.46823e+06" />
-        <BoundingBox SRS="EPSG:3040"
-                    minx="2.31093e+06" miny="6.28137e+06" maxx="2.32131e+06" maxy="6.28765e+06" />
-        <BoundingBox SRS="EPSG:3041"
-                    minx="1.92491e+06" miny="6.13918e+06" maxx="1.93524e+06" maxy="6.14459e+06" />
-        <BoundingBox SRS="EPSG:3042"
-                    minx="1.5331e+06" miny="6.03309e+06" maxx="1.54333e+06" maxy="6.03766e+06" />
-        <BoundingBox SRS="EPSG:3043"
-                    minx="1.13753e+06" miny="5.96194e+06" maxx="1.14762e+06" maxy="5.96568e+06" />
-        <BoundingBox SRS="EPSG:3044"
-                    minx="739805" miny="5.92488e+06" maxx="749731" maxy="5.9278e+06" />
-        <BoundingBox SRS="EPSG:3045"
-                    minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
-        <BoundingBox SRS="EPSG:3046"
-                    minx="-56964" miny="5.9505e+06" maxx="-46904.9" maxy="5.95405e+06" />
-        <BoundingBox SRS="EPSG:3047"
-                    minx="-453304" miny="6.01381e+06" maxx="-443100" maxy="6.01819e+06" />
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
-        </MetadataURL>
+      <Name>TN.CommonTransportElements</Name>
+      <Title>TN.CommonTransportElements</Title>
+      <Abstract>Nicht verfügbar</Abstract>
+      <KeywordList>
+          <Keyword>no-keyword here</Keyword>
+      </KeywordList>
+      <SRS>EPSG:4326</SRS>
+      <LatLonBoundingBox minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
+      <BoundingBox SRS="EPSG:25833"
+                  minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
+      <BoundingBox SRS="EPSG:4326"
+                  minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
+      <BoundingBox SRS="EPSG:4269"
+                  minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
+      <BoundingBox SRS="EPSG:3035"
+                  minx="4.49447e+06" miny="3.37095e+06" maxx="4.50436e+06" maxy="3.37372e+06" />
+      <BoundingBox SRS="EPSG:4258"
+                  minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
+      <BoundingBox SRS="EPSG:3038"
+                  minx="3.05452e+06" miny="6.67978e+06" maxx="3.06479e+06" maxy="6.68783e+06" />
+      <BoundingBox SRS="EPSG:3039"
+                  minx="2.68857e+06" miny="6.46107e+06" maxx="2.69894e+06" maxy="6.46823e+06" />
+      <BoundingBox SRS="EPSG:3040"
+                  minx="2.31093e+06" miny="6.28137e+06" maxx="2.32131e+06" maxy="6.28765e+06" />
+      <BoundingBox SRS="EPSG:3041"
+                  minx="1.92491e+06" miny="6.13918e+06" maxx="1.93524e+06" maxy="6.14459e+06" />
+      <BoundingBox SRS="EPSG:3042"
+                  minx="1.5331e+06" miny="6.03309e+06" maxx="1.54333e+06" maxy="6.03766e+06" />
+      <BoundingBox SRS="EPSG:3043"
+                  minx="1.13753e+06" miny="5.96194e+06" maxx="1.14762e+06" maxy="5.96568e+06" />
+      <BoundingBox SRS="EPSG:3044"
+                  minx="739805" miny="5.92488e+06" maxx="749731" maxy="5.9278e+06" />
+      <BoundingBox SRS="EPSG:3045"
+                  minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
+      <BoundingBox SRS="EPSG:3046"
+                  minx="-56964" miny="5.9505e+06" maxx="-46904.9" maxy="5.95405e+06" />
+      <BoundingBox SRS="EPSG:3047"
+                  minx="-453304" miny="6.01381e+06" maxx="-443100" maxy="6.01819e+06" />
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
+      </MetadataURL>
         <Style>
           <Name>TestStyle</Name>
           <Title>TestStyle</Title>
@@ -379,48 +379,48 @@
       </Layer>
     </Layer>
     <Layer queryable="1" opaque="0" cascaded="0">
-        <Name>TN.RoadTransportNetwork</Name>
-        <Title>TN.RoadTransportNetwork</Title>
-        <Abstract>Nicht verfügbar</Abstract>
-        <KeywordList>
-            <Keyword>no-keyword here</Keyword>
-        </KeywordList>
-        <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
-        <BoundingBox SRS="EPSG:25833"
-                    minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
-        <BoundingBox SRS="EPSG:4326"
-                    minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
-        <BoundingBox SRS="EPSG:4269"
-                    minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
-        <BoundingBox SRS="EPSG:3035"
-                    minx="4.49447e+06" miny="3.37095e+06" maxx="4.50436e+06" maxy="3.37372e+06" />
-        <BoundingBox SRS="EPSG:4258"
-                    minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
-        <BoundingBox SRS="EPSG:3038"
-                    minx="3.05452e+06" miny="6.67978e+06" maxx="3.06479e+06" maxy="6.68783e+06" />
-        <BoundingBox SRS="EPSG:3039"
-                    minx="2.68857e+06" miny="6.46107e+06" maxx="2.69894e+06" maxy="6.46823e+06" />
-        <BoundingBox SRS="EPSG:3040"
-                    minx="2.31093e+06" miny="6.28137e+06" maxx="2.32131e+06" maxy="6.28765e+06" />
-        <BoundingBox SRS="EPSG:3041"
-                    minx="1.92491e+06" miny="6.13918e+06" maxx="1.93524e+06" maxy="6.14459e+06" />
-        <BoundingBox SRS="EPSG:3042"
-                    minx="1.5331e+06" miny="6.03309e+06" maxx="1.54333e+06" maxy="6.03766e+06" />
-        <BoundingBox SRS="EPSG:3043"
-                    minx="1.13753e+06" miny="5.96194e+06" maxx="1.14762e+06" maxy="5.96568e+06" />
-        <BoundingBox SRS="EPSG:3044"
-                    minx="739805" miny="5.92488e+06" maxx="749731" maxy="5.9278e+06" />
-        <BoundingBox SRS="EPSG:3045"
-                    minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
-        <BoundingBox SRS="EPSG:3046"
-                    minx="-56964" miny="5.9505e+06" maxx="-46904.9" maxy="5.95405e+06" />
-        <BoundingBox SRS="EPSG:3047"
-                    minx="-453304" miny="6.01381e+06" maxx="-443100" maxy="6.01819e+06" />
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
-        </MetadataURL>
+      <Name>TN.RoadTransportNetwork</Name>
+      <Title>TN.RoadTransportNetwork</Title>
+      <Abstract>Nicht verfügbar</Abstract>
+      <KeywordList>
+          <Keyword>no-keyword here</Keyword>
+      </KeywordList>
+      <SRS>EPSG:4326</SRS>
+      <LatLonBoundingBox minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
+      <BoundingBox SRS="EPSG:25833"
+                  minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
+      <BoundingBox SRS="EPSG:4326"
+                  minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
+      <BoundingBox SRS="EPSG:4269"
+                  minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
+      <BoundingBox SRS="EPSG:3035"
+                  minx="4.49447e+06" miny="3.37095e+06" maxx="4.50436e+06" maxy="3.37372e+06" />
+      <BoundingBox SRS="EPSG:4258"
+                  minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
+      <BoundingBox SRS="EPSG:3038"
+                  minx="3.05452e+06" miny="6.67978e+06" maxx="3.06479e+06" maxy="6.68783e+06" />
+      <BoundingBox SRS="EPSG:3039"
+                  minx="2.68857e+06" miny="6.46107e+06" maxx="2.69894e+06" maxy="6.46823e+06" />
+      <BoundingBox SRS="EPSG:3040"
+                  minx="2.31093e+06" miny="6.28137e+06" maxx="2.32131e+06" maxy="6.28765e+06" />
+      <BoundingBox SRS="EPSG:3041"
+                  minx="1.92491e+06" miny="6.13918e+06" maxx="1.93524e+06" maxy="6.14459e+06" />
+      <BoundingBox SRS="EPSG:3042"
+                  minx="1.5331e+06" miny="6.03309e+06" maxx="1.54333e+06" maxy="6.03766e+06" />
+      <BoundingBox SRS="EPSG:3043"
+                  minx="1.13753e+06" miny="5.96194e+06" maxx="1.14762e+06" maxy="5.96568e+06" />
+      <BoundingBox SRS="EPSG:3044"
+                  minx="739805" miny="5.92488e+06" maxx="749731" maxy="5.9278e+06" />
+      <BoundingBox SRS="EPSG:3045"
+                  minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
+      <BoundingBox SRS="EPSG:3046"
+                  minx="-56964" miny="5.9505e+06" maxx="-46904.9" maxy="5.95405e+06" />
+      <BoundingBox SRS="EPSG:3047"
+                  minx="-453304" miny="6.01381e+06" maxx="-443100" maxy="6.01819e+06" />
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
+      </MetadataURL>
       <Layer queryable="1" opaque="0" cascaded="0">
         <Name>TN.RoadTransportNetwork.RoadLink</Name>
         <Title>Straßensegment</Title>
@@ -635,48 +635,48 @@
       </Layer>
     </Layer>
     <Layer queryable="1" opaque="0" cascaded="0">
-        <Name>TN.RailTransportNetwork</Name>
-        <Title>TN.RailTransportNetwork</Title>
-        <Abstract>Nicht verfügbar</Abstract>
-        <KeywordList>
-            <Keyword>no-keyword here</Keyword>
-        </KeywordList>
-        <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
-        <BoundingBox SRS="EPSG:25833"
-                    minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
-        <BoundingBox SRS="EPSG:4326"
-                    minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
-        <BoundingBox SRS="EPSG:4269"
-                    minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
-        <BoundingBox SRS="EPSG:3035"
-                    minx="4.49447e+06" miny="3.37095e+06" maxx="4.50436e+06" maxy="3.37372e+06" />
-        <BoundingBox SRS="EPSG:4258"
-                    minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
-        <BoundingBox SRS="EPSG:3038"
-                    minx="3.05452e+06" miny="6.67978e+06" maxx="3.06479e+06" maxy="6.68783e+06" />
-        <BoundingBox SRS="EPSG:3039"
-                    minx="2.68857e+06" miny="6.46107e+06" maxx="2.69894e+06" maxy="6.46823e+06" />
-        <BoundingBox SRS="EPSG:3040"
-                    minx="2.31093e+06" miny="6.28137e+06" maxx="2.32131e+06" maxy="6.28765e+06" />
-        <BoundingBox SRS="EPSG:3041"
-                    minx="1.92491e+06" miny="6.13918e+06" maxx="1.93524e+06" maxy="6.14459e+06" />
-        <BoundingBox SRS="EPSG:3042"
-                    minx="1.5331e+06" miny="6.03309e+06" maxx="1.54333e+06" maxy="6.03766e+06" />
-        <BoundingBox SRS="EPSG:3043"
-                    minx="1.13753e+06" miny="5.96194e+06" maxx="1.14762e+06" maxy="5.96568e+06" />
-        <BoundingBox SRS="EPSG:3044"
-                    minx="739805" miny="5.92488e+06" maxx="749731" maxy="5.9278e+06" />
-        <BoundingBox SRS="EPSG:3045"
-                    minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
-        <BoundingBox SRS="EPSG:3046"
-                    minx="-56964" miny="5.9505e+06" maxx="-46904.9" maxy="5.95405e+06" />
-        <BoundingBox SRS="EPSG:3047"
-                    minx="-453304" miny="6.01381e+06" maxx="-443100" maxy="6.01819e+06" />
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
-        </MetadataURL>
+      <Name>TN.RailTransportNetwork</Name>
+      <Title>TN.RailTransportNetwork</Title>
+      <Abstract>Nicht verfügbar</Abstract>
+      <KeywordList>
+          <Keyword>no-keyword here</Keyword>
+      </KeywordList>
+      <SRS>EPSG:4326</SRS>
+      <LatLonBoundingBox minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
+      <BoundingBox SRS="EPSG:25833"
+                  minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
+      <BoundingBox SRS="EPSG:4326"
+                  minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
+      <BoundingBox SRS="EPSG:4269"
+                  minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
+      <BoundingBox SRS="EPSG:3035"
+                  minx="4.49447e+06" miny="3.37095e+06" maxx="4.50436e+06" maxy="3.37372e+06" />
+      <BoundingBox SRS="EPSG:4258"
+                  minx="12.610800" miny="53.418300" maxx="12.758400" maxy="53.440000" />
+      <BoundingBox SRS="EPSG:3038"
+                  minx="3.05452e+06" miny="6.67978e+06" maxx="3.06479e+06" maxy="6.68783e+06" />
+      <BoundingBox SRS="EPSG:3039"
+                  minx="2.68857e+06" miny="6.46107e+06" maxx="2.69894e+06" maxy="6.46823e+06" />
+      <BoundingBox SRS="EPSG:3040"
+                  minx="2.31093e+06" miny="6.28137e+06" maxx="2.32131e+06" maxy="6.28765e+06" />
+      <BoundingBox SRS="EPSG:3041"
+                  minx="1.92491e+06" miny="6.13918e+06" maxx="1.93524e+06" maxy="6.14459e+06" />
+      <BoundingBox SRS="EPSG:3042"
+                  minx="1.5331e+06" miny="6.03309e+06" maxx="1.54333e+06" maxy="6.03766e+06" />
+      <BoundingBox SRS="EPSG:3043"
+                  minx="1.13753e+06" miny="5.96194e+06" maxx="1.14762e+06" maxy="5.96568e+06" />
+      <BoundingBox SRS="EPSG:3044"
+                  minx="739805" miny="5.92488e+06" maxx="749731" maxy="5.9278e+06" />
+      <BoundingBox SRS="EPSG:3045"
+                  minx="341227" miny="5.92115e+06" maxx="351110" maxy="5.92388e+06" />
+      <BoundingBox SRS="EPSG:3046"
+                  minx="-56964" miny="5.9505e+06" maxx="-46904.9" maxy="5.95405e+06" />
+      <BoundingBox SRS="EPSG:3047"
+                  minx="-453304" miny="6.01381e+06" maxx="-443100" maxy="6.01819e+06" />
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&amp;version=2.0.2&amp;request=GetRecordById&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;ElementSetName=full&amp;Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"/>
+      </MetadataURL>
       <Layer queryable="1" opaque="0" cascaded="0">
         <Name>TN.RailTransportNetwork.RailwayLink</Name>
         <Title>Eisenbahnverbindung</Title>

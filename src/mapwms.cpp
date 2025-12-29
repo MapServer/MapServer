@@ -51,8 +51,10 @@
 #include <string.h>
 
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #ifdef _WIN32
@@ -545,73 +547,262 @@ static int msWMSApplyFilter(mapObj *map, int version, const char *filter,
 }
 
 /*
-** msWMSPrepareNestedGroups()
-**
-** purpose: Parse WMS_LAYER_GROUP settings into arrays
-**
-** params:
-** - nestedGroups: This array holds the arrays of groups that have been set
-**                 through the WMS_LAYER_GROUP metadata
-** - numNestedGroups: This array holds the number of groups set in
-**                    WMS_LAYER_GROUP for each layer
-** - isUsedInNestedGroup: This array indicates if the layer is used as group
-**                        as set through the WMS_LAYER_GROUP metadata
+** Class representing a node in the hierarchy of <Layer> of the
+* GetCapabilities response. All nodes don't necessarily correspond to an
+* actual MapServer LAYER when groups are involved.
 */
-static void msWMSPrepareNestedGroups(mapObj *map, int /* nVersion */,
-                                     char ***nestedGroups, int *numNestedGroups,
-                                     int *isUsedInNestedGroup) {
-  // Create set to hold unique groups
-  std::set<std::string> uniqgroups;
+class msWMSLayerNode {
+public:
+  std::string name{};
+  std::string title{};
+  std::string titleWarning{};
+  std::string abstract{};
+  int layerIdx = -1;
+  msWMSLayerNode *parent = nullptr;
+  std::vector<std::unique_ptr<msWMSLayerNode>> children{};
+
+  msWMSLayerNode() = default;
+
+  /*
+  ** isQueryable()
+  */
+  bool isQueryable(const mapObj *map) const {
+    if (layerIdx >= 0 && msIsLayerQueryable(GET_LAYER(map, layerIdx)))
+      return true;
+    for (const auto &child : children) {
+      if (child->isQueryable(map)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /*
+  ** collectLayerIndices()
+  */
+  std::vector<int> collectLayerIndices() const {
+    std::vector<int> res;
+    collectLayerIndices(res);
+    return res;
+  }
+
+private:
+  msWMSLayerNode(const msWMSLayerNode &) = delete;
+  msWMSLayerNode &operator=(const msWMSLayerNode &) = delete;
+
+  void collectLayerIndices(std::vector<int> &res) const {
+    if (layerIdx >= 0)
+      res.push_back(layerIdx);
+    for (const auto &child : children) {
+      child->collectLayerIndices(res);
+    }
+  }
+};
+
+/*
+** msWMSCreateLayerTree()
+*/
+static std::pair<std::unique_ptr<msWMSLayerNode>,
+                 std::map<std::string, msWMSLayerNode *>>
+msWMSCreateLayerTree(mapObj *map, const char *validated_language) {
+  auto root = std::make_unique<msWMSLayerNode>();
+  std::map<std::vector<std::string>, msWMSLayerNode *> mapPathToNode;
+  std::map<std::string, msWMSLayerNode *> mapNameToNode;
+
+  if (map->name) {
+    root->name = map->name;
+    mapNameToNode[msStringToLower(root->name)] = root.get();
+  }
 
   for (int i = 0; i < map->numlayers; i++) {
-    nestedGroups[i] = NULL;     /* default */
-    numNestedGroups[i] = 0;     /* default */
-    isUsedInNestedGroup[i] = 0; /* default */
+    layerObj *layer = GET_LAYER(map, i);
+    if (!layer->name)
+      continue;
 
-    const char *groups = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata),
-                                             "MO", "layer_group");
-    if ((groups != NULL) && (strlen(groups) != 0)) {
-      if (GET_LAYER(map, i)->group != NULL &&
-          strlen(GET_LAYER(map, i)->group) != 0) {
+    const char *layer_group =
+        msOWSLookupMetadata(&(layer->metadata), "MO", "layer_group");
+    const char *group = layer->group;
+    const bool has_layer_group = layer_group && layer_group[0] != 0;
+    const bool has_group = group && group[0] != 0;
+    msWMSLayerNode *curNode = nullptr;
+
+    std::vector<std::string> path;
+    if (has_layer_group) {
+      if (has_group) {
         const char *errorMsg = "It is not allowed to set both the GROUP and "
                                "WMS_LAYER_GROUP for a layer";
         msSetErrorWithStatus(MS_WMSERR, MS_HTTP_500_INTERNAL_SERVER_ERROR,
-                             errorMsg, "msWMSPrepareNestedGroups()", NULL);
+                             errorMsg, "msWMSCreateLayerTree()", NULL);
         msIO_fprintf(stdout, "<!-- ERROR: %s -->\n", errorMsg);
         /* cannot return exception at this point because we are already writing
          * to stdout */
+      } else if (layer_group[0] != '/') {
+        const char *errorMsg =
+            "The WMS_LAYER_GROUP metadata does not start with a '/'";
+        msSetErrorWithStatus(MS_WMSERR, MS_HTTP_500_INTERNAL_SERVER_ERROR,
+                             errorMsg, "msWMSPrepareNestedGroups()", NULL);
+        msIO_fprintf(stdout, "<!-- ERROR: %s -->\n", errorMsg);
+        /* cannot return exception at this point because we are already
+         * writing to stdout */
       } else {
-        if (groups[0] != '/') {
-          const char *errorMsg =
-              "The WMS_LAYER_GROUP metadata does not start with a '/'";
-          msSetErrorWithStatus(MS_WMSERR, MS_HTTP_500_INTERNAL_SERVER_ERROR,
-                               errorMsg, "msWMSPrepareNestedGroups()", NULL);
-          msIO_fprintf(stdout, "<!-- ERROR: %s -->\n", errorMsg);
-          /* cannot return exception at this point because we are already
-           * writing to stdout */
-        } else {
-          /* split into subgroups. Start at address + 1 because the first '/'
-           * would cause an extra empty group */
-          nestedGroups[i] = msStringSplit(groups + 1, '/', &numNestedGroups[i]);
-          /* Iterate through the groups and add them to the unique groups array
-           */
-          for (int k = 0; k < numNestedGroups[i]; k++) {
-            uniqgroups.insert(msStringToLower(std::string(nestedGroups[i][k])));
+        /* split into subgroups. Start at address + 1 because the first '/'
+         * would cause an extra empty group */
+        curNode = root.get();
+        const auto splitPath = msStringSplit(layer_group + 1, '/');
+        if (!splitPath.empty()) {
+          bool lastComponentJustAdded = false;
+          for (const std::string &subPath : splitPath) {
+            path.push_back(msStringToLower(subPath));
+            auto iter = mapPathToNode.find(path);
+            if (iter == mapPathToNode.end()) {
+              auto newNode = std::make_unique<msWMSLayerNode>();
+              newNode->parent = curNode;
+              newNode->name = subPath;
+              newNode->title = subPath;
+              mapPathToNode[path] = newNode.get();
+              mapNameToNode[msStringToLower(newNode->name)] = newNode.get();
+              curNode->children.push_back(std::move(newNode));
+              curNode = curNode->children.back().get();
+              lastComponentJustAdded = true;
+            } else {
+              curNode = iter->second;
+              lastComponentJustAdded = false;
+            }
+          }
+
+          if (lastComponentJustAdded) {
+            const char *value;
+            if ((value = msOWSLookupMetadataWithLanguage(&(layer->metadata),
+                                                         "MO", "GROUP_TITLE",
+                                                         validated_language))) {
+              curNode->title = value;
+            } else {
+              curNode->title = curNode->name;
+
+              char *pszExpandedName =
+                  msStringConcatenate(nullptr, "GROUP_TITLE");
+              if (validated_language && validated_language[0]) {
+                pszExpandedName = msStringConcatenate(pszExpandedName, ".");
+                pszExpandedName =
+                    msStringConcatenate(pszExpandedName, validated_language);
+              }
+              char *pszExpandedMetadataKey =
+                  msOWSGetExpandedMetadataKey("MO", pszExpandedName);
+              curNode->titleWarning = "<!-- WARNING: Mandatory metadata ";
+              curNode->titleWarning += pszExpandedMetadataKey;
+              curNode->titleWarning += " was missing in this context. -->";
+              msFree(pszExpandedName);
+              msFree(pszExpandedMetadataKey);
+            }
+          }
+          if (lastComponentJustAdded) {
+            const char *value;
+            if ((value = msOWSLookupMetadataWithLanguage(&(layer->metadata),
+                                                         "MO", "GROUP_ABSTRACT",
+                                                         validated_language))) {
+              curNode->abstract = value;
+            }
           }
         }
       }
-    }
-  }
-  /* Iterate through layers to find out whether they are in any of the nested
-   * groups */
-  for (int i = 0; i < map->numlayers; i++) {
-    if (GET_LAYER(map, i)->name) {
-      if (uniqgroups.find(msStringToLower(
-              std::string(GET_LAYER(map, i)->name))) != uniqgroups.end()) {
-        isUsedInNestedGroup[i] = 1;
+    } else {
+      curNode = root.get();
+      if (has_group) {
+        path.push_back(msStringToLower(group));
+        auto iter = mapPathToNode.find(path);
+        if (iter == mapPathToNode.end()) {
+          auto newNode = std::make_unique<msWMSLayerNode>();
+          newNode->parent = curNode;
+          newNode->name = group;
+
+          {
+            const char *value;
+            if ((value = msOWSLookupMetadataWithLanguage(&(layer->metadata),
+                                                         "MO", "GROUP_TITLE",
+                                                         validated_language))) {
+              newNode->title = value;
+            } else {
+              newNode->title = newNode->name;
+
+              char *pszExpandedName =
+                  msStringConcatenate(nullptr, "GROUP_TITLE");
+              if (validated_language && validated_language[0]) {
+                pszExpandedName = msStringConcatenate(pszExpandedName, ".");
+                pszExpandedName =
+                    msStringConcatenate(pszExpandedName, validated_language);
+              }
+              char *pszExpandedMetadataKey =
+                  msOWSGetExpandedMetadataKey("MO", pszExpandedName);
+              newNode->titleWarning = "<!-- WARNING: Mandatory metadata ";
+              newNode->titleWarning += pszExpandedMetadataKey;
+              newNode->titleWarning += " was missing in this context. -->";
+              msFree(pszExpandedName);
+              msFree(pszExpandedMetadataKey);
+            }
+          }
+          {
+            const char *value;
+            if ((value = msOWSLookupMetadataWithLanguage(&(layer->metadata),
+                                                         "MO", "GROUP_ABSTRACT",
+                                                         validated_language))) {
+              newNode->abstract = value;
+            }
+          }
+
+          mapPathToNode[path] = newNode.get();
+          mapNameToNode[msStringToLower(newNode->name)] = newNode.get();
+          curNode->children.push_back(std::move(newNode));
+          curNode = root->children.back().get();
+        } else {
+          curNode = iter->second;
+        }
       }
     }
+
+    if (curNode) {
+      auto newNode = std::make_unique<msWMSLayerNode>();
+      newNode->parent = curNode;
+      newNode->layerIdx = i;
+      newNode->name = layer->name;
+      path.push_back(msStringToLower(newNode->name));
+      mapPathToNode[path] = newNode.get();
+      mapNameToNode[msStringToLower(newNode->name)] = newNode.get();
+      {
+        const char *value;
+        if ((value = msOWSLookupMetadataWithLanguage(
+                 &(layer->metadata), "MO", "title", validated_language))) {
+          newNode->title = value;
+        } else {
+          newNode->title = newNode->name;
+
+          char *pszExpandedName = msStringConcatenate(nullptr, "TITLE");
+          if (validated_language && validated_language[0]) {
+            pszExpandedName = msStringConcatenate(pszExpandedName, ".");
+            pszExpandedName =
+                msStringConcatenate(pszExpandedName, validated_language);
+          }
+          char *pszExpandedMetadataKey =
+              msOWSGetExpandedMetadataKey("MO", pszExpandedName);
+          newNode->titleWarning = "<!-- WARNING: Mandatory metadata ";
+          newNode->titleWarning += pszExpandedMetadataKey;
+          newNode->titleWarning += " was missing in this context. -->";
+          msFree(pszExpandedName);
+          msFree(pszExpandedMetadataKey);
+        }
+      }
+      {
+        const char *value;
+        if ((value = msOWSLookupMetadataWithLanguage(
+                 &(layer->metadata), "MO", "abstract", validated_language))) {
+          newNode->abstract = value;
+        }
+      }
+
+      curNode->children.push_back(std::move(newNode));
+    }
   }
+
+  return std::make_pair(std::move(root), std::move(mapNameToNode));
 }
 
 /*
@@ -1063,14 +1254,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
         }
       }
 
-      char ***nestedGroups =
-          (char ***)msSmallCalloc(map->numlayers, sizeof(char **));
-      int *numNestedGroups = (int *)msSmallCalloc(map->numlayers, sizeof(int));
-      int *isUsedInNestedGroup =
-          (int *)msSmallCalloc(map->numlayers, sizeof(int));
-      msWMSPrepareNestedGroups(map, nVersion, nestedGroups, numNestedGroups,
-                               isUsedInNestedGroup);
-
       if (ows_request->layerwmsfilterindex != NULL)
         msFree(ows_request->layerwmsfilterindex);
       ows_request->layerwmsfilterindex =
@@ -1080,27 +1263,27 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
       }
       ows_request->numwmslayerargs = static_cast<int>(wmslayers.size());
 
+      auto [layerTree, mapNameToNode] = msWMSCreateLayerTree(map, nullptr);
+      (void)layerTree;
+
       for (int k = 0; k < static_cast<int>(wmslayers.size()); k++) {
         const auto &wmslayer = wmslayers[k];
         bool layerfound = false;
-        for (int j = 0; j < map->numlayers; j++) {
-          /* Turn on selected layers only. */
-          if (((GET_LAYER(map, j)->name &&
-                strcasecmp(GET_LAYER(map, j)->name, wmslayer.c_str()) == 0) ||
-               (map->name && strcasecmp(map->name, wmslayer.c_str()) == 0) ||
-               (GET_LAYER(map, j)->group &&
-                strcasecmp(GET_LAYER(map, j)->group, wmslayer.c_str()) == 0) ||
-               ((numNestedGroups[j] > 0) &&
-                msStringInArray(wmslayer.c_str(), nestedGroups[j],
-                                numNestedGroups[j]))) &&
-              ((msIntegerInArray(GET_LAYER(map, j)->index,
-                                 ows_request->enabled_layers,
-                                 ows_request->numlayers)))) {
-            if (GET_LAYER(map, j)->status != MS_DEFAULT) {
+        auto iter = mapNameToNode.find(msStringToLower(wmslayer));
+        std::vector<int> layerIndices;
+        if (iter != mapNameToNode.end()) {
+          layerIndices = iter->second->collectLayerIndices();
+        }
+
+        for (int j : layerIndices) {
+          layerObj *layer = GET_LAYER(map, j);
+          if (msIntegerInArray(layer->index, ows_request->enabled_layers,
+                               ows_request->numlayers)) {
+            if (layer->status != MS_DEFAULT) {
               if (layerOrder[j] == 0) {
                 map->layerorder[nLayerOrder++] = j;
                 layerOrder[j] = 1;
-                GET_LAYER(map, j)->status = MS_ON;
+                layer->status = MS_ON;
               }
             }
             /* if a layer name is repeated assign the first matching filter */
@@ -1113,19 +1296,10 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
             layerfound = true;
           }
         }
-        if (layerfound == false && !wmslayers.empty())
+
+        if (!layerfound)
           invalidlayers++;
       }
-
-      /* free the stuff used for nested layers */
-      for (int k = 0; k < map->numlayers; k++) {
-        if (numNestedGroups[k] > 0) {
-          msFreeCharArray(nestedGroups[k], numNestedGroups[k]);
-        }
-      }
-      free(nestedGroups);
-      free(numNestedGroups);
-      free(isUsedInNestedGroup);
 
       /* set all layers with status off at end of array */
       for (int j = 0; j < map->numlayers; j++) {
@@ -2315,16 +2489,18 @@ void msWMSPrintKeywordlist(FILE *stream, const char *tabspace, const char *name,
 }
 
 /*
-** msDumpLayer()
+** msWMSDumpLayer()
 */
-static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
-                       const char *script_url_encoded, const char *indent,
-                       const char *validated_language, int grouplayer,
-                       int hasQueryableSubLayers) {
+static void msWMSDumpLayer(mapObj *map, const msWMSLayerNode *node,
+                           int nVersion, const char *script_url_encoded,
+                           const char *validated_language,
+                           const std::string &indent) {
   rectObj ext;
   char **classgroups = NULL;
   int iclassgroups = 0;
   char *pszMapEPSG, *pszLayerEPSG;
+
+  layerObj *lp = GET_LAYER(map, node->layerIdx);
 
   /* if the layer status is set to MS_DEFAULT, output a warning */
   if (lp->status == MS_DEFAULT)
@@ -2336,8 +2512,8 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
                  "OFF is recommended. -->\n");
 
   if (nVersion < OWS_1_1_0) {
-    msIO_printf("%s    <Layer queryable=\"%d\">\n", indent,
-                hasQueryableSubLayers || msIsLayerQueryable(lp));
+    msIO_printf("%s<Layer queryable=\"%d\">\n", indent.c_str(),
+                node->isQueryable(map));
   } else {
     /* 1.1.0 and later: opaque and cascaded are new. */
     int cascaded = 0, opaque = 0;
@@ -2347,10 +2523,8 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
     if (lp->connectiontype == MS_WMS)
       cascaded = 1;
 
-    msIO_printf(
-        "%s    <Layer queryable=\"%d\" opaque=\"%d\" cascaded=\"%d\">\n",
-        indent, hasQueryableSubLayers || msIsLayerQueryable(lp), opaque,
-        cascaded);
+    msIO_printf("%s<Layer queryable=\"%d\" opaque=\"%d\" cascaded=\"%d\">\n",
+                indent.c_str(), node->isQueryable(map), opaque, cascaded);
   }
 
   if (lp->name && strlen(lp->name) > 0 &&
@@ -2361,20 +2535,21 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
                  "lead to potential problems. -->\n",
                  lp->name);
   msOWSPrintEncodeParam(stdout, "LAYER.NAME", lp->name, OWS_NOERR,
-                        "        <Name>%s</Name>\n", NULL);
+                        (indent + "  <Name>%s</Name>\n").c_str(), NULL);
 
   /* the majority of this section is dependent on appropriately named metadata
    * in the LAYER object */
   msOWSPrintEncodeMetadata2(stdout, &(lp->metadata), "MO", "title", OWS_WARN,
-                            "        <Title>%s</Title>\n", lp->name,
-                            validated_language);
+                            (indent + "  <Title>%s</Title>\n").c_str(),
+                            lp->name, validated_language);
 
   msOWSPrintEncodeMetadata2(stdout, &(lp->metadata), "MO", "abstract",
-                            OWS_NOERR, "        <Abstract>%s</Abstract>\n",
+                            OWS_NOERR,
+                            (indent + "  <Abstract>%s</Abstract>\n").c_str(),
                             NULL, validated_language);
 
-  msWMSPrintKeywordlist(stdout, "        ", "keywordlist", &(lp->metadata),
-                        "MO", nVersion);
+  msWMSPrintKeywordlist(stdout, (indent + "  ").c_str(), "keywordlist",
+                        &(lp->metadata), "MO", nVersion);
 
   msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "MO", MS_FALSE,
                    &pszMapEPSG);
@@ -2390,21 +2565,21 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
                                   "MAP.PROJECTION, LAYER.PROJECTION "
                                   "or wms_srs metadata",
                                   pszLayerEPSG, OWS_WARN, ' ', NULL, NULL,
-                                  "        <CRS>%s</CRS>\n", NULL);
+                                  (indent + "  <CRS>%s</CRS>\n").c_str(), NULL);
       } else {
         msOWSPrintEncodeParamList(stdout,
                                   "(at least one of) "
                                   "MAP.PROJECTION, LAYER.PROJECTION "
                                   "or wms_srs metadata",
                                   pszLayerEPSG, OWS_WARN, ' ', NULL, NULL,
-                                  "        <SRS>%s</SRS>\n", NULL);
+                                  (indent + "  <SRS>%s</SRS>\n").c_str(), NULL);
       }
     } else {
       msOWSPrintEncodeParam(stdout,
                             "(at least one of) MAP.PROJECTION, "
                             "LAYER.PROJECTION or wms_srs metadata",
-                            pszLayerEPSG, OWS_WARN, "        <SRS>%s</SRS>\n",
-                            NULL);
+                            pszLayerEPSG, OWS_WARN,
+                            (indent + "  <SRS>%s</SRS>\n").c_str(), NULL);
     }
   } else {
     /* No warning required in this case since there's at least a map proj. */
@@ -2416,19 +2591,19 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
                                   "MAP.PROJECTION, LAYER.PROJECTION "
                                   "or wms_srs metadata",
                                   pszLayerEPSG, OWS_NOERR, ' ', NULL, NULL,
-                                  "        <CRS>%s</CRS>\n", NULL);
+                                  (indent + "  <CRS>%s</CRS>\n").c_str(), NULL);
       } else {
         msOWSPrintEncodeParamList(stdout,
                                   "(at least one of) "
                                   "MAP.PROJECTION, LAYER.PROJECTION "
                                   "or wms_srs metadata",
                                   pszLayerEPSG, OWS_NOERR, ' ', NULL, NULL,
-                                  "        <SRS>%s</SRS>\n", NULL);
+                                  (indent + "  <SRS>%s</SRS>\n").c_str(), NULL);
       }
     } else {
       msOWSPrintEncodeParam(stdout, " LAYER.PROJECTION (or wms_srs metadata)",
-                            pszLayerEPSG, OWS_NOERR, "        <SRS>%s</SRS>\n",
-                            NULL);
+                            pszLayerEPSG, OWS_NOERR,
+                            (indent + "  <SRS>%s</SRS>\n").c_str(), NULL);
     }
   }
   msFree(pszLayerEPSG);
@@ -2438,35 +2613,37 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
   if (msOWSGetLayerExtent(map, lp, "MO", &ext) == MS_SUCCESS) {
     if (lp->projection.numargs > 0) {
       if (nVersion >= OWS_1_3_0)
-        msOWSPrintEX_GeographicBoundingBox(stdout, "        ", &(ext),
-                                           &(lp->projection));
+        msOWSPrintEX_GeographicBoundingBox(stdout, (indent + "  ").c_str(),
+                                           &(ext), &(lp->projection));
       else
-        msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext),
+        msOWSPrintLatLonBoundingBox(stdout, (indent + "  ").c_str(), &(ext),
                                     &(lp->projection), NULL, OWS_WMS);
 
-      msOWSPrintBoundingBox(stdout, "        ", &(ext), &(lp->projection),
-                            &(lp->metadata), &(map->web.metadata), "MO",
-                            nVersion);
+      msOWSPrintBoundingBox(stdout, (indent + "  ").c_str(), &(ext),
+                            &(lp->projection), &(lp->metadata),
+                            &(map->web.metadata), "MO", nVersion);
     } else {
       if (nVersion >= OWS_1_3_0)
-        msOWSPrintEX_GeographicBoundingBox(stdout, "        ", &(ext),
-                                           &(map->projection));
+        msOWSPrintEX_GeographicBoundingBox(stdout, (indent + "  ").c_str(),
+                                           &(ext), &(map->projection));
       else
-        msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext),
+        msOWSPrintLatLonBoundingBox(stdout, (indent + "  ").c_str(), &(ext),
                                     &(map->projection), NULL, OWS_WMS);
-      msOWSPrintBoundingBox(stdout, "        ", &(ext), &(map->projection),
-                            &(lp->metadata), &(map->web.metadata), "MO",
-                            nVersion);
+      msOWSPrintBoundingBox(stdout, (indent + "  ").c_str(), &(ext),
+                            &(map->projection), &(lp->metadata),
+                            &(map->web.metadata), "MO", nVersion);
     }
   } else {
     if (nVersion >= OWS_1_3_0)
       msIO_printf(
-          "        <!-- WARNING: Optional Ex_GeographicBoundingBox could not "
+          (indent + "  %s").c_str(),
+          "<!-- WARNING: Optional Ex_GeographicBoundingBox could not "
           "be established for this layer.  Consider setting the EXTENT in the "
           "LAYER object, or wms_extent metadata. Also check that your data "
           "exists in the DATA statement -->\n");
     else
-      msIO_printf("        <!-- WARNING: Optional LatLonBoundingBox could not "
+      msIO_printf((indent + "  %s").c_str(),
+                  "<!-- WARNING: Optional LatLonBoundingBox could not "
                   "be established for this layer.  Consider setting the EXTENT "
                   "in the LAYER object, or wms_extent metadata. Also check "
                   "that your data exists in the DATA statement -->\n");
@@ -2482,28 +2659,35 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
     if (nVersion >= OWS_1_3_0) {
       if (pszWmsTimeDefault)
         msIO_fprintf(stdout,
-                     "        <Dimension name=\"time\" units=\"ISO8601\" "
-                     "default=\"%s\" nearestValue=\"0\">%s</Dimension>\n",
+                     (indent +
+                      "  <Dimension name=\"time\" units=\"ISO8601\" "
+                      "default=\"%s\" nearestValue=\"0\">%s</Dimension>\n")
+                         .c_str(),
                      pszWmsTimeDefault, pszWmsTimeExtent);
       else
         msIO_fprintf(stdout,
-                     "        <Dimension name=\"time\" units=\"ISO8601\" "
-                     "nearestValue=\"0\">%s</Dimension>\n",
+                     (indent + "  <Dimension name=\"time\" units=\"ISO8601\" "
+                               "nearestValue=\"0\">%s</Dimension>\n")
+                         .c_str(),
                      pszWmsTimeExtent);
     }
 
     else {
-      msIO_fprintf(stdout,
-                   "        <Dimension name=\"time\" units=\"ISO8601\"/>\n");
+      msIO_fprintf(stdout, "%s",
+                   (indent + "  <Dimension name=\"time\" units=\"ISO8601\"/>\n")
+                       .c_str());
       if (pszWmsTimeDefault)
         msIO_fprintf(stdout,
-                     "        <Extent name=\"time\" default=\"%s\" "
-                     "nearestValue=\"0\">%s</Extent>\n",
+                     (indent + "  <Extent name=\"time\" default=\"%s\" "
+                               "nearestValue=\"0\">%s</Extent>\n")
+                         .c_str(),
                      pszWmsTimeDefault, pszWmsTimeExtent);
       else
         msIO_fprintf(
             stdout,
-            "        <Extent name=\"time\" nearestValue=\"0\">%s</Extent>\n",
+            (indent +
+             "  <Extent name=\"time\" nearestValue=\"0\">%s</Extent>\n")
+                .c_str(),
             pszWmsTimeExtent);
     }
   }
@@ -2532,30 +2716,38 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
           if (pszDimensionDefault && strlen(pszDimensionDefault) > 0)
             msIO_fprintf(
                 stdout,
-                "        <Dimension name=\"%s\" units=\"%s\" default=\"%s\" "
-                "multipleValues=\"1\" nearestValue=\"0\">%s</Dimension>\n",
+                (indent +
+                 "  <Dimension name=\"%s\" units=\"%s\" default=\"%s\" "
+                 "multipleValues=\"1\" nearestValue=\"0\">%s</Dimension>\n")
+                    .c_str(),
                 dimension.c_str(), pszDimensionUnit, pszDimensionDefault,
                 pszDimensionExtent);
           else
             msIO_fprintf(
                 stdout,
-                "        <Dimension name=\"%s\" units=\"%s\"  "
-                "multipleValues=\"1\"  nearestValue=\"0\">%s</Dimension>\n",
+                (indent +
+                 "  <Dimension name=\"%s\" units=\"%s\"  "
+                 "multipleValues=\"1\"  nearestValue=\"0\">%s</Dimension>\n")
+                    .c_str(),
                 dimension.c_str(), pszDimensionUnit, pszDimensionExtent);
         } else {
-          msIO_fprintf(stdout,
-                       "        <Dimension name=\"%s\" units=\"%s\"/>\n",
-                       dimension.c_str(), pszDimensionUnit);
+          msIO_fprintf(
+              stdout,
+              (indent + "  <Dimension name=\"%s\" units=\"%s\"/>\n").c_str(),
+              dimension.c_str(), pszDimensionUnit);
           if (pszDimensionDefault && strlen(pszDimensionDefault) > 0)
             msIO_fprintf(stdout,
-                         "        <Extent name=\"%s\" default=\"%s\" "
-                         "nearestValue=\"0\">%s</Extent>\n",
+                         (indent + "  <Extent name=\"%s\" default=\"%s\" "
+                                   "nearestValue=\"0\">%s</Extent>\n")
+                             .c_str(),
                          dimension.c_str(), pszDimensionDefault,
                          pszDimensionExtent);
           else
             msIO_fprintf(
                 stdout,
-                "        <Extent name=\"%s\" nearestValue=\"0\">%s</Extent>\n",
+                (indent +
+                 "  <Extent name=\"%s\" nearestValue=\"0\">%s</Extent>\n")
+                    .c_str(),
                 dimension.c_str(), pszDimensionExtent);
         }
       }
@@ -2564,9 +2756,12 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
 
   /* AuthorityURL support and Identifier support, only available >= WMS 1.1.0 */
   if (nVersion >= OWS_1_1_0) {
-    msWMSPrintAttribution(stdout, "    ", &(lp->metadata), "MO");
-    msWMSPrintAuthorityURL(stdout, "        ", &(lp->metadata), "MO");
-    msWMSPrintIdentifier(stdout, "        ", &(lp->metadata), "MO");
+    msWMSPrintAttribution(stdout, (indent + "  ").c_str(), &(lp->metadata),
+                          "MO");
+    msWMSPrintAuthorityURL(stdout, (indent + "  ").c_str(), &(lp->metadata),
+                           "MO");
+    msWMSPrintIdentifier(stdout, (indent + "  ").c_str(), &(lp->metadata),
+                         "MO");
   }
 
   if (nVersion >= OWS_1_1_0) {
@@ -2580,11 +2775,11 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
         msOWSPrintURLType(stdout, &(lp->metadata), "MO", key.c_str(), OWS_NOERR,
                           NULL, "MetadataURL", " type=\"%s\"", NULL, NULL,
                           ">\n          <Format>%s</Format",
-                          "\n          <OnlineResource xmlns:xlink=\""
+                          "\n        <OnlineResource xmlns:xlink=\""
                           "http://www.w3.org/1999/xlink\" "
                           "xlink:type=\"simple\" xlink:href=\"%s\"/>\n        ",
                           MS_TRUE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE, NULL,
-                          NULL, NULL, NULL, NULL, "        ");
+                          NULL, NULL, NULL, NULL, (indent + "  ").c_str());
       }
     } else {
       if (!msOWSLookupMetadata(&(lp->metadata), "MO", "metadataurl_href"))
@@ -2592,19 +2787,22 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
 
       msOWSPrintURLType(stdout, &(lp->metadata), "MO", "metadataurl", OWS_NOERR,
                         NULL, "MetadataURL", " type=\"%s\"", NULL, NULL,
-                        ">\n          <Format>%s</Format",
-                        "\n          <OnlineResource xmlns:xlink=\""
-                        "http://www.w3.org/1999/xlink\" "
-                        "xlink:type=\"simple\" xlink:href=\"%s\"/>\n        ",
+                        (">\n" + indent + "    <Format>%s</Format").c_str(),
+                        ("\n" + indent +
+                         "    <OnlineResource xmlns:xlink=\""
+                         "http://www.w3.org/1999/xlink\" "
+                         "xlink:type=\"simple\" xlink:href=\"%s\"/>\n" +
+                         indent + "  ")
+                            .c_str(),
                         MS_TRUE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE, NULL,
-                        NULL, NULL, NULL, NULL, "        ");
+                        NULL, NULL, NULL, NULL, (indent + "  ").c_str());
     }
   }
 
   if (nVersion < OWS_1_1_0)
-    msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", "dataurl_href",
-                             OWS_NOERR, "        <DataURL>%s</DataURL>\n",
-                             NULL);
+    msOWSPrintEncodeMetadata(
+        stdout, &(lp->metadata), "MO", "dataurl_href", OWS_NOERR,
+        (indent + "  <DataURL>%s</DataURL>\n").c_str(), NULL);
   else {
     const char *dataurl_list =
         msOWSLookupMetadata(&(lp->metadata), "MO", "dataurl_list");
@@ -2615,22 +2813,28 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
         key += token;
         msOWSPrintURLType(stdout, &(lp->metadata), "MO", key.c_str(), OWS_NOERR,
                           NULL, "DataURL", NULL, NULL, NULL,
-                          ">\n          <Format>%s</Format",
-                          "\n          <OnlineResource xmlns:xlink=\""
-                          "http://www.w3.org/1999/xlink\" "
-                          "xlink:type=\"simple\" xlink:href=\"%s\"/>\n        ",
+                          (">\n" + indent + "    <Format>%s</Format").c_str(),
+                          ("\n" + indent +
+                           "    <OnlineResource xmlns:xlink=\""
+                           "http://www.w3.org/1999/xlink\" "
+                           "xlink:type=\"simple\" xlink:href=\"%s\"/>\n" +
+                           indent + "  ")
+                              .c_str(),
                           MS_FALSE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE, NULL,
-                          NULL, NULL, NULL, NULL, "        ");
+                          NULL, NULL, NULL, NULL, (indent + "  ").c_str());
       }
     } else {
       msOWSPrintURLType(stdout, &(lp->metadata), "MO", "dataurl", OWS_NOERR,
                         NULL, "DataURL", NULL, NULL, NULL,
-                        ">\n          <Format>%s</Format",
-                        "\n          <OnlineResource xmlns:xlink=\""
-                        "http://www.w3.org/1999/xlink\" "
-                        "xlink:type=\"simple\" xlink:href=\"%s\"/>\n        ",
+                        (">\n" + indent + "    <Format>%s</Format").c_str(),
+                        ("\n" + indent +
+                         "    <OnlineResource xmlns:xlink=\""
+                         "http://www.w3.org/1999/xlink\" "
+                         "xlink:type=\"simple\" xlink:href=\"%s\"/>\n" +
+                         indent + "  ")
+                            .c_str(),
                         MS_FALSE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE, NULL,
-                        NULL, NULL, NULL, NULL, "        ");
+                        NULL, NULL, NULL, NULL, (indent + "  ").c_str());
     }
   }
 
@@ -2652,33 +2856,36 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
 
   if (nVersion <= OWS_1_0_0 && pszLegendURL) {
     /* First, print the style block */
-    msIO_fprintf(stdout, "        <Style>\n");
-    msIO_fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
+    msIO_fprintf(stdout, "%s", (indent + "  <Style>\n").c_str());
+    msIO_fprintf(stdout, (indent + "    <Name>%s</Name>\n").c_str(), pszStyle);
     /* Print the real Title or Style name otherwise */
     msOWSPrintEncodeMetadata2(
         stdout, &(lp->metadata), "MO",
         (std::string("style_") + pszStyle + "_title").c_str(), OWS_NOERR,
-        "          <Title>%s</Title>\n", pszStyle, validated_language);
+        (indent + "    <Title>%s</Title>\n").c_str(), pszStyle,
+        validated_language);
 
     /* Inside, print the legend url block */
     msOWSPrintEncodeMetadata(
         stdout, &(lp->metadata), "MO",
         (std::string("style_") + pszStyle + "_legendurl_href").c_str(),
-        OWS_NOERR, "          <StyleURL>%s</StyleURL>\n", NULL);
+        OWS_NOERR, (indent + "    <StyleURL>%s</StyleURL>\n").c_str(), NULL);
 
     /* close the style block */
-    msIO_fprintf(stdout, "        </Style>\n");
+    msIO_fprintf(stdout, "%s", (indent + "  </Style>\n").c_str());
 
   } else if (nVersion >= OWS_1_1_0) {
     if (pszLegendURL) {
       /* First, print the style block */
-      msIO_fprintf(stdout, "        <Style>\n");
-      msIO_fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
+      msIO_fprintf(stdout, "%s", (indent + "  <Style>\n").c_str());
+      msIO_fprintf(stdout, (indent + "    <Name>%s</Name>\n").c_str(),
+                   pszStyle);
       /* Print the real Title or Style name otherwise */
       msOWSPrintEncodeMetadata2(
           stdout, &(lp->metadata), "MO",
           (std::string("style_") + pszStyle + "_title").c_str(), OWS_NOERR,
-          "          <Title>%s</Title>\n", pszStyle, validated_language);
+          (indent + "    <Title>%s</Title>\n").c_str(), pszStyle,
+          validated_language);
 
       /* Inside, print the legend url block */
       msOWSPrintURLType(
@@ -2692,7 +2899,7 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
           "          ",
           MS_FALSE, MS_TRUE, MS_TRUE, MS_TRUE, MS_TRUE, NULL, NULL, NULL, NULL,
           NULL, "          ");
-      msIO_fprintf(stdout, "        </Style>\n");
+      msIO_fprintf(stdout, "%s", (indent + "  </Style>\n").c_str());
 
     } else {
       if (script_url_encoded) {
@@ -2710,26 +2917,10 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
             std::vector<int> group_layers;
             group_layers.reserve(map->numlayers);
 
-            char ***nestedGroups =
-                (char ***)msSmallCalloc(map->numlayers, sizeof(char **));
-            int *numNestedGroups =
-                (int *)msSmallCalloc(map->numlayers, sizeof(int));
-            int *isUsedInNestedGroup =
-                (int *)msSmallCalloc(map->numlayers, sizeof(int));
-            msWMSPrepareNestedGroups(map, nVersion, nestedGroups,
-                                     numNestedGroups, isUsedInNestedGroup);
-
             group_layers.push_back(lp->index);
-            if (isUsedInNestedGroup[lp->index]) {
-              for (int j = 0; j < map->numlayers; j++) {
-                if (j == lp->index)
-                  continue;
-                for (int k = 0; k < numNestedGroups[j]; k++) {
-                  if (strcasecmp(lp->name, nestedGroups[j][k]) == 0) {
-                    group_layers.push_back(j);
-                    break;
-                  }
-                }
+            for (int j : node->collectLayerIndices()) {
+              if (j != lp->index) {
+                group_layers.push_back(j);
               }
             }
 
@@ -2778,29 +2969,22 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
                     continue;
                   /* Check that style is not inherited from group layer(s)
                    * (#4442). */
-                  if (numNestedGroups[lp->index] > 0) {
-                    int j = 0;
-                    layerObj *lp2 = NULL;
-                    for (; j < numNestedGroups[lp->index]; j++) {
-                      int l = 0;
-                      for (int k = 0; k < map->numlayers; k++) {
-                        if (GET_LAYER(map, k)->name &&
-                            strcasecmp(GET_LAYER(map, k)->name,
-                                       nestedGroups[lp->index][j]) == 0) {
-                          lp2 = (GET_LAYER(map, k));
-                          for (l = 0; l < lp2->numclasses; l++) {
-                            if (strcasecmp(lp2->_class[l]->group,
-                                           lp->_class[i]->group) == 0)
-                              break;
-                          }
+                  bool styleInheritedFromParent = false;
+                  for (const msWMSLayerNode *cur = node->parent;
+                       cur && !styleInheritedFromParent; cur = cur->parent) {
+                    if (cur->layerIdx >= 0) {
+                      layerObj *lp2 = GET_LAYER(map, cur->layerIdx);
+                      for (int l = 0; l < lp2->numclasses; l++) {
+                        if (strcasecmp(lp2->_class[l]->group,
+                                       lp->_class[i]->group) == 0) {
+                          styleInheritedFromParent = true;
                           break;
                         }
                       }
-                      if (lp2 && l < lp2->numclasses)
-                        break;
                     }
-                    if (j < numNestedGroups[lp->index])
-                      continue;
+                  }
+                  if (styleInheritedFromParent) {
+                    continue;
                   }
                   if (!classgroups) {
                     classgroups = (char **)msSmallMalloc(sizeof(char *));
@@ -2902,15 +3086,6 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
               msFreeCharArray(classgroups, iclassgroups);
               msFree(mimetype);
             }
-            /* free the stuff used for nested layers */
-            for (int i = 0; i < map->numlayers; i++) {
-              if (numNestedGroups[i] > 0) {
-                msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
-              }
-            }
-            free(nestedGroups);
-            free(numNestedGroups);
-            free(isUsedInNestedGroup);
           }
         }
       }
@@ -2919,173 +3094,191 @@ static int msDumpLayer(mapObj *map, layerObj *lp, int nVersion,
 
   /* print Min/Max ScaleDenominator */
   if (nVersion < OWS_1_3_0)
-    msWMSPrintScaleHint("        ", lp->minscaledenom, lp->maxscaledenom,
-                        map->resolution);
+    msWMSPrintScaleHint((indent + "  ").c_str(), lp->minscaledenom,
+                        lp->maxscaledenom, map->resolution);
   else
-    msWMSPrintScaleDenominator("        ", lp->minscaledenom,
+    msWMSPrintScaleDenominator((indent + "  ").c_str(), lp->minscaledenom,
                                lp->maxscaledenom);
-
-  if (grouplayer == MS_FALSE)
-    msIO_printf("%s    </Layer>\n", indent);
-
-  return MS_SUCCESS;
 }
 
 /*
- * msWMSIsSubGroup
- */
-static bool msWMSIsSubGroup(char **currentGroups, int currentLevel,
-                            char **otherGroups, int numOtherGroups) {
-  /* no match if otherGroups[] has less levels than currentLevel */
-  if (numOtherGroups <= currentLevel) {
-    return false;
-  }
-  /* compare all groups below the current level */
-  for (int i = 0; i <= currentLevel; i++) {
-    if (strcmp(currentGroups[i], otherGroups[i]) != 0) {
-      return false; /* if one of these is not equal it is not a sub group */
+** msWMSPrintGroupStyle()
+*/
+static void msWMSPrintGroupStyle(mapObj *map, int nVersion,
+                                 owsRequestObj *ows_request,
+                                 const msWMSLayerNode *node, layerObj *lp,
+                                 const char *script_url_encoded,
+                                 const std::string &indent) {
+  char *pszEncodedName = NULL;
+  const char *styleName = NULL;
+  char *pszEncodedStyleName = NULL;
+  const char *legendURL = NULL;
+
+  pszEncodedName = msEncodeHTMLEntities(lp->group);
+
+  styleName = msOWSLookupMetadata(&(lp->metadata), "MO", "group_style_name");
+  if (styleName == NULL)
+    styleName = "default";
+
+  pszEncodedStyleName = msEncodeHTMLEntities(styleName);
+
+  msIO_fprintf(stdout, "%s", (indent + "  <Style>\n").c_str());
+  msIO_fprintf(stdout, (indent + "    <Name>%s</Name>\n").c_str(),
+               pszEncodedStyleName);
+  msOWSPrintEncodeMetadata(
+      stdout, &(lp->metadata), "MO", "group_style_title", OWS_NOERR,
+      (indent + "    <Title>%s</Title>\n").c_str(), styleName);
+
+  legendURL =
+      msOWSLookupMetadata(&(lp->metadata), "MO", "group_style_legendurl_href");
+  if (legendURL) {
+    msOWSPrintURLType(stdout, &(lp->metadata), "MO", "group_style_legendurl",
+                      OWS_NOERR, NULL, "LegendURL", NULL, " width=\"%s\"",
+                      " height=\"%s\"",
+                      (">\n" + indent + "    <Format>%s</Format").c_str(),
+                      ("\n" + indent +
+                       "    <OnlineResource "
+                       "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
+                       " xlink:type=\"simple\" xlink:href=\"%s\"/>\n" +
+                       indent + "  ")
+                          .c_str(),
+                      MS_FALSE, MS_TRUE, MS_TRUE, MS_TRUE, MS_TRUE, NULL, NULL,
+                      NULL, NULL, NULL, (indent + "  ").c_str());
+  } else {
+    std::vector<int> group_layers;
+    group_layers.reserve(map->numlayers);
+    for (int j : node->collectLayerIndices()) {
+      if (msIntegerInArray(GET_LAYER(map, j)->index,
+                           ows_request->enabled_layers,
+                           ows_request->numlayers)) {
+        group_layers.push_back(j);
+      }
+    }
+
+    if (!group_layers.empty()) {
+      int size_x = 0, size_y = 0;
+      char *pszMimetype = NULL;
+
+      if (msLegendCalcSize(map, 1, &size_x, &size_y, group_layers.data(),
+                           static_cast<int>(group_layers.size()), NULL,
+                           1) == MS_SUCCESS) {
+        const std::string width(std::to_string(size_x));
+        const std::string height(std::to_string(size_y));
+
+        const char *format_list = msOWSLookupMetadata(
+            &(map->web.metadata), "M", "getlegendgraphic_formatlist");
+        if (format_list && strlen(format_list) > 0) {
+          const auto tokens = msStringSplit(format_list, ',');
+          if (!tokens.empty()) {
+            /*just grab the first mime type*/
+            pszMimetype = msEncodeHTMLEntities(tokens[0].c_str());
+          }
+        } else
+          pszMimetype = msEncodeHTMLEntities("image/png");
+
+        std::string legendurl(script_url_encoded);
+        legendurl += "version=";
+        char szVersionBuf[OWS_VERSION_MAXLEN];
+        legendurl += msOWSGetVersionString(nVersion, szVersionBuf);
+        legendurl += "&amp;service=WMS&amp;request=GetLegendGraphic&amp;";
+        if (nVersion >= OWS_1_3_0) {
+          legendurl += "sld_version=1.1.0&amp;layer=";
+        } else {
+          legendurl += "layer=";
+        }
+        legendurl += pszEncodedName;
+        legendurl += "&amp;format=";
+        legendurl += pszMimetype;
+        legendurl += "&amp;STYLE=";
+        legendurl += pszEncodedStyleName;
+
+        msOWSPrintURLType(stdout, NULL, "O", "ttt", OWS_NOERR, NULL,
+                          "LegendURL", NULL, " width=\"%s\"", " height=\"%s\"",
+                          ">\n          <Format>%s</Format",
+                          "\n          <OnlineResource "
+                          "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
+                          " xlink:type=\"simple\" xlink:href=\"%s\"/>\n"
+                          "       ",
+                          MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE,
+                          NULL, width.c_str(), height.c_str(), pszMimetype,
+                          legendurl.c_str(), "       ");
+
+        msFree(pszMimetype);
+      }
     }
   }
-  return true;
+  msIO_fprintf(stdout, "%s", (indent + "  </Style>\n").c_str());
+  msFree(pszEncodedName);
+  msFree(pszEncodedStyleName);
 }
 
 /*
- * msWMSHasQueryableSubLayers
- */
-static int msWMSHasQueryableSubLayers(mapObj *map, int index, int level,
-                                      char ***nestedGroups,
-                                      int *numNestedGroups) {
-  for (int j = index; j < map->numlayers; j++) {
-    if (msWMSIsSubGroup(nestedGroups[index], level, nestedGroups[j],
-                        numNestedGroups[j])) {
-      if (msIsLayerQueryable(GET_LAYER(map, j)))
-        return MS_TRUE;
-    }
-  }
-  return MS_FALSE;
-}
-
-/***********************************************************************************
- * msWMSPrintNestedGroups() *
- *                                                                                 *
- * purpose: Writes the layers to the capabilities that have the *
- * "WMS_LAYER_GROUP" metadata set. *
- *                                                                                 *
- * params: * -map: The main map object * -nVersion: OGC WMS version *
- * -pabLayerProcessed: boolean array indicating which layers have been dealt
- *with. * -index: the index of the current layer. * -level: the level of depth
- *in the group tree (root = 0)                         * -nestedGroups: This
- *array holds the arrays of groups that have                  * been set through
- *the WMS_LAYER_GROUP metadata                                 *
- * -numNestedGroups: This array holds the number of nested groups for each layer
- **
- ***********************************************************************************/
-void msWMSPrintNestedGroups(mapObj *map, int nVersion, char *pabLayerProcessed,
-                            int index, int level, char ***nestedGroups,
-                            int *numNestedGroups, int *isUsedInNestedGroup,
-                            const char *script_url_encoded,
-                            const char *validated_language) {
-  bool groupAdded = false;
+** msWMSPrintLayerNode()
+*/
+static void
+msWMSPrintLayerNode(mapObj *map, int nVersion, owsRequestObj *ows_request,
+                    const msWMSLayerNode *node, const char *script_url_encoded,
+                    const char *validated_language, int indentLevel) {
   std::string indent;
-  for (int i = 0; i < level; i++) {
+  for (int i = 0; i < indentLevel; i++) {
     indent += "  ";
   }
 
-  if (numNestedGroups[index] <= level) { /* no more subgroups */
-    if ((!pabLayerProcessed[index]) && (!isUsedInNestedGroup[index])) {
-      /* we are at the deepest level of the group branchings, so add layer now.
-       */
-      msDumpLayer(map, GET_LAYER(map, index), nVersion, script_url_encoded,
-                  indent.c_str(), validated_language, MS_FALSE, MS_FALSE);
-      pabLayerProcessed[index] = 1; /* done */
+  bool closeLayerTag = false;
+  if (node->layerIdx >= 0) {
+    layerObj *lp = GET_LAYER(map, node->layerIdx);
+    if (lp->status != MS_DELETE &&
+        msIntegerInArray(lp->index, ows_request->enabled_layers,
+                         ows_request->numlayers)) {
+      closeLayerTag = true;
+      msWMSDumpLayer(map, node, nVersion, script_url_encoded,
+                     validated_language, indent);
     }
-  } else { /* not yet there, we have to deal with this group and possible
-              subgroups and layers. */
-    int j;
-    for (j = 0; j < map->numlayers; j++) {
-      if (GET_LAYER(map, j)->name &&
-          strcasecmp(GET_LAYER(map, j)->name, nestedGroups[index][level]) ==
-              0) {
-        break;
-      }
+  } else {
+    closeLayerTag = true;
+    msIO_printf("%s<Layer%s>\n", indent.c_str(),
+                node->isQueryable(map) ? " queryable=\"1\"" : "");
+    msIO_printf("%s  <Name>%s</Name>\n", indent.c_str(), node->name.c_str());
+    if (!node->titleWarning.empty()) {
+      msIO_printf("%s  %s\n", indent.c_str(), node->titleWarning.c_str());
     }
-
-    /* Beginning of a new group... enclose the group in a layer block */
-    if (j < map->numlayers) {
-      if (!pabLayerProcessed[j]) {
-        msDumpLayer(map, GET_LAYER(map, j), nVersion, script_url_encoded,
-                    indent.c_str(), validated_language, MS_TRUE,
-                    msWMSHasQueryableSubLayers(map, index, level, nestedGroups,
-                                               numNestedGroups));
-        pabLayerProcessed[j] = 1; /* done */
-        groupAdded = true;
-      }
-    } else {
-      msIO_printf("%s    <Layer%s>\n", indent.c_str(),
-                  msWMSHasQueryableSubLayers(map, index, level, nestedGroups,
-                                             numNestedGroups)
-                      ? " queryable=\"1\""
-                      : "");
-      msIO_printf("%s      <Name>%s</Name>\n", indent.c_str(),
-                  nestedGroups[index][level]);
-
-      {
-        const char *value;
-        if ((value = msOWSLookupMetadataWithLanguage(
-                 &(GET_LAYER(map, index)->metadata), "MO", "GROUP_TITLE",
-                 validated_language))) {
-          char *encoded = msEncodeHTMLEntities(value);
-          msIO_printf("%s      <Title>%s</Title>\n", indent.c_str(), encoded);
-          msFree(encoded);
-        } else {
-          msIO_printf("%s      <Title>%s</Title>\n", indent.c_str(),
-                      nestedGroups[index][level]);
-        }
-      }
-      {
-        const char *value;
-        if ((value = msOWSLookupMetadataWithLanguage(
-                 &(GET_LAYER(map, index)->metadata), "MO", "GROUP_ABSTRACT",
-                 validated_language))) {
-          char *encoded = msEncodeHTMLEntities(value);
-          msIO_printf("%s      <Abstract>%s</Abstract>\n", indent.c_str(),
-                      encoded);
-          msFree(encoded);
-        }
-      }
-
-      groupAdded = true;
+    {
+      char *encoded = msEncodeHTMLEntities(node->title.c_str());
+      msIO_printf("%s  <Title>%s</Title>\n", indent.c_str(), encoded);
+      msFree(encoded);
+    }
+    if (!node->abstract.empty()) {
+      char *encoded = msEncodeHTMLEntities(node->abstract.c_str());
+      msIO_printf("%s  <Abstract>%s</Abstract>\n", indent.c_str(), encoded);
+      msFree(encoded);
     }
 
-    /* Look for one group deeper in the current layer */
-    if (!pabLayerProcessed[index]) {
-      msWMSPrintNestedGroups(map, nVersion, pabLayerProcessed, index, level + 1,
-                             nestedGroups, numNestedGroups, isUsedInNestedGroup,
-                             script_url_encoded, validated_language);
-    }
-
-    /* look for subgroups in other layers. */
-    for (j = index + 1; j < map->numlayers; j++) {
-      if (msWMSIsSubGroup(nestedGroups[index], level, nestedGroups[j],
-                          numNestedGroups[j])) {
-        if (!pabLayerProcessed[j]) {
-          msWMSPrintNestedGroups(map, nVersion, pabLayerProcessed, j, level + 1,
-                                 nestedGroups, numNestedGroups,
-                                 isUsedInNestedGroup, script_url_encoded,
-                                 validated_language);
-        }
-      } else {
-        /* TODO: if we would sort all layers on "WMS_LAYER_GROUP" beforehand */
-        /* we could break out of this loop at this point, which would increase
-         */
-        /* performance.  */
+    if (script_url_encoded && indentLevel == 2 && !node->children.empty() &&
+        node->children[0]->layerIdx >= 0) {
+      layerObj *lp = GET_LAYER(map, node->children[0]->layerIdx);
+      if (lp->group && strlen(lp->group) > 0 &&
+          msIntegerInArray(lp->index, ows_request->enabled_layers,
+                           ows_request->numlayers)) {
+        msWMSPrintGroupStyle(map, nVersion, ows_request, node, lp,
+                             script_url_encoded, indent);
       }
     }
-    /* Close group layer block */
-    if (groupAdded)
-      msIO_printf("%s    </Layer>\n", indent.c_str());
   }
-} /* msWMSPrintNestedGroups */
+
+  indent += "  ";
+
+  for (const auto &child : node->children) {
+    msWMSPrintLayerNode(map, nVersion, ows_request, child.get(),
+                        script_url_encoded, validated_language,
+                        indentLevel + 1);
+  }
+
+  indent.pop_back();
+  indent.pop_back();
+
+  if (closeLayerTag)
+    msIO_printf("%s</Layer>\n", indent.c_str());
+}
 
 /*
 ** msWMSGetCapabilities()
@@ -3864,11 +4057,13 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
         std::vector<int> group_layers;
         group_layers.reserve(map->numlayers);
 
-        for (int i = 0; i < map->numlayers; i++)
+        for (int i = 0; i < map->numlayers; i++) {
           if (msIntegerInArray(GET_LAYER(map, i)->index,
                                ows_request->enabled_layers,
-                               ows_request->numlayers))
+                               ows_request->numlayers)) {
             group_layers.push_back(i);
+          }
+        }
 
         if (!group_layers.empty()) {
           int size_x = 0, size_y = 0;
@@ -3939,225 +4134,14 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
     /* individually, at the same level as the groups in the layer hierarchy */
     /*  */
     if (map->numlayers) {
-      char ***nestedGroups = NULL;
-      int *numNestedGroups = NULL;
-      int *isUsedInNestedGroup = NULL;
 
-      /* We'll use this array of booleans to track which layer/group have been
-       */
-      /* processed already */
-      std::vector<char> pabLayerProcessed(map->numlayers);
-
-      /* Mark disabled layers as processed to prevent from being displayed in
-       * nested groups (#4533)*/
-      for (int i = 0; i < map->numlayers; i++) {
-        if (!msIntegerInArray(GET_LAYER(map, i)->index,
-                              ows_request->enabled_layers,
-                              ows_request->numlayers))
-          pabLayerProcessed[i] = 1;
+      auto [layerTree, mapNameToNode] =
+          msWMSCreateLayerTree(map, validated_language.c_str());
+      (void)mapNameToNode;
+      for (const auto &child : layerTree->children) {
+        msWMSPrintLayerNode(map, nVersion, ows_request, child.get(),
+                            script_url_encoded, validated_language.c_str(), 2);
       }
-
-      nestedGroups = (char ***)msSmallCalloc(map->numlayers, sizeof(char **));
-      numNestedGroups = (int *)msSmallCalloc(map->numlayers, sizeof(int));
-      isUsedInNestedGroup = (int *)msSmallCalloc(map->numlayers, sizeof(int));
-      msWMSPrepareNestedGroups(map, nVersion, nestedGroups, numNestedGroups,
-                               isUsedInNestedGroup);
-
-      for (int i = 0; i < map->numlayers; i++) {
-        layerObj *lp = (GET_LAYER(map, i));
-
-        if (pabLayerProcessed[i] || (lp->status == MS_DELETE))
-          continue; /* Layer is hidden or has already been handled */
-
-        if (numNestedGroups[i] > 0) {
-          /* Has nested groups.  */
-          msWMSPrintNestedGroups(map, nVersion, pabLayerProcessed.data(), i, 0,
-                                 nestedGroups, numNestedGroups,
-                                 isUsedInNestedGroup, script_url_encoded,
-                                 validated_language.c_str());
-        } else if (lp->group == NULL || strlen(lp->group) == 0) {
-          /* Don't dump layer if it is used in wms_group_layer. */
-          if (!isUsedInNestedGroup[i]) {
-            /* This layer is not part of a group... dump it directly */
-            msDumpLayer(map, lp, nVersion, script_url_encoded, "",
-                        validated_language.c_str(), MS_FALSE, MS_FALSE);
-            pabLayerProcessed[i] = 1;
-          }
-        } else {
-          bool group_is_queryable = false;
-          /* Group is queryable as soon as its member layers is. */
-          for (int j = i; j < map->numlayers; j++) {
-            if (GET_LAYER(map, j)->group &&
-                strcmp(lp->group, GET_LAYER(map, j)->group) == 0 &&
-                msIntegerInArray(GET_LAYER(map, j)->index,
-                                 ows_request->enabled_layers,
-                                 ows_request->numlayers) &&
-                msIsLayerQueryable(GET_LAYER(map, j))) {
-              group_is_queryable = true;
-              break;
-            }
-          }
-          /* Beginning of a new group... enclose the group in a layer block */
-          msIO_printf("    <Layer%s>\n",
-                      group_is_queryable ? " queryable=\"1\"" : "");
-
-          /* Layer Name is optional but title is mandatory. */
-          if (lp->group && strlen(lp->group) > 0 &&
-              (msIsXMLTagValid(lp->group) == MS_FALSE || isdigit(lp->group[0])))
-            msIO_fprintf(
-                stdout,
-                "<!-- WARNING: The layer name '%s' might contain spaces or "
-                "invalid characters or may start with a number. This could "
-                "lead to potential problems. -->\n",
-                lp->group);
-          msOWSPrintEncodeParam(stdout, "GROUP.NAME", lp->group, OWS_NOERR,
-                                "      <Name>%s</Name>\n", NULL);
-          msOWSPrintGroupMetadata2(stdout, map, lp->group, "MO", "GROUP_TITLE",
-                                   OWS_WARN, "      <Title>%s</Title>\n",
-                                   lp->group, validated_language.c_str());
-          msOWSPrintGroupMetadata2(stdout, map, lp->group, "MO",
-                                   "GROUP_ABSTRACT", OWS_NOERR,
-                                   "      <Abstract>%s</Abstract>\n", lp->group,
-                                   validated_language.c_str());
-
-          /*build a getlegendgraphicurl*/
-          if (script_url_encoded) {
-            if (lp->group && strlen(lp->group) > 0) {
-              char *pszEncodedName = NULL;
-              const char *styleName = NULL;
-              char *pszEncodedStyleName = NULL;
-              const char *legendURL = NULL;
-
-              pszEncodedName = msEncodeHTMLEntities(lp->group);
-
-              styleName = msOWSLookupMetadata(&(lp->metadata), "MO",
-                                              "group_style_name");
-              if (styleName == NULL)
-                styleName = "default";
-
-              pszEncodedStyleName = msEncodeHTMLEntities(styleName);
-
-              msIO_fprintf(stdout, "    <Style>\n");
-              msIO_fprintf(stdout, "       <Name>%s</Name>\n",
-                           pszEncodedStyleName);
-              msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO",
-                                       "group_style_title", OWS_NOERR,
-                                       "       <Title>%s</Title>\n", styleName);
-
-              legendURL = msOWSLookupMetadata(&(lp->metadata), "MO",
-                                              "group_style_legendurl_href");
-              if (legendURL) {
-                msOWSPrintURLType(
-                    stdout, &(lp->metadata), "MO", "group_style_legendurl",
-                    OWS_NOERR, NULL, "LegendURL", NULL, " width=\"%s\"",
-                    " height=\"%s\"", ">\n          <Format>%s</Format",
-                    "\n          <OnlineResource "
-                    "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
-                    " xlink:type=\"simple\" xlink:href=\"%s\"/>\n"
-                    "       ",
-                    MS_FALSE, MS_TRUE, MS_TRUE, MS_TRUE, MS_TRUE, NULL, NULL,
-                    NULL, NULL, NULL, "       ");
-              } else {
-                std::vector<int> group_layers;
-                group_layers.reserve(map->numlayers);
-
-                for (int j = i; j < map->numlayers; j++)
-                  if (!pabLayerProcessed[j] && GET_LAYER(map, j)->group &&
-                      strcmp(lp->group, GET_LAYER(map, j)->group) == 0 &&
-                      msIntegerInArray(GET_LAYER(map, j)->index,
-                                       ows_request->enabled_layers,
-                                       ows_request->numlayers))
-                    group_layers.push_back(j);
-
-                if (!group_layers.empty()) {
-                  int size_x = 0, size_y = 0;
-                  char *pszMimetype = NULL;
-
-                  if (msLegendCalcSize(map, 1, &size_x, &size_y,
-                                       group_layers.data(),
-                                       static_cast<int>(group_layers.size()),
-                                       NULL, 1) == MS_SUCCESS) {
-                    const std::string width(std::to_string(size_x));
-                    const std::string height(std::to_string(size_y));
-
-                    const char *format_list =
-                        msOWSLookupMetadata(&(map->web.metadata), "M",
-                                            "getlegendgraphic_formatlist");
-                    if (format_list && strlen(format_list) > 0) {
-                      const auto tokens = msStringSplit(format_list, ',');
-                      if (!tokens.empty()) {
-                        /*just grab the first mime type*/
-                        pszMimetype = msEncodeHTMLEntities(tokens[0].c_str());
-                      }
-                    } else
-                      pszMimetype = msEncodeHTMLEntities("image/png");
-
-                    std::string legendurl(script_url_encoded);
-                    legendurl += "version=";
-                    char szVersionBuf[OWS_VERSION_MAXLEN];
-                    legendurl += msOWSGetVersionString(nVersion, szVersionBuf);
-                    legendurl +=
-                        "&amp;service=WMS&amp;request=GetLegendGraphic&amp;";
-                    if (nVersion >= OWS_1_3_0) {
-                      legendurl += "sld_version=1.1.0&amp;layer=";
-                    } else {
-                      legendurl += "layer=";
-                    }
-                    legendurl += pszEncodedName;
-                    legendurl += "&amp;format=";
-                    legendurl += pszMimetype;
-                    legendurl += "&amp;STYLE=";
-                    legendurl += pszEncodedStyleName;
-
-                    msOWSPrintURLType(
-                        stdout, NULL, "O", "ttt", OWS_NOERR, NULL, "LegendURL",
-                        NULL, " width=\"%s\"", " height=\"%s\"",
-                        ">\n          <Format>%s</Format",
-                        "\n          <OnlineResource "
-                        "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
-                        " xlink:type=\"simple\" xlink:href=\"%s\"/>\n"
-                        "       ",
-                        MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, NULL,
-                        width.c_str(), height.c_str(), pszMimetype,
-                        legendurl.c_str(), "       ");
-
-                    msFree(pszMimetype);
-                  }
-                }
-              }
-              msIO_fprintf(stdout, "    </Style>\n");
-              msFree(pszEncodedName);
-              msFree(pszEncodedStyleName);
-            }
-          }
-
-          /* Dump all layers for this group */
-          for (int j = i; j < map->numlayers; j++) {
-            if (!pabLayerProcessed[j] && GET_LAYER(map, j)->group &&
-                strcmp(lp->group, GET_LAYER(map, j)->group) == 0 &&
-                msIntegerInArray(GET_LAYER(map, j)->index,
-                                 ows_request->enabled_layers,
-                                 ows_request->numlayers)) {
-              msDumpLayer(map, (GET_LAYER(map, j)), nVersion,
-                          script_url_encoded, "  ", validated_language.c_str(),
-                          MS_FALSE, MS_FALSE);
-              pabLayerProcessed[j] = 1;
-            }
-          }
-          /* Close group layer block */
-          msIO_printf("    </Layer>\n");
-        }
-      }
-
-      /* free the stuff used for nested layers */
-      for (int i = 0; i < map->numlayers; i++) {
-        if (numNestedGroups[i] > 0) {
-          msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
-        }
-      }
-      free(nestedGroups);
-      free(numNestedGroups);
-      free(isUsedInNestedGroup);
     }
 
     msIO_printf("  </Layer>\n");
@@ -4565,12 +4549,8 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
   const char *wms_connection = NULL;
   int numOWSLayers = 0;
 
-  char ***nestedGroups =
-      (char ***)msSmallCalloc(map->numlayers, sizeof(char **));
-  int *numNestedGroups = (int *)msSmallCalloc(map->numlayers, sizeof(int));
-  int *isUsedInNestedGroup = (int *)msSmallCalloc(map->numlayers, sizeof(int));
-  msWMSPrepareNestedGroups(map, nVersion, nestedGroups, numNestedGroups,
-                           isUsedInNestedGroup);
+  auto [layerTree, mapNameToNode] = msWMSCreateLayerTree(map, nullptr);
+  (void)layerTree;
 
   const char *styles = nullptr;
   std::vector<std::string> wmslayers;
@@ -4721,33 +4701,29 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
         }
       }
 
-      for (int j = 0; j < map->numlayers; j++) {
-        layerObj *layer = GET_LAYER(map, j);
-        if (!msIsLayerQueryable(layer))
-          continue;
-        for (const auto &wmslayer : querylayers) {
-          if (((layer->name &&
-                strcasecmp(layer->name, wmslayer.c_str()) == 0) ||
-               (layer->group &&
-                strcasecmp(layer->group, wmslayer.c_str()) == 0) ||
-               ((numNestedGroups[j] > 0) &&
-                msStringInArray(wmslayer.c_str(), nestedGroups[j],
-                                numNestedGroups[j]))) &&
-              (msIntegerInArray(layer->index, ows_request->enabled_layers,
-                                ows_request->numlayers))) {
+      for (const auto &wmslayer : querylayers) {
+        auto iter = mapNameToNode.find(msStringToLower(wmslayer));
+        if (iter != mapNameToNode.end()) {
+          const auto layerIndices = iter->second->collectLayerIndices();
+          for (int j : layerIndices) {
+            layerObj *layer = GET_LAYER(map, j);
+            if (msIsLayerQueryable(layer) &&
+                msIntegerInArray(layer->index, ows_request->enabled_layers,
+                                 ows_request->numlayers)) {
+              if (layer->connectiontype == MS_WMS) {
+                wms_layer = MS_TRUE;
+                wms_connection = layer->connection;
+              }
 
-            if (layer->connectiontype == MS_WMS) {
-              wms_layer = MS_TRUE;
-              wms_connection = layer->connection;
+              mapLayerIndexToStyleNames[j] = mapLayerNameToStyleNames[wmslayer];
+
+              numlayers_found++;
+              layer->status = MS_ON;
             }
-
-            mapLayerIndexToStyleNames[j] = mapLayerNameToStyleNames[wmslayer];
-
-            numlayers_found++;
-            layer->status = MS_ON;
           }
         }
       }
+
     } else if (strcasecmp(names[i], "INFO_FORMAT") == 0) {
       if (values[i] && strlen(values[i]) > 0) {
         info_format = values[i];
@@ -4778,16 +4754,6 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
       }
     }
   }
-
-  /* free the stuff used for nested layers */
-  for (int i = 0; i < map->numlayers; i++) {
-    if (numNestedGroups[i] > 0) {
-      msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
-    }
-  }
-  free(nestedGroups);
-  free(numNestedGroups);
-  free(isUsedInNestedGroup);
 
   if (numlayers_found == 0) {
     if (query_layer) {
@@ -5035,7 +5001,8 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
 */
 static int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
                               char **values, int numentries,
-                              const char *wms_exception_format) {
+                              const char *wms_exception_format,
+                              owsRequestObj *ows_request) {
   std::vector<std::string> wmslayers;
   const char *version = NULL;
   const char *sld_version = NULL;
@@ -5106,118 +5073,117 @@ static int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
   if (pszOnlineResMapWCS && strlen(pszOnlineResMapWCS) == 0)
     pszOnlineResMapWCS = NULL;
 
-  char ***nestedGroups =
-      (char ***)msSmallCalloc(map->numlayers, sizeof(char **));
-  int *numNestedGroups = (int *)msSmallCalloc(map->numlayers, sizeof(int));
-  int *isUsedInNestedGroup = (int *)msSmallCalloc(map->numlayers, sizeof(int));
-  msWMSPrepareNestedGroups(map, nVersion, nestedGroups, numNestedGroups,
-                           isUsedInNestedGroup);
+  auto [layerTree, mapNameToNode] = msWMSCreateLayerTree(map, nullptr);
+  (void)layerTree;
 
   for (const auto &wmslayer : wmslayers) {
-    for (int k = 0; k < map->numlayers; k++) {
-      layerObj *lp = GET_LAYER(map, k);
+    auto iter = mapNameToNode.find(msStringToLower(wmslayer));
+    if (iter != mapNameToNode.end()) {
+      const auto layerIndices = iter->second->collectLayerIndices();
+      for (int j : layerIndices) {
+        layerObj *lp = GET_LAYER(map, j);
+        if (msIntegerInArray(lp->index, ows_request->enabled_layers,
+                             ows_request->numlayers)) {
+          /* Look for a WFS onlineresouce at the layer level and then at
+           * the map level.
+           */
+          const char *pszOnlineResLyrWFS =
+              msOWSLookupMetadata(&(lp->metadata), "FO", "onlineresource");
+          const char *pszOnlineResLyrWCS =
+              msOWSLookupMetadata(&(lp->metadata), "CO", "onlineresource");
+          if (pszOnlineResLyrWFS == NULL || strlen(pszOnlineResLyrWFS) == 0)
+            pszOnlineResLyrWFS = pszOnlineResMapWFS;
 
-      if ((map->name && strcasecmp(map->name, wmslayer.c_str()) == 0) ||
-          (lp->name && strcasecmp(lp->name, wmslayer.c_str()) == 0) ||
-          (lp->group && strcasecmp(lp->group, wmslayer.c_str()) == 0) ||
-          ((numNestedGroups[k] > 0) &&
-           msStringInArray(wmslayer.c_str(), nestedGroups[k],
-                           numNestedGroups[k]))) {
-        /* Look for a WFS onlineresouce at the layer level and then at
-         * the map level.
-         */
-        const char *pszOnlineResLyrWFS =
-            msOWSLookupMetadata(&(lp->metadata), "FO", "onlineresource");
-        const char *pszOnlineResLyrWCS =
-            msOWSLookupMetadata(&(lp->metadata), "CO", "onlineresource");
-        if (pszOnlineResLyrWFS == NULL || strlen(pszOnlineResLyrWFS) == 0)
-          pszOnlineResLyrWFS = pszOnlineResMapWFS;
+          if (pszOnlineResLyrWCS == NULL || strlen(pszOnlineResLyrWCS) == 0)
+            pszOnlineResLyrWCS = pszOnlineResMapWCS;
 
-        if (pszOnlineResLyrWCS == NULL || strlen(pszOnlineResLyrWCS) == 0)
-          pszOnlineResLyrWCS = pszOnlineResMapWCS;
+          if (pszOnlineResLyrWFS &&
+              (lp->type == MS_LAYER_POINT || lp->type == MS_LAYER_LINE ||
+               lp->type == MS_LAYER_POLYGON)) {
+            char *pszOnlineResEncoded =
+                msEncodeHTMLEntities(pszOnlineResLyrWFS);
+            char *pszLayerName = msEncodeHTMLEntities(lp->name);
 
-        if (pszOnlineResLyrWFS &&
-            (lp->type == MS_LAYER_POINT || lp->type == MS_LAYER_LINE ||
-             lp->type == MS_LAYER_POLYGON)) {
-          char *pszOnlineResEncoded = msEncodeHTMLEntities(pszOnlineResLyrWFS);
-          char *pszLayerName = msEncodeHTMLEntities(lp->name);
-
-          if (nVersion < OWS_1_3_0) {
-            msIO_printf("<LayerDescription name=\"%s\" wfs=\"%s\" "
-                        "owsType=\"WFS\" owsURL=\"%s\">\n",
-                        pszLayerName, pszOnlineResEncoded, pszOnlineResEncoded);
-            msIO_printf("<Query typeName=\"%s\" />\n", pszLayerName);
-            msIO_printf("</LayerDescription>\n");
-          } else { /*wms 1.3.0*/
-            msIO_printf("  <LayerDescription>\n");
-            msIO_printf("    <owsType>wfs</owsType>\n");
-            msIO_printf("    <se:OnlineResource xlink:type=\"simple\" "
-                        "xlink:href=\"%s\"/>\n",
-                        pszOnlineResEncoded);
-            msIO_printf("    <TypeName>\n");
-            msIO_printf("      <se:FeatureTypeName>%s</se:FeatureTypeName>\n",
-                        pszLayerName);
-            msIO_printf("    </TypeName>\n");
-            msIO_printf("  </LayerDescription>\n");
-          }
-
-          msFree(pszOnlineResEncoded);
-          msFree(pszLayerName);
-        } else if (pszOnlineResLyrWCS && lp->type == MS_LAYER_RASTER &&
-                   lp->connectiontype != MS_WMS) {
-          char *pszOnlineResEncoded = msEncodeHTMLEntities(pszOnlineResLyrWCS);
-          char *pszLayerName = msEncodeHTMLEntities(lp->name);
-
-          if (nVersion < OWS_1_3_0) {
-            msIO_printf("<LayerDescription name=\"%s\"  owsType=\"WCS\" "
-                        "owsURL=\"%s\">\n",
-                        pszLayerName, pszOnlineResEncoded);
-            msIO_printf("<Query typeName=\"%s\" />\n", pszLayerName);
-            msIO_printf("</LayerDescription>\n");
-          } else {
-            msIO_printf("  <LayerDescription>\n");
-            msIO_printf("    <owsType>wcs</owsType>\n");
-            msIO_printf("    <se:OnlineResource xlink:type=\"simple\" "
-                        "xlink:href=\"%s\"/>\n",
-                        pszOnlineResEncoded);
-            msIO_printf("    <TypeName>\n");
-            msIO_printf("      <se:CoverageTypeName>%s</se:CoverageTypeName>\n",
-                        pszLayerName);
-            msIO_printf("    </TypeName>\n");
-            msIO_printf("  </LayerDescription>\n");
-          }
-          msFree(pszOnlineResEncoded);
-          msFree(pszLayerName);
-        } else {
-          char *pszLayerName = msEncodeHTMLEntities(lp->name);
-
-          if (nVersion < OWS_1_3_0)
-            msIO_printf("<LayerDescription name=\"%s\"></LayerDescription>\n",
-                        pszLayerName);
-          else { /*wms 1.3.0*/
-            msIO_printf("  <LayerDescription>\n");
-            /*need to have a owstype for the DescribeLayer to be valid*/
-            if (lp->type == MS_LAYER_RASTER && lp->connectiontype != MS_WMS)
-              msIO_printf("    <owsType>wcs</owsType>\n");
-            else
+            if (nVersion < OWS_1_3_0) {
+              msIO_printf("<LayerDescription name=\"%s\" wfs=\"%s\" "
+                          "owsType=\"WFS\" owsURL=\"%s\">\n",
+                          pszLayerName, pszOnlineResEncoded,
+                          pszOnlineResEncoded);
+              msIO_printf("<Query typeName=\"%s\" />\n", pszLayerName);
+              msIO_printf("</LayerDescription>\n");
+            } else { /*wms 1.3.0*/
+              msIO_printf("  <LayerDescription>\n");
               msIO_printf("    <owsType>wfs</owsType>\n");
+              msIO_printf("    <se:OnlineResource xlink:type=\"simple\" "
+                          "xlink:href=\"%s\"/>\n",
+                          pszOnlineResEncoded);
+              msIO_printf("    <TypeName>\n");
+              msIO_printf("      <se:FeatureTypeName>%s</se:FeatureTypeName>\n",
+                          pszLayerName);
+              msIO_printf("    </TypeName>\n");
+              msIO_printf("  </LayerDescription>\n");
+            }
 
-            msIO_printf("    <se:OnlineResource xlink:type=\"simple\"/>\n");
-            msIO_printf("    <TypeName>\n");
-            if (lp->type == MS_LAYER_RASTER && lp->connectiontype != MS_WMS)
+            msFree(pszOnlineResEncoded);
+            msFree(pszLayerName);
+          } else if (pszOnlineResLyrWCS && lp->type == MS_LAYER_RASTER &&
+                     lp->connectiontype != MS_WMS) {
+            char *pszOnlineResEncoded =
+                msEncodeHTMLEntities(pszOnlineResLyrWCS);
+            char *pszLayerName = msEncodeHTMLEntities(lp->name);
+
+            if (nVersion < OWS_1_3_0) {
+              msIO_printf("<LayerDescription name=\"%s\"  owsType=\"WCS\" "
+                          "owsURL=\"%s\">\n",
+                          pszLayerName, pszOnlineResEncoded);
+              msIO_printf("<Query typeName=\"%s\" />\n", pszLayerName);
+              msIO_printf("</LayerDescription>\n");
+            } else {
+              msIO_printf("  <LayerDescription>\n");
+              msIO_printf("    <owsType>wcs</owsType>\n");
+              msIO_printf("    <se:OnlineResource xlink:type=\"simple\" "
+                          "xlink:href=\"%s\"/>\n",
+                          pszOnlineResEncoded);
+              msIO_printf("    <TypeName>\n");
               msIO_printf(
                   "      <se:CoverageTypeName>%s</se:CoverageTypeName>\n",
                   pszLayerName);
-            else
-              msIO_printf("      <se:FeatureTypeName>%s</se:FeatureTypeName>\n",
-                          pszLayerName);
-            msIO_printf("    </TypeName>\n");
-            msIO_printf("  </LayerDescription>\n");
-          }
+              msIO_printf("    </TypeName>\n");
+              msIO_printf("  </LayerDescription>\n");
+            }
+            msFree(pszOnlineResEncoded);
+            msFree(pszLayerName);
+          } else {
+            char *pszLayerName = msEncodeHTMLEntities(lp->name);
 
-          msFree(pszLayerName);
+            if (nVersion < OWS_1_3_0)
+              msIO_printf("<LayerDescription name=\"%s\"></LayerDescription>\n",
+                          pszLayerName);
+            else { /*wms 1.3.0*/
+              msIO_printf("  <LayerDescription>\n");
+              /*need to have a owstype for the DescribeLayer to be valid*/
+              if (lp->type == MS_LAYER_RASTER && lp->connectiontype != MS_WMS)
+                msIO_printf("    <owsType>wcs</owsType>\n");
+              else
+                msIO_printf("    <owsType>wfs</owsType>\n");
+
+              msIO_printf("    <se:OnlineResource xlink:type=\"simple\"/>\n");
+              msIO_printf("    <TypeName>\n");
+              if (lp->type == MS_LAYER_RASTER && lp->connectiontype != MS_WMS)
+                msIO_printf(
+                    "      <se:CoverageTypeName>%s</se:CoverageTypeName>\n",
+                    pszLayerName);
+              else
+                msIO_printf(
+                    "      <se:FeatureTypeName>%s</se:FeatureTypeName>\n",
+                    pszLayerName);
+              msIO_printf("    </TypeName>\n");
+              msIO_printf("  </LayerDescription>\n");
+            }
+
+            msFree(pszLayerName);
+          }
         }
-        /* break; */
       }
     }
   }
@@ -5226,16 +5192,6 @@ static int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
     msIO_printf("</WMS_DescribeLayerResponse>\n");
   else
     msIO_printf("</DescribeLayerResponse>\n");
-
-  /* free the stuff used for nested layers */
-  for (int i = 0; i < map->numlayers; i++) {
-    if (numNestedGroups[i] > 0) {
-      msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
-    }
-  }
-  free(nestedGroups);
-  free(numNestedGroups);
-  free(isUsedInNestedGroup);
 
   return (MS_SUCCESS);
 }
@@ -5342,54 +5298,39 @@ static int msWMSLegendGraphic(mapObj *map, int nVersion, char **names,
                             wms_exception_format);
     }
 
-    char ***nestedGroups =
-        (char ***)msSmallCalloc(map->numlayers, sizeof(char **));
-    int *numNestedGroups = (int *)msSmallCalloc(map->numlayers, sizeof(int));
-    int *isUsedInNestedGroup =
-        (int *)msSmallCalloc(map->numlayers, sizeof(int));
-    msWMSPrepareNestedGroups(map, nVersion, nestedGroups, numNestedGroups,
-                             isUsedInNestedGroup);
+    auto [layerTree, mapNameToNode] = msWMSCreateLayerTree(map, nullptr);
+    (void)layerTree;
 
-    /* check if layer name is valid. we check for layer's and group's name */
-    /* as well as wms_layer_group names */
-    for (int i = 0; i < map->numlayers; i++) {
+    for (int i = 0; i < map->numlayers; ++i) {
       layerObj *lp = GET_LAYER(map, i);
-      if (((map->name && strcasecmp(map->name, pszLayer) == 0) ||
-           (lp->name && strcasecmp(lp->name, pszLayer) == 0) ||
-           (lp->group && strcasecmp(lp->group, pszLayer) == 0) ||
-           ((numNestedGroups[i] > 0) &&
-            (msStringInArray(pszLayer, nestedGroups[i],
-                             numNestedGroups[i])))) &&
-          (msIntegerInArray(lp->index, ows_request->enabled_layers,
-                            ows_request->numlayers))) {
-        nLayers++;
-        lp->status = MS_ON;
-        iLayerIndex = i;
-        if (GET_LAYER(map, i)->connectiontype == MS_WMS) {
-          /* we do not cascade a wms layer if it contains at least
-           * one class with the property name set */
-          wms_layer = MS_TRUE;
-          for (int j = 0; j < lp->numclasses; j++) {
-            if (lp->_class[j]->name != NULL &&
-                strlen(lp->_class[j]->name) > 0) {
-              wms_layer = MS_FALSE;
-              break;
+      lp->status = MS_OFF;
+    }
+
+    auto iter = mapNameToNode.find(msStringToLower(pszLayer));
+    if (iter != mapNameToNode.end()) {
+      const auto layerIndices = iter->second->collectLayerIndices();
+      for (int i : layerIndices) {
+        layerObj *lp = GET_LAYER(map, i);
+        if (msIntegerInArray(lp->index, ows_request->enabled_layers,
+                             ows_request->numlayers)) {
+          nLayers++;
+          lp->status = MS_ON;
+          iLayerIndex = i;
+          if (lp->connectiontype == MS_WMS) {
+            /* we do not cascade a wms layer if it contains at least
+             * one class with the property name set */
+            wms_layer = MS_TRUE;
+            for (int j = 0; j < lp->numclasses; j++) {
+              if (lp->_class[j]->name != NULL &&
+                  strlen(lp->_class[j]->name) > 0) {
+                wms_layer = MS_FALSE;
+                break;
+              }
             }
           }
         }
-      } else
-        lp->status = MS_OFF;
-    }
-
-    /* free the stuff used for nested layers */
-    for (int i = 0; i < map->numlayers; i++) {
-      if (numNestedGroups[i] > 0) {
-        msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
       }
     }
-    free(nestedGroups);
-    free(numNestedGroups);
-    free(isUsedInNestedGroup);
 
     if (nLayers == 0) {
       msSetErrorWithStatus(
@@ -5602,22 +5543,19 @@ static int msWMSGetContentDependentLegend(mapObj *map, int nVersion,
 */
 static int msWMSGetStyles(mapObj *map, int nVersion, char **names,
                           char **values, int numentries,
-                          const char *wms_exception_format)
+                          const char *wms_exception_format,
+                          owsRequestObj *ows_request)
 
 {
   bool validlayer = false;
-
-  char ***nestedGroups =
-      (char ***)msSmallCalloc(map->numlayers, sizeof(char **));
-  int *numNestedGroups = (int *)msSmallCalloc(map->numlayers, sizeof(int));
-  int *isUsedInNestedGroup = (int *)msSmallCalloc(map->numlayers, sizeof(int));
-  msWMSPrepareNestedGroups(map, nVersion, nestedGroups, numNestedGroups,
-                           isUsedInNestedGroup);
 
   const char *sldenabled =
       msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
   if (sldenabled == NULL)
     sldenabled = "true";
+
+  auto [layerTree, mapNameToNode] = msWMSCreateLayerTree(map, nullptr);
+  (void)layerTree;
 
   for (int i = 0; i < numentries; i++) {
     /* getMap parameters */
@@ -5632,19 +5570,17 @@ static int msWMSGetStyles(mapObj *map, int nVersion, char **names,
       for (int j = 0; j < map->numlayers; j++)
         GET_LAYER(map, j)->status = MS_OFF;
 
-      for (int k = 0; k < static_cast<int>(wmslayers.size()); k++) {
-        const auto &wmslayer = wmslayers[k];
-        for (int j = 0; j < map->numlayers; j++) {
-          if ((map->name && strcasecmp(map->name, wmslayer.c_str()) == 0) ||
-              (GET_LAYER(map, j)->name &&
-               strcasecmp(GET_LAYER(map, j)->name, wmslayer.c_str()) == 0) ||
-              (GET_LAYER(map, j)->group &&
-               strcasecmp(GET_LAYER(map, j)->group, wmslayer.c_str()) == 0) ||
-              ((numNestedGroups[j] > 0) &&
-               msStringInArray(wmslayer.c_str(), nestedGroups[j],
-                               numNestedGroups[j]))) {
-            GET_LAYER(map, j)->status = MS_ON;
-            validlayer = true;
+      for (const auto &wmslayer : wmslayers) {
+        auto iter = mapNameToNode.find(msStringToLower(wmslayer));
+        if (iter != mapNameToNode.end()) {
+          const auto layerIndices = iter->second->collectLayerIndices();
+          for (int i : layerIndices) {
+            layerObj *lp = GET_LAYER(map, i);
+            if (msIntegerInArray(lp->index, ows_request->enabled_layers,
+                                 ows_request->numlayers)) {
+              lp->status = MS_ON;
+              validlayer = true;
+            }
           }
         }
       }
@@ -5660,16 +5596,6 @@ static int msWMSGetStyles(mapObj *map, int nVersion, char **names,
       msSLDApplySLD(map, values[i], -1, NULL, NULL);
     }
   }
-
-  /* free the stuff used for nested layers */
-  for (int i = 0; i < map->numlayers; i++) {
-    if (numNestedGroups[i] > 0) {
-      msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
-    }
-  }
-  free(nestedGroups);
-  free(numNestedGroups);
-  free(isUsedInNestedGroup);
 
   /* validate all layers given. If an invalid layer is sent, return an
    * exception. */
@@ -6002,7 +5928,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request,
 
   if (strcasecmp(request, "GetStyles") == 0)
     return msWMSGetStyles(map, nVersion, req->ParamNames, req->ParamValues,
-                          req->NumParams, wms_exception_format);
+                          req->NumParams, wms_exception_format, ows_request);
 
   else if (request && strcasecmp(request, "GetSchemaExtension") == 0)
     return msWMSGetSchemaExtension(map);
@@ -6037,7 +5963,8 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request,
                             req->NumParams, wms_exception_format, ows_request);
   else if (strcasecmp(request, "DescribeLayer") == 0) {
     return msWMSDescribeLayer(map, nVersion, req->ParamNames, req->ParamValues,
-                              req->NumParams, wms_exception_format);
+                              req->NumParams, wms_exception_format,
+                              ows_request);
   } else if (isContentDependentLegend) {
     return msWMSGetContentDependentLegend(map, nVersion, req->ParamNames,
                                           req->ParamValues, req->NumParams,

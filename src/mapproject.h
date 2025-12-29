@@ -139,6 +139,7 @@ MS_DLL_EXPORT char *msProjectionObj2OGCWKT(projectionObj *proj);
 MS_DLL_EXPORT void msFreeProjection(projectionObj *p);
 MS_DLL_EXPORT void msFreeProjectionExceptContext(projectionObj *p);
 MS_DLL_EXPORT int msInitProjection(projectionObj *p);
+int msCloneProjectionFrom(projectionObj *p, projectionObj *pSource);
 MS_DLL_EXPORT void msProjectionInheritContextFrom(projectionObj *pDst,
                                                   const projectionObj *pSrc);
 MS_DLL_EXPORT void msProjectionSetContext(projectionObj *p,

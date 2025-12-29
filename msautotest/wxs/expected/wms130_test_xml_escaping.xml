@@ -130,19 +130,19 @@
     <BoundingBox CRS="EPSG:4326"
                 minx="42.000000" miny="-67.572500" maxx="48.500000" maxy="-58.927500" />
     <Layer queryable="0" opaque="0" cascaded="0">
-        <Name>province</Name>
-        <Title>title&amp;title</Title>
-        <Abstract>abstract&amp;abstract</Abstract>
-        <EX_GeographicBoundingBox>
-            <westBoundLongitude>-66.724329</westBoundLongitude>
-            <eastBoundLongitude>-57.721680</eastBoundLongitude>
-            <southBoundLatitude>41.770508</southBoundLatitude>
-            <northBoundLatitude>48.477314</northBoundLatitude>
-        </EX_GeographicBoundingBox>
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/ows_test_xml_escaping?myparam=something&amp;request=GetMetadata&amp;layer=province"/>
-        </MetadataURL>
+      <Name>province</Name>
+      <Title>title&amp;title</Title>
+      <Abstract>abstract&amp;abstract</Abstract>
+      <EX_GeographicBoundingBox>
+          <westBoundLongitude>-66.724329</westBoundLongitude>
+          <eastBoundLongitude>-57.721680</eastBoundLongitude>
+          <southBoundLatitude>41.770508</southBoundLatitude>
+          <northBoundLatitude>48.477314</northBoundLatitude>
+      </EX_GeographicBoundingBox>
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/ows_test_xml_escaping?myparam=something&amp;request=GetMetadata&amp;layer=province"/>
+      </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>

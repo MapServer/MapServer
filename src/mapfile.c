@@ -1278,7 +1278,7 @@ static void writeGrid(FILE *stream, int indent, graticuleObj *pGraticule) {
   writeBlockEnd(stream, indent, "GRID");
 }
 
-static int loadProjection(projectionObj *p) {
+static int loadProjection(projectionObj *p, mapObj *map) {
   p->gt.need_geotransform = MS_FALSE;
 
   if (p->proj != NULL || p->numargs != 0) {
@@ -1305,9 +1305,25 @@ static int loadProjection(projectionObj *p) {
         free(one_line_def);
         return result;
       } else {
-        if (p->numargs != 0)
+        if (p->numargs != 0) {
+          if (map && map->numlayers > 0) {
+            layerObj *prevLayer = GET_LAYER(map, map->numlayers - 1);
+            if (prevLayer->projection.numargs == p->numargs) {
+              bool same = true;
+              for (int i = 0; i < p->numargs; ++i) {
+                if (strcmp(p->args[i], prevLayer->projection.args[i]) != 0) {
+                  same = false;
+                  break;
+                }
+              }
+              if (same) {
+                return msCloneProjectionFrom(p, &(prevLayer->projection));
+              }
+            }
+          }
+
           return msProcessProjection(p);
-        else
+        } else
           return 0;
       }
       break;
@@ -4759,7 +4775,7 @@ int loadLayer(layerObj *layer, mapObj *map) {
         layer->labelcache = MS_OFF;
       break;
     case (PROJECTION):
-      if (loadProjection(&(layer->projection)) == -1)
+      if (loadProjection(&(layer->projection), map) == -1)
         return (-1);
       layer->project = MS_TRUE;
       break;
@@ -6749,7 +6765,7 @@ static int loadMapInternal(mapObj *map) {
       map->imagetype = getToken();
       break;
     case (LATLON):
-      if (loadProjection(&map->latlon) == -1)
+      if (loadProjection(&map->latlon, map) == -1)
         return MS_FAILURE;
       break;
     case (LAYER):
@@ -6787,7 +6803,7 @@ static int loadMapInternal(mapObj *map) {
         return MS_FAILURE;
       break;
     case (PROJECTION):
-      if (loadProjection(&map->projection) == -1)
+      if (loadProjection(&map->projection, map) == -1)
         return MS_FAILURE;
       break;
     case (QUERYMAP):

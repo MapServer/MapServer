@@ -127,30 +127,30 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
     <BoundingBox SRS="EPSG:4326"
                 minx="-117.545904" miny="44.665361" maxx="-117.387172" maxy="44.767083" />
     <Layer queryable="1" opaque="0" cascaded="0">
-        <Name>road</Name>
-        <Title>road</Title>
-        <SRS>EPSG:32611</SRS>
-        <LatLonBoundingBox minx="-117.545904" miny="44.665615" maxx="-117.387277" maxy="44.767083" />
-        <BoundingBox SRS="EPSG:32611"
-                    minx="456800" miny="4.94595e+06" maxx="469300" maxy="4.95715e+06" />
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wms_simple?request=GetMetadata&amp;layer=road"/>
-        </MetadataURL>
+      <Name>road</Name>
+      <Title>road</Title>
+      <SRS>EPSG:32611</SRS>
+      <LatLonBoundingBox minx="-117.545904" miny="44.665615" maxx="-117.387277" maxy="44.767083" />
+      <BoundingBox SRS="EPSG:32611"
+                  minx="456800" miny="4.94595e+06" maxx="469300" maxy="4.95715e+06" />
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wms_simple?request=GetMetadata&amp;layer=road"/>
+      </MetadataURL>
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
-        <Name>grey</Name>
+      <Name>grey</Name>
 <!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
-        <Title>grey</Title>
-        <SRS>EPSG:32611</SRS>
-        <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="-121.488744" miny="0.000000" maxx="-121.485160" maxy="0.002706" />
-        <BoundingBox SRS="EPSG:32611"
-                    minx="0" miny="0" maxx="400" maxy="300" />
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wms_simple?request=GetMetadata&amp;layer=grey"/>
-        </MetadataURL>
+      <Title>grey</Title>
+      <SRS>EPSG:32611</SRS>
+      <SRS>EPSG:4326</SRS>
+      <LatLonBoundingBox minx="-121.488744" miny="0.000000" maxx="-121.485160" maxy="0.002706" />
+      <BoundingBox SRS="EPSG:32611"
+                  minx="0" miny="0" maxx="400" maxy="300" />
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wms_simple?request=GetMetadata&amp;layer=grey"/>
+      </MetadataURL>
     </Layer>
   </Layer>
 </Capability>

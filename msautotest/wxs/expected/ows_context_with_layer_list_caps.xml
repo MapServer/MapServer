@@ -106,13 +106,13 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
     <BoundingBox SRS="EPSG:4326"
                 minx="-180.000000" miny="-90.000000" maxx="180.000000" maxy="90.000000" />
     <Layer queryable="0" opaque="0" cascaded="0">
-        <Name>province</Name>
-        <Title>province</Title>
-        <LatLonBoundingBox minx="-66.724329" miny="41.770508" maxx="-57.721680" maxy="48.477314" />
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wfs_simple?myparam=something&amp;request=GetMetadata&amp;layer=province"/>
-        </MetadataURL>
+      <Name>province</Name>
+      <Title>province</Title>
+      <LatLonBoundingBox minx="-66.724329" miny="41.770508" maxx="-57.721680" maxy="48.477314" />
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wfs_simple?myparam=something&amp;request=GetMetadata&amp;layer=province"/>
+      </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>
@@ -123,13 +123,13 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         </Style>
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="1">
-        <Name>test</Name>
-        <Title>test</Title>
-        <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wfs_simple?myparam=something&amp;request=GetMetadata&amp;layer=test"/>
-        </MetadataURL>
+      <Name>test</Name>
+      <Title>test</Title>
+      <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wfs_simple?myparam=something&amp;request=GetMetadata&amp;layer=test"/>
+      </MetadataURL>
     </Layer>
   </Layer>
 </Capability>

@@ -45,6 +45,8 @@
 #include <stdbool.h>
 #include <assert.h>
 
+#include <map>
+
 /*
 ** msOWSInitRequestObj() initializes an owsRequestObj; i.e: sets
 ** all internal pointers to NULL.
@@ -73,7 +75,7 @@ void msOWSClearRequestObj(owsRequestObj *ows_request) {
   msFree(ows_request->request);
   if (ows_request->document) {
 #if defined(USE_LIBXML2)
-    xmlFreeDoc(ows_request->document);
+    xmlFreeDoc(static_cast<xmlDocPtr>(ows_request->document));
     xmlCleanupParser();
 #else
     CPLDestroyXMLNode(ows_request->document);
@@ -162,7 +164,8 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
     }
 #endif
     if (ows_request->document == NULL ||
-        (root = xmlDocGetRootElement(ows_request->document)) == NULL) {
+        (root = xmlDocGetRootElement(
+             static_cast<const xmlDoc *>(ows_request->document))) == NULL) {
       const xmlError *error = xmlGetLastError();
       msSetError(MS_OWSERR, "XML parsing error: %s", "msOWSPreParseRequest()",
                  error->message);
@@ -1123,21 +1126,22 @@ void msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata,
       return;
     }
 
-    *epsgCode = msSmallMalloc((space_ptr - value + 1) * sizeof(char));
+    *epsgCode = static_cast<char *>(
+        msSmallMalloc((space_ptr - value + 1) * sizeof(char)));
     /* caller requested only first projection code, copy up to the first space
      * character*/
     strlcpy(*epsgCode, value, space_ptr - value + 1);
     return;
   } else if (proj && proj->numargs > 0 &&
              (value = strstr(proj->args[0], "init=epsg:")) != NULL) {
-    *epsgCode = msSmallMalloc((strlen("EPSG:") + strlen(value + 10) + 1) *
-                              sizeof(char));
+    *epsgCode = static_cast<char *>(msSmallMalloc(
+        (strlen("EPSG:") + strlen(value + 10) + 1) * sizeof(char)));
     sprintf(*epsgCode, "EPSG:%s", value + 10);
     return;
   } else if (proj && proj->numargs > 0 &&
              (value = strstr(proj->args[0], "init=crs:")) != NULL) {
-    *epsgCode =
-        msSmallMalloc((strlen("CRS:") + strlen(value + 9) + 1) * sizeof(char));
+    *epsgCode = static_cast<char *>(
+        msSmallMalloc((strlen("CRS:") + strlen(value + 9) + 1) * sizeof(char)));
     sprintf(*epsgCode, "CRS:%s", value + 9);
     return;
   } else if (proj && proj->numargs > 0 &&
@@ -1215,8 +1219,8 @@ const char *msOWSGetSchemasLocation(mapObj *map) {
 /*
 ** msOWSGetExpandedMetadataKey()
 */
-static char *msOWSGetExpandedMetadataKey(const char *namespaces,
-                                         const char *metadata_name) {
+char *msOWSGetExpandedMetadataKey(const char *namespaces,
+                                  const char *metadata_name) {
   char *pszRet = msStringConcatenate(NULL, "");
   for (int i = 0; namespaces[i] != '\0'; ++i) {
     if (i > 0)
@@ -1350,12 +1354,13 @@ int msUpdateGMLFieldMetadata(layerObj *layer, const char *field_name,
 */
 static int msRenameLayer(layerObj *lp, int count) {
   char *newname;
-  newname = (char *)malloc((strlen(lp->name) + 5) * sizeof(char));
+  const size_t nSize = strlen(lp->name) + 16;
+  newname = (char *)malloc(nSize);
   if (!newname) {
     msSetError(MS_MEMERR, NULL, "msRenameLayer()");
     return MS_FAILURE;
   }
-  sprintf(newname, "%s_%2.2d", lp->name, count);
+  snprintf(newname, nSize, "%s_%2.2d", lp->name, count);
   free(lp->name);
   lp->name = newname;
 
@@ -1366,26 +1371,32 @@ static int msRenameLayer(layerObj *lp, int count) {
 ** msOWSMakeAllLayersUnique()
 */
 int msOWSMakeAllLayersUnique(mapObj *map) {
-  int i, j;
+  std::map<std::string, int> namesToIdx;
+  std::map<std::string, int> namesToCount;
 
   /* Make sure all layers in the map file have valid and unique names */
-  for (i = 0; i < map->numlayers; i++) {
-    int count = 1;
-    for (j = i + 1; j < map->numlayers; j++) {
-      if (GET_LAYER(map, i)->name == NULL || GET_LAYER(map, j)->name == NULL) {
-        continue;
+  for (int i = 0; i < map->numlayers; i++) {
+    layerObj *lp = GET_LAYER(map, i);
+    if (!lp->name)
+      continue;
+    const std::string name = msStringToLower(std::string(lp->name));
+    auto iterToIdx = namesToIdx.find(name);
+    if (iterToIdx == namesToIdx.end()) {
+      namesToIdx[name] = i;
+      namesToCount[name] = 1;
+    } else {
+      auto iterToCount = namesToCount.find(name);
+      assert(iterToCount != namesToCount.end());
+      if (iterToCount->second == 1) {
+        if (msRenameLayer(GET_LAYER(map, iterToIdx->second), 1) != MS_SUCCESS)
+          return MS_FAILURE;
       }
-      if (strcasecmp(GET_LAYER(map, i)->name, GET_LAYER(map, j)->name) == 0 &&
-          msRenameLayer((GET_LAYER(map, j)), ++count) != MS_SUCCESS) {
+      ++iterToCount->second;
+      if (msRenameLayer(lp, iterToCount->second) != MS_SUCCESS)
         return MS_FAILURE;
-      }
-    }
-
-    /* Don't forget to rename the first layer if duplicates were found */
-    if (count > 1 && msRenameLayer((GET_LAYER(map, i)), 1) != MS_SUCCESS) {
-      return MS_FAILURE;
     }
   }
+
   return MS_SUCCESS;
 }
 
@@ -1762,8 +1773,8 @@ int msOWSPrintInspireCommonLanguages(FILE *stream, mapObj *map,
     msFree(buffer);
 
     /* append _exclude to our default_language*/
-    default_language = msSmallRealloc(
-        default_language, strlen(default_language) + strlen("_exclude") + 1);
+    default_language = static_cast<char *>(msSmallRealloc(
+        default_language, strlen(default_language) + strlen("_exclude") + 1));
     strcat(default_language, "_exclude");
 
     msOWSPrintEncodeMetadataList(

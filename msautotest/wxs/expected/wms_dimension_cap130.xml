@@ -108,23 +108,23 @@ Content-Type: text/xml; charset=UTF-8
     <BoundingBox CRS="EPSG:4326"
                 minx="-0.002134" miny="0.000178" maxx="0.000314" maxy="0.003420" />
     <Layer queryable="0" opaque="0" cascaded="0">
-        <Name>lakes_elev</Name>
-        <Title>Lakes</Title>
-        <CRS>EPSG:4326</CRS>
-        <EX_GeographicBoundingBox>
-            <westBoundLongitude>0.000178</westBoundLongitude>
-            <eastBoundLongitude>0.003420</eastBoundLongitude>
-            <southBoundLatitude>-0.002134</southBoundLatitude>
-            <northBoundLatitude>0.000314</northBoundLatitude>
-        </EX_GeographicBoundingBox>
-        <BoundingBox CRS="EPSG:4326"
-                    minx="-0.002134" miny="0.000178" maxx="0.000314" maxy="0.003420" />
-        <Dimension name="elevation" units="meters" default="500" multipleValues="1" nearestValue="0">500, 490, 480</Dimension>
-        <Dimension name="text_dimension" units="my_units"  multipleValues="1"  nearestValue="0">first, second, third</Dimension>
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?request=GetMetadata&amp;layer=lakes_elev"/>
-        </MetadataURL>
+      <Name>lakes_elev</Name>
+      <Title>Lakes</Title>
+      <CRS>EPSG:4326</CRS>
+      <EX_GeographicBoundingBox>
+          <westBoundLongitude>0.000178</westBoundLongitude>
+          <eastBoundLongitude>0.003420</eastBoundLongitude>
+          <southBoundLatitude>-0.002134</southBoundLatitude>
+          <northBoundLatitude>0.000314</northBoundLatitude>
+      </EX_GeographicBoundingBox>
+      <BoundingBox CRS="EPSG:4326"
+                  minx="-0.002134" miny="0.000178" maxx="0.000314" maxy="0.003420" />
+      <Dimension name="elevation" units="meters" default="500" multipleValues="1" nearestValue="0">500, 490, 480</Dimension>
+      <Dimension name="text_dimension" units="my_units"  multipleValues="1"  nearestValue="0">first, second, third</Dimension>
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?request=GetMetadata&amp;layer=lakes_elev"/>
+      </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>
@@ -135,22 +135,22 @@ Content-Type: text/xml; charset=UTF-8
         </Style>
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
-        <Name>lakes_elev_range</Name>
-        <Title>Lakes</Title>
-        <CRS>EPSG:4326</CRS>
-        <EX_GeographicBoundingBox>
-            <westBoundLongitude>0.000178</westBoundLongitude>
-            <eastBoundLongitude>0.003420</eastBoundLongitude>
-            <southBoundLatitude>-0.002134</southBoundLatitude>
-            <northBoundLatitude>0.000314</northBoundLatitude>
-        </EX_GeographicBoundingBox>
-        <BoundingBox CRS="EPSG:4326"
-                    minx="-0.002134" miny="0.000178" maxx="0.000314" maxy="0.003420" />
-        <Dimension name="elevation" units="meters"  multipleValues="1"  nearestValue="0">490/800</Dimension>
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?request=GetMetadata&amp;layer=lakes_elev_range"/>
-        </MetadataURL>
+      <Name>lakes_elev_range</Name>
+      <Title>Lakes</Title>
+      <CRS>EPSG:4326</CRS>
+      <EX_GeographicBoundingBox>
+          <westBoundLongitude>0.000178</westBoundLongitude>
+          <eastBoundLongitude>0.003420</eastBoundLongitude>
+          <southBoundLatitude>-0.002134</southBoundLatitude>
+          <northBoundLatitude>0.000314</northBoundLatitude>
+      </EX_GeographicBoundingBox>
+      <BoundingBox CRS="EPSG:4326"
+                  minx="-0.002134" miny="0.000178" maxx="0.000314" maxy="0.003420" />
+      <Dimension name="elevation" units="meters"  multipleValues="1"  nearestValue="0">490/800</Dimension>
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?request=GetMetadata&amp;layer=lakes_elev_range"/>
+      </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>
@@ -161,22 +161,22 @@ Content-Type: text/xml; charset=UTF-8
         </Style>
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
-        <Name>lakes_elev_multi_range</Name>
-        <Title>Lakes</Title>
-        <CRS>EPSG:4326</CRS>
-        <EX_GeographicBoundingBox>
-            <westBoundLongitude>0.000178</westBoundLongitude>
-            <eastBoundLongitude>0.003420</eastBoundLongitude>
-            <southBoundLatitude>-0.002134</southBoundLatitude>
-            <northBoundLatitude>0.000314</northBoundLatitude>
-        </EX_GeographicBoundingBox>
-        <BoundingBox CRS="EPSG:4326"
-                    minx="-0.002134" miny="0.000178" maxx="0.000314" maxy="0.003420" />
-        <Dimension name="elevation" units="meters"  multipleValues="1"  nearestValue="0">480/500,800/900</Dimension>
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?request=GetMetadata&amp;layer=lakes_elev_multi_range"/>
-        </MetadataURL>
+      <Name>lakes_elev_multi_range</Name>
+      <Title>Lakes</Title>
+      <CRS>EPSG:4326</CRS>
+      <EX_GeographicBoundingBox>
+          <westBoundLongitude>0.000178</westBoundLongitude>
+          <eastBoundLongitude>0.003420</eastBoundLongitude>
+          <southBoundLatitude>-0.002134</southBoundLatitude>
+          <northBoundLatitude>0.000314</northBoundLatitude>
+      </EX_GeographicBoundingBox>
+      <BoundingBox CRS="EPSG:4326"
+                  minx="-0.002134" miny="0.000178" maxx="0.000314" maxy="0.003420" />
+      <Dimension name="elevation" units="meters"  multipleValues="1"  nearestValue="0">480/500,800/900</Dimension>
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?request=GetMetadata&amp;layer=lakes_elev_multi_range"/>
+      </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>
