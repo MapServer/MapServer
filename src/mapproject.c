@@ -538,6 +538,23 @@ void msFreeProjection(projectionObj *p) {
   p->generation_number++;
 }
 
+int msCloneProjectionFrom(projectionObj *p, projectionObj *pSource) {
+  msFreeProjection(p);
+  p->gt.need_geotransform = pSource->gt.need_geotransform;
+  p->is_polar = pSource->is_polar;
+  p->wellknownprojection = pSource->wellknownprojection;
+  msProjectionInheritContextFrom(p, pSource);
+  if (pSource->proj)
+    p->proj = proj_clone(p->proj_ctx->proj_ctx, pSource->proj);
+  p->args = (char **)malloc(MS_MAXPROJARGS * sizeof(char *));
+  MS_CHECK_ALLOC(p->args, MS_MAXPROJARGS * sizeof(char *), -1);
+  p->numargs = pSource->numargs;
+  for (int i = 0; i < p->numargs; ++i) {
+    p->args[i] = msStrdup(pSource->args[i]);
+  }
+  return 0;
+}
+
 void msFreeProjectionExceptContext(projectionObj *p) {
   projectionContext *ctx = p->proj_ctx;
   p->proj_ctx = NULL;
