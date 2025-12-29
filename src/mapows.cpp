@@ -45,6 +45,8 @@
 #include <stdbool.h>
 #include <assert.h>
 
+#include <map>
+
 /*
 ** msOWSInitRequestObj() initializes an owsRequestObj; i.e: sets
 ** all internal pointers to NULL.
@@ -1369,26 +1371,32 @@ static int msRenameLayer(layerObj *lp, int count) {
 ** msOWSMakeAllLayersUnique()
 */
 int msOWSMakeAllLayersUnique(mapObj *map) {
-  int i, j;
+  std::map<std::string, int> namesToIdx;
+  std::map<std::string, int> namesToCount;
 
   /* Make sure all layers in the map file have valid and unique names */
-  for (i = 0; i < map->numlayers; i++) {
-    int count = 1;
-    for (j = i + 1; j < map->numlayers; j++) {
-      if (GET_LAYER(map, i)->name == NULL || GET_LAYER(map, j)->name == NULL) {
-        continue;
+  for (int i = 0; i < map->numlayers; i++) {
+    layerObj *lp = GET_LAYER(map, i);
+    if (!lp->name)
+      continue;
+    const std::string name = msStringToLower(std::string(lp->name));
+    auto iterToIdx = namesToIdx.find(name);
+    if (iterToIdx == namesToIdx.end()) {
+      namesToIdx[name] = i;
+      namesToCount[name] = 1;
+    } else {
+      auto iterToCount = namesToCount.find(name);
+      assert(iterToCount != namesToCount.end());
+      if (iterToCount->second == 1) {
+        if (msRenameLayer(GET_LAYER(map, iterToIdx->second), 1) != MS_SUCCESS)
+          return MS_FAILURE;
       }
-      if (strcasecmp(GET_LAYER(map, i)->name, GET_LAYER(map, j)->name) == 0 &&
-          msRenameLayer((GET_LAYER(map, j)), ++count) != MS_SUCCESS) {
+      ++iterToCount->second;
+      if (msRenameLayer(lp, iterToCount->second) != MS_SUCCESS)
         return MS_FAILURE;
-      }
-    }
-
-    /* Don't forget to rename the first layer if duplicates were found */
-    if (count > 1 && msRenameLayer((GET_LAYER(map, i)), 1) != MS_SUCCESS) {
-      return MS_FAILURE;
     }
   }
+
   return MS_SUCCESS;
 }
 
