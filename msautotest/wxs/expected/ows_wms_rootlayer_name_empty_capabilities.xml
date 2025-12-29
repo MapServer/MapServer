@@ -76,6 +76,7 @@ Content-Type: text/xml; charset=UTF-8
                 minx="-1.000000" miny="-1.000000" maxx="-1.000000" maxy="-1.000000" />
     <Layer queryable="1">
       <Name>roadgroup</Name>
+      <!-- WARNING: Mandatory metadata "wms_GROUP_TITLE" or "ows_GROUP_TITLE" was missing in this context. -->
       <Title>roadgroup</Title>
       <Layer queryable="1" opaque="0" cascaded="0">
         <Name>road2</Name>

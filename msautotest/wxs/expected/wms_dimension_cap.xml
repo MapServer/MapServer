@@ -85,20 +85,20 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
     <BoundingBox SRS="EPSG:4326"
                 minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
     <Layer queryable="0" opaque="0" cascaded="0">
-        <Name>lakes_elev</Name>
-        <Title>Lakes</Title>
-        <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
-        <BoundingBox SRS="EPSG:4326"
-                    minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
-        <Dimension name="elevation" units="meters"/>
-        <Extent name="elevation" default="500" nearestValue="0">500, 490, 480</Extent>
-        <Dimension name="text_dimension" units="my_units"/>
-        <Extent name="text_dimension" nearestValue="0">first, second, third</Extent>
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?request=GetMetadata&amp;layer=lakes_elev"/>
-        </MetadataURL>
+      <Name>lakes_elev</Name>
+      <Title>Lakes</Title>
+      <SRS>EPSG:4326</SRS>
+      <LatLonBoundingBox minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
+      <BoundingBox SRS="EPSG:4326"
+                  minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
+      <Dimension name="elevation" units="meters"/>
+      <Extent name="elevation" default="500" nearestValue="0">500, 490, 480</Extent>
+      <Dimension name="text_dimension" units="my_units"/>
+      <Extent name="text_dimension" nearestValue="0">first, second, third</Extent>
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?request=GetMetadata&amp;layer=lakes_elev"/>
+      </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>
@@ -109,18 +109,18 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         </Style>
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
-        <Name>lakes_elev_range</Name>
-        <Title>Lakes</Title>
-        <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
-        <BoundingBox SRS="EPSG:4326"
-                    minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
-        <Dimension name="elevation" units="meters"/>
-        <Extent name="elevation" nearestValue="0">490/800</Extent>
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?request=GetMetadata&amp;layer=lakes_elev_range"/>
-        </MetadataURL>
+      <Name>lakes_elev_range</Name>
+      <Title>Lakes</Title>
+      <SRS>EPSG:4326</SRS>
+      <LatLonBoundingBox minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
+      <BoundingBox SRS="EPSG:4326"
+                  minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
+      <Dimension name="elevation" units="meters"/>
+      <Extent name="elevation" nearestValue="0">490/800</Extent>
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?request=GetMetadata&amp;layer=lakes_elev_range"/>
+      </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>
@@ -131,18 +131,18 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
         </Style>
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
-        <Name>lakes_elev_multi_range</Name>
-        <Title>Lakes</Title>
-        <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
-        <BoundingBox SRS="EPSG:4326"
-                    minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
-        <Dimension name="elevation" units="meters"/>
-        <Extent name="elevation" nearestValue="0">480/500,800/900</Extent>
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?request=GetMetadata&amp;layer=lakes_elev_multi_range"/>
-        </MetadataURL>
+      <Name>lakes_elev_multi_range</Name>
+      <Title>Lakes</Title>
+      <SRS>EPSG:4326</SRS>
+      <LatLonBoundingBox minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
+      <BoundingBox SRS="EPSG:4326"
+                  minx="0.000178" miny="-0.002134" maxx="0.003420" maxy="0.000314" />
+      <Dimension name="elevation" units="meters"/>
+      <Extent name="elevation" nearestValue="0">480/500,800/900</Extent>
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?request=GetMetadata&amp;layer=lakes_elev_multi_range"/>
+      </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>

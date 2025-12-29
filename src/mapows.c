@@ -1215,8 +1215,8 @@ const char *msOWSGetSchemasLocation(mapObj *map) {
 /*
 ** msOWSGetExpandedMetadataKey()
 */
-static char *msOWSGetExpandedMetadataKey(const char *namespaces,
-                                         const char *metadata_name) {
+char *msOWSGetExpandedMetadataKey(const char *namespaces,
+                                  const char *metadata_name) {
   char *pszRet = msStringConcatenate(NULL, "");
   for (int i = 0; namespaces[i] != '\0'; ++i) {
     if (i > 0)
