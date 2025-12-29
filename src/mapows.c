@@ -1350,12 +1350,13 @@ int msUpdateGMLFieldMetadata(layerObj *layer, const char *field_name,
 */
 static int msRenameLayer(layerObj *lp, int count) {
   char *newname;
-  newname = (char *)malloc((strlen(lp->name) + 5) * sizeof(char));
+  const size_t nSize = strlen(lp->name) + 16;
+  newname = (char *)malloc(nSize);
   if (!newname) {
     msSetError(MS_MEMERR, NULL, "msRenameLayer()");
     return MS_FAILURE;
   }
-  sprintf(newname, "%s_%2.2d", lp->name, count);
+  snprintf(newname, nSize, "%s_%2.2d", lp->name, count);
   free(lp->name);
   lp->name = newname;
 
