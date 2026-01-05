@@ -61,12 +61,12 @@ Content-Type: text/xml; charset=UTF-8
     <BoundingBox SRS="EPSG:4326"
                 minx="-67.572500" miny="42.000000" maxx="-58.927500" maxy="48.500000" />
     <Layer queryable="1">
-        <Name>road</Name>
-        <Title>road</Title>
-        <SRS>EPSG:43204</SRS>
-        <LatLonBoundingBox minx="-66.633318" miny="42.382054" maxx="-59.292114" maxy="48.295512" />
-        <BoundingBox SRS="EPSG:43204"
-                    minx="2.25898e+06" miny="-70747.9" maxx="2.61535e+06" maxy="495481" />
+      <Name>road</Name>
+      <Title>road</Title>
+      <SRS>EPSG:43204</SRS>
+      <LatLonBoundingBox minx="-66.633318" miny="42.382054" maxx="-59.292114" maxy="48.295512" />
+      <BoundingBox SRS="EPSG:43204"
+                  minx="2.25898e+06" miny="-70747.9" maxx="2.61535e+06" maxy="495481" />
     </Layer>
   </Layer>
 </Capability>

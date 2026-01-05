@@ -78,18 +78,18 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
     <ScaleHint min="997.805696859274" max="24945.1424214819" />
 <!-- WARNING: This layer has its status set to DEFAULT and will always be displayed when doing a GetMap request even if it is not requested by the client. This is not in line with the expected behavior of a WMS server. Using status ON or OFF is recommended. -->
     <Layer queryable="0" opaque="0" cascaded="0">
-        <Name>pattern4</Name>
-        <Title>pattern4</Title>
-        <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="-131.020004" miny="33.650002" maxx="-119.849998" maxy="48.389999" />
-        <BoundingBox SRS="EPSG:4326"
-                    minx="-131.020004" miny="33.650002" maxx="-119.849998" maxy="48.389999" />
-        <Dimension name="time" units="ISO8601"/>
-        <Extent name="time" nearestValue="0">2004-01-01/2004-02-01</Extent>
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms_time?request=GetMetadata&amp;layer=pattern4"/>
-        </MetadataURL>
+      <Name>pattern4</Name>
+      <Title>pattern4</Title>
+      <SRS>EPSG:4326</SRS>
+      <LatLonBoundingBox minx="-131.020004" miny="33.650002" maxx="-119.849998" maxy="48.389999" />
+      <BoundingBox SRS="EPSG:4326"
+                  minx="-131.020004" miny="33.650002" maxx="-119.849998" maxy="48.389999" />
+      <Dimension name="time" units="ISO8601"/>
+      <Extent name="time" nearestValue="0">2004-01-01/2004-02-01</Extent>
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms_time?request=GetMetadata&amp;layer=pattern4"/>
+      </MetadataURL>
     </Layer>
   </Layer>
 </Capability>

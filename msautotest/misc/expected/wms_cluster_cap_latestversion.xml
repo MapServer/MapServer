@@ -106,19 +106,19 @@ Content-Type: text/xml; charset=UTF-8
         <northBoundLatitude>47.941252</northBoundLatitude>
     </EX_GeographicBoundingBox>
     <Layer queryable="0" opaque="0" cascaded="0">
-        <Name>popplace</Name>
+      <Name>popplace</Name>
 <!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
-        <Title>popplace</Title>
-        <EX_GeographicBoundingBox>
-            <westBoundLongitude>-66.328617</westBoundLongitude>
-            <eastBoundLongitude>-59.688212</eastBoundLongitude>
-            <southBoundLatitude>42.563125</southBoundLatitude>
-            <northBoundLatitude>47.941251</northBoundLatitude>
-        </EX_GeographicBoundingBox>
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo?request=GetMetadata&amp;layer=popplace"/>
-        </MetadataURL>
+      <Title>popplace</Title>
+      <EX_GeographicBoundingBox>
+          <westBoundLongitude>-66.328617</westBoundLongitude>
+          <eastBoundLongitude>-59.688212</eastBoundLongitude>
+          <southBoundLatitude>42.563125</southBoundLatitude>
+          <northBoundLatitude>47.941251</northBoundLatitude>
+      </EX_GeographicBoundingBox>
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://foo?request=GetMetadata&amp;layer=popplace"/>
+      </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>
