@@ -60,39 +60,45 @@
 typedef struct {
 
   /* query cache results */
-  int query_results;
+  int query_results = 0;
 
-  int refcount;
+  int refcount = 0;
 
-  float *u; /* u values */
-  float *v; /* v values */
-  int width;
-  int height;
-  rectObj extent;
-  int next_shape;
+  float *u = nullptr; /* u values */
+  float *v = nullptr; /* v values */
+  int width = 0;
+  int height = 0;
+  rectObj extent{};
+  int next_shape = 0;
 
   /* To improve performance of GetShape() when queried on increasing shapeindex
    */
-  long last_queried_shapeindex; // value in [0, query_results[ range
-  size_t last_raster_off;       // value in [0, width*height[ range
+  long last_queried_shapeindex = 0; // value in [0, query_results[ range
+  size_t last_raster_off = 0;       // value in [0, width*height[ range
 
-  bool needsLonLat;
-  reprojectionObj *reprojectorToLonLat;
+  bool needsLonLat = false;
+  reprojectionObj *reprojectorToLonLat = nullptr;
 
-  mapObj
-      *mapToUseForWhichShapes; /* set if the map->extent and map->projection are
-                                  valid in msUVRASTERLayerWhichShapes() */
+  /* set if the map->extent and map->projection are
+     valid in msUVRASTERLayerWhichShapes() */
+  mapObj *mapToUseForWhichShapes = nullptr;
 
+  std::string timestring{};
+  std::string timefield{};
 } uvRasterLayerInfo;
+
+static uvRasterLayerInfo *getLayerInfo(layerObj *layer) {
+  return static_cast<uvRasterLayerInfo *>(layer->layerinfo);
+}
 
 void msUVRASTERLayerUseMapExtentAndProjectionForNextWhichShapes(layerObj *layer,
                                                                 mapObj *map) {
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+  uvRasterLayerInfo *uvlinfo = getLayerInfo(layer);
   uvlinfo->mapToUseForWhichShapes = map;
 }
 
 static int msUVRASTERLayerInitItemInfo(layerObj *layer) {
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+  uvRasterLayerInfo *uvlinfo = getLayerInfo(layer);
   int i;
   int *itemindexes;
   int failed = 0;
@@ -154,18 +160,13 @@ void msUVRASTERLayerFreeItemInfo(layerObj *layer) {
 }
 
 static void msUVRasterLayerInfoInitialize(layerObj *layer) {
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+  uvRasterLayerInfo *uvlinfo = getLayerInfo(layer);
 
   if (uvlinfo != NULL)
     return;
 
-  uvlinfo = (uvRasterLayerInfo *)msSmallCalloc(1, sizeof(uvRasterLayerInfo));
+  uvlinfo = new uvRasterLayerInfo;
   layer->layerinfo = uvlinfo;
-
-  uvlinfo->u = NULL;
-  uvlinfo->v = NULL;
-  uvlinfo->width = 0;
-  uvlinfo->height = 0;
 
   /* Set attribute type to Real, unless the user has explicitly set */
   /* something else. */
@@ -189,7 +190,7 @@ static void msUVRasterLayerInfoInitialize(layerObj *layer) {
 static void msUVRasterLayerInfoFree(layerObj *layer)
 
 {
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+  uvRasterLayerInfo *uvlinfo = getLayerInfo(layer);
 
   if (uvlinfo == NULL)
     return;
@@ -201,7 +202,7 @@ static void msUVRasterLayerInfoFree(layerObj *layer)
     msProjectDestroyReprojector(uvlinfo->reprojectorToLonLat);
   }
 
-  free(uvlinfo);
+  delete uvlinfo;
 
   layer->layerinfo = NULL;
 }
@@ -213,7 +214,7 @@ int msUVRASTERLayerOpen(layerObj *layer) {
   if (layer->layerinfo == NULL)
     return MS_FAILURE;
 
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+  uvRasterLayerInfo *uvlinfo = getLayerInfo(layer);
 
   uvlinfo->refcount = uvlinfo->refcount + 1;
 
@@ -227,7 +228,7 @@ int msUVRASTERLayerIsOpen(layerObj *layer) {
 }
 
 int msUVRASTERLayerClose(layerObj *layer) {
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+  uvRasterLayerInfo *uvlinfo = getLayerInfo(layer);
 
   if (uvlinfo != NULL) {
     uvlinfo->refcount--;
@@ -239,7 +240,7 @@ int msUVRASTERLayerClose(layerObj *layer) {
 }
 
 int msUVRASTERLayerGetItems(layerObj *layer) {
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+  uvRasterLayerInfo *uvlinfo = getLayerInfo(layer);
 
   if (uvlinfo == NULL)
     return MS_FAILURE;
@@ -273,7 +274,7 @@ static char **msUVRASTERGetValues(layerObj *layer, float u, float v,
   char tmp[100];
   float size_scale;
   int *itemindexes = (int *)layer->iteminfo;
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+  uvRasterLayerInfo *uvlinfo = getLayerInfo(layer);
   double lon = HUGE_VAL;
   double lat = HUGE_VAL;
 
@@ -452,7 +453,7 @@ rectObj msUVRASTERGetSearchRect(layerObj *layer, mapObj *map) {
 }
 
 int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+  uvRasterLayerInfo *uvlinfo = getLayerInfo(layer);
   imageObj *image_tmp;
   outputFormatObj *outputformat = NULL;
   mapObj *map_tmp;
@@ -753,7 +754,26 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
    */
   saved_layer_mask = layer->mask;
   layer->mask = NULL;
-  ret = msDrawRasterLayerLow(map_tmp, layer, image_tmp, NULL);
+
+  if (layer->tileindex) {
+    expressionObj old_filter;
+    if (!uvlinfo->timestring.empty()) {
+      msInitExpression(&old_filter);
+      msCopyExpression(&old_filter, &layer->filter); /* save existing filter */
+      msFreeExpression(&layer->filter);
+      msLayerMakeBackticsTimeFilter(layer, uvlinfo->timestring.c_str(),
+                                    uvlinfo->timefield.c_str());
+    }
+
+    ret = msDrawRasterLayerLow(map_tmp, layer, image_tmp, NULL);
+
+    if (!uvlinfo->timestring.empty()) {
+      msCopyExpression(&layer->filter, &old_filter); /* restore old filter */
+      msFreeExpression(&old_filter);
+    }
+  } else {
+    ret = msDrawRasterLayerLow(map_tmp, layer, image_tmp, NULL);
+  }
 
   /* restore layer attributes if we went through the above on-the-fly VRT */
   if (oldLayerData) {
@@ -825,7 +845,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
 
 int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape,
                             resultObj *record) {
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+  uvRasterLayerInfo *uvlinfo = getLayerInfo(layer);
   lineObj line;
   pointObj point;
   const long shapeindex = record->shapeindex;
@@ -889,7 +909,7 @@ int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape,
 }
 
 int msUVRASTERLayerNextShape(layerObj *layer, shapeObj *shape) {
-  uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *)layer->layerinfo;
+  uvRasterLayerInfo *uvlinfo = getLayerInfo(layer);
 
   if (uvlinfo->next_shape < 0 ||
       uvlinfo->next_shape >= uvlinfo->query_results) {
@@ -1029,12 +1049,20 @@ int msUVRASTERLayerSetTimeFilter(layerObj *layer, const char *timestring,
   /* -------------------------------------------------------------------- */
   /*      If we are using a local shapefile as our tileindex (that is     */
   /*      to say, the tileindex name is not of another layer), then we    */
-  /*      just install a backtics style filter on the raster layer.       */
-  /*      This is propagated to the "working layer" created for the       */
-  /*      tileindex by code in mapraster.c.                               */
+  /*      will install a backtics style filter later.                     */
   /* -------------------------------------------------------------------- */
-  if (tilelayerindex == -1)
-    return msLayerMakeBackticsTimeFilter(layer, timestring, timefield);
+  if (tilelayerindex == -1) {
+    if (layer->layerinfo == NULL)
+      msUVRasterLayerInfoInitialize(layer);
+    if (layer->layerinfo == NULL)
+      return MS_FAILURE;
+    uvRasterLayerInfo *uvlinfo = getLayerInfo(layer);
+    if (timestring)
+      uvlinfo->timestring = timestring;
+    if (timefield)
+      uvlinfo->timefield = timefield;
+    return MS_SUCCESS;
+  }
 
   /* -------------------------------------------------------------------- */
   /*      Otherwise we invoke the tileindex layers SetTimeFilter          */
