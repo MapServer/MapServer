@@ -817,6 +817,21 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
   uvlinfo->u = (float *)msSmallMalloc(sizeof(float *) * width * height);
   uvlinfo->v = (float *)msSmallMalloc(sizeof(float *) * width * height);
 
+  reprojectionObj *reprojectorLayerToMap = nullptr;
+  if (layer->project) {
+    reprojectorLayerToMap =
+        msProjectCreateReprojector(&layer->projection, &layer->map->projection);
+  }
+  // To reproject the wind direction, use a ~ 10 m long line. This is a value
+  // not too small and not too big to be able to reproject a small vector.
+  double typicalLength = 10.0;
+  if (msProjIsGeographicCRS(&(layer->projection))) {
+    const double dfDegToMeter =
+        msProjGetSemiMajorAxis(&(layer->projection)) * (MS_PI / 180);
+    const double dfMeterToDeg = 1.0 / dfDegToMeter;
+    typicalLength *= dfMeterToDeg;
+  }
+
   for (size_t off = 0; off < static_cast<size_t>(width) * height; ++off) {
     /* Ignore invalid pixels (at nodata), or (u,v)=(0,0) */
     if (MS_GET_BIT(image_tmp->img_mask, off)) {
@@ -825,6 +840,43 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
           image_tmp->img.raw_float[off + static_cast<size_t>(width) * height];
       if (!(uvlinfo->u[off] == 0 && uvlinfo->v[off] == 0)) {
         uvlinfo->query_results++;
+        if (reprojectorLayerToMap) {
+          // Compute coordinates of the pixel in layer projection
+          const int x = static_cast<int>(off % uvlinfo->width);
+          const int y = static_cast<int>(off / uvlinfo->width);
+          const double xLayer =
+              Pix2Georef(x, 0, uvlinfo->width - 1, uvlinfo->extent.minx,
+                         uvlinfo->extent.maxx, MS_FALSE);
+          const double yLayer =
+              Pix2Georef(y, 0, uvlinfo->height - 1, uvlinfo->extent.miny,
+                         uvlinfo->extent.maxy, MS_TRUE);
+
+          // Creates a vector starting at point.x,point.y, of length
+          // ~ 10 m, using the angle defined by (u,v)
+          pointObj point1, point2;
+          point1.x = xLayer;
+          point1.y = yLayer;
+          const double lengthInLayerProj =
+              hypotf(uvlinfo->u[off], uvlinfo->v[off]);
+          point2.x =
+              xLayer + typicalLength * (uvlinfo->u[off] / lengthInLayerProj);
+          point2.y =
+              yLayer + typicalLength * (uvlinfo->v[off] / lengthInLayerProj);
+
+          // Reprojects that vector to map projection
+          if (msProjectPointEx(reprojectorLayerToMap, &point1) == MS_SUCCESS &&
+              msProjectPointEx(reprojectorLayerToMap, &point2) == MS_SUCCESS) {
+            // Now computes the (u,v) component in map projection,
+            // preserving its original length
+            const double dx = point2.x - point1.x;
+            const double dy = point2.y - point1.y;
+            const double lengthInMapProj = hypot(dx, dy);
+            uvlinfo->u[off] =
+                (float)(lengthInLayerProj * (dx / lengthInMapProj));
+            uvlinfo->v[off] =
+                (float)(lengthInLayerProj * (dy / lengthInMapProj));
+          }
+        }
       } else {
         uvlinfo->u[off] = std::numeric_limits<float>::quiet_NaN();
         uvlinfo->v[off] = std::numeric_limits<float>::quiet_NaN();
@@ -834,6 +886,8 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
       uvlinfo->v[off] = std::numeric_limits<float>::quiet_NaN();
     }
   }
+
+  msProjectDestroyReprojector(reprojectorLayerToMap);
 
   msFreeImage(image_tmp); /* we do not need the imageObj anymore */
   msFreeMap(map_tmp);
