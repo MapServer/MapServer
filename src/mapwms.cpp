@@ -923,11 +923,11 @@ static bool msWMSValidateDimensionValue(const char *value,
         }
       } else if (isextentarange) {
         /*single user value, single/multiple range extent*/
-        const float currentval = atof(uservalues[0].c_str());
+        const double currentval = atof(uservalues[0].c_str());
 
         for (const auto &extentrange : aextentranges) {
-          const float minval = extentrange.x;
-          const float maxval = extentrange.y;
+          const double minval = extentrange.x;
+          const double maxval = extentrange.y;
           if (currentval >= minval && currentval <= maxval) {
             uservaluevalid = true;
             break;
@@ -937,12 +937,12 @@ static bool msWMSValidateDimensionValue(const char *value,
     } else if (ranges.size() == 2 || ranges.size() == 3) { /*range*/
       /*user input=single range. In this case the extents must
        be of a range type.*/
-      const float mincurrentval = atof(ranges[0].c_str());
-      const float maxcurrentval = atof(ranges[1].c_str());
+      const double mincurrentval = atof(ranges[0].c_str());
+      const double maxcurrentval = atof(ranges[1].c_str());
       if (isextentarange) {
         for (const auto &extentrange : aextentranges) {
-          const float minval = extentrange.x;
-          const float maxval = extentrange.y;
+          const double minval = extentrange.x;
+          const double maxval = extentrange.y;
 
           if (minval <= mincurrentval && maxval >= maxcurrentval &&
               minval <= maxval) {
@@ -981,9 +981,9 @@ static bool msWMSValidateDimensionValue(const char *value,
           /*user input is multiple values, extent is defined as one or multiple
            * ranges*/
           for (const auto &extentrange : aextentranges) {
-            const float minval = extentrange.x;
-            const float maxval = extentrange.y;
-            const float currentval = atof(uservalue.c_str());
+            const double minval = extentrange.x;
+            const double maxval = extentrange.y;
+            const double currentval = atof(uservalue.c_str());
             if (minval <= currentval && maxval >= currentval &&
                 minval <= maxval) {
               valueisvalid = true;
@@ -1002,15 +1002,15 @@ static bool msWMSValidateDimensionValue(const char *value,
         /*each ranges should be valid*/
         const auto onerange = msStringSplit(uservalue.c_str(), '/');
         if (onerange.size() == 2 || onerange.size() == 3) {
-          const float mincurrentval = atof(onerange[0].c_str());
-          const float maxcurrentval = atof(onerange[1].c_str());
+          const double mincurrentval = atof(onerange[0].c_str());
+          const double maxcurrentval = atof(onerange[1].c_str());
 
           /*extent must be defined also as a rangle*/
           if (isextentarange) {
             bool found = false;
             for (const auto &extentrange : aextentranges) {
-              const float mincurrentrange = extentrange.x;
-              const float maxcurrentrange = extentrange.y;
+              const double mincurrentrange = extentrange.x;
+              const double maxcurrentrange = extentrange.y;
 
               if (mincurrentval >= mincurrentrange &&
                   maxcurrentval <= maxcurrentrange &&
@@ -4087,7 +4087,6 @@ static int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req,
 
             std::string legendurl(script_url_encoded);
             legendurl += "version=";
-            char szVersionBuf[OWS_VERSION_MAXLEN];
             legendurl += msOWSGetVersionString(nVersion, szVersionBuf);
             legendurl += "&amp;service=WMS&amp;request=GetLegendGraphic&amp;";
             if (nVersion >= OWS_1_3_0) {
@@ -4806,9 +4805,9 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
 
   /* It's a valid Cascading WMS GetFeatureInfo request */
   if (wms_layer)
-    return msWMSLayerExecuteRequest(map, numOWSLayers, point.x, point.y,
-                                    feature_count, info_format,
-                                    WMS_GETFEATUREINFO);
+    return msWMSLayerExecuteRequest(
+        map, numOWSLayers, static_cast<int>(point.x), static_cast<int>(point.y),
+        feature_count, info_format, WMS_GETFEATUREINFO);
   if (use_bbox == MS_FALSE) {
 
     if (point.x == -1.0 || point.y == -1.0) {
@@ -5541,8 +5540,8 @@ static int msWMSGetContentDependentLegend(mapObj *map, int nVersion,
 ** msWMSGetStyles() : return an SLD document for all layers that
 ** have a status set to on or default.
 */
-static int msWMSGetStyles(mapObj *map, int nVersion, char **names,
-                          char **values, int numentries,
+static int msWMSGetStyles(mapObj *map, int nVersion, const char *const *names,
+                          const char *const *values, int numentries,
                           const char *wms_exception_format,
                           owsRequestObj *ows_request)
 
@@ -5574,8 +5573,8 @@ static int msWMSGetStyles(mapObj *map, int nVersion, char **names,
         auto iter = mapNameToNode.find(msStringToLower(wmslayer));
         if (iter != mapNameToNode.end()) {
           const auto layerIndices = iter->second->collectLayerIndices();
-          for (int i : layerIndices) {
-            layerObj *lp = GET_LAYER(map, i);
+          for (int layerIdx : layerIndices) {
+            layerObj *lp = GET_LAYER(map, layerIdx);
             if (msIntegerInArray(lp->index, ows_request->enabled_layers,
                                  ows_request->numlayers)) {
               lp->status = MS_ON;
