@@ -1497,7 +1497,7 @@ static int LoadGDALImages(GDALDatasetH hDS, int band_numbers[4], int band_count,
     pabyBuffer = pabyWholeBuffer + iColorIndex * nPixelCount;
 
     if (iColorIndex == 0 && bGotNoData)
-      *ppbIsNoDataBuffer = (bool *)calloc(nPixelCount, 1);
+      *ppbIsNoDataBuffer = (bool *)calloc(nPixelCount, sizeof(bool));
 
     for (i = 0; i < nPixelCount; i++) {
       float fScaledValue;
