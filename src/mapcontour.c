@@ -226,12 +226,7 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect) {
   src_xsize = GDALGetRasterXSize(clinfo->hOrigDS);
   src_ysize = GDALGetRasterYSize(clinfo->hOrigDS);
 
-  /* set the Dataset extent */
   msGetGDALGeoTransform(clinfo->hOrigDS, map, layer, adfGeoTransform);
-  clinfo->extent.minx = adfGeoTransform[0];
-  clinfo->extent.maxy = adfGeoTransform[3];
-  clinfo->extent.maxx = adfGeoTransform[0] + src_xsize * adfGeoTransform[1];
-  clinfo->extent.miny = adfGeoTransform[3] + src_ysize * adfGeoTransform[5];
 
   if (layer->transform) {
     if (layer->debug)
@@ -750,6 +745,19 @@ int msContourLayerOpen(layerObj *layer) {
   } else
     clinfo->hOrigDS = NULL;
 
+  if (clinfo->hOrigDS) {
+    const int src_xsize = GDALGetRasterXSize(clinfo->hOrigDS);
+    const int src_ysize = GDALGetRasterYSize(clinfo->hOrigDS);
+
+    /* set the Dataset extent */
+    double adfGeoTransform[6];
+    msGetGDALGeoTransform(clinfo->hOrigDS, layer->map, layer, adfGeoTransform);
+    clinfo->extent.minx = adfGeoTransform[0];
+    clinfo->extent.maxy = adfGeoTransform[3];
+    clinfo->extent.maxx = adfGeoTransform[0] + src_xsize * adfGeoTransform[1];
+    clinfo->extent.miny = adfGeoTransform[3] + src_ysize * adfGeoTransform[5];
+  }
+
   msReleaseLock(TLOCK_GDAL);
 
   if (clinfo->hOrigDS == NULL) {
@@ -757,24 +765,6 @@ int msContourLayerOpen(layerObj *layer) {
                "msContourLayerOpen()");
     return MS_FAILURE;
   }
-
-  /* Open the raster source */
-  if (msContourLayerReadRaster(layer, layer->map->extent) != MS_SUCCESS)
-    return MS_FAILURE;
-
-  /* Generate Contour Dataset */
-  if (msContourLayerGenerateContour(layer) != MS_SUCCESS)
-    return MS_FAILURE;
-
-  if (clinfo->hDS) {
-    GDALClose(clinfo->hDS);
-    clinfo->hDS = NULL;
-    free(clinfo->buffer);
-  }
-
-  /* Open our virtual ogr layer */
-  if (clinfo->hOGRDS && (msLayerOpen(&clinfo->ogrLayer) != MS_SUCCESS))
-    return MS_FAILURE;
 
   return MS_SUCCESS;
 }
@@ -833,7 +823,7 @@ int msContourLayerGetItems(layerObj *layer) {
     layer->items[layer->numitems++] = msStrdup(elevItem);
   }
 
-  return msLayerGetItems(&clinfo->ogrLayer);
+  return MS_SUCCESS;
 }
 
 int msContourLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
