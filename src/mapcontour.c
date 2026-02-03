@@ -59,6 +59,10 @@ typedef struct {
   OGRDataSourceH hOGRDS;
   double cellsize;
 
+  /* set if the map->extent and map->projection are
+     valid in msContourLayerWhichShapes() */
+  mapObj *mapToUseForWhichShapes;
+
 } contourLayerInfo;
 
 static int msContourLayerInitItemInfo(layerObj *layer) {
@@ -235,12 +239,41 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect) {
     InvGeoTransform(adfGeoTransform, adfInvGeoTransform);
 
     mapRect = rect;
-    if (map->cellsize == 0) {
-      map->cellsize = msAdjustExtent(&mapRect, map->width, map->height);
-    }
-    map_cellsize_x = map_cellsize_y = map->cellsize;
+
     /* if necessary, project the searchrect to source coords */
     if (msProjectionsDiffer(&(map->projection), &(layer->projection))) {
+
+      /* Deal with request in WebMercator, overlapping the anti-meridian,
+       * and raster in geographic coordinates within (approximatively)
+       * [-180,180] longitude range.
+       */
+      double map_cellsize_x_override = 0;
+      if (clinfo->mapToUseForWhichShapes) {
+        mapRect = clinfo->mapToUseForWhichShapes->extent;
+        const double WEB_MERCATOR_MAX_X = 20037508.34;
+        if (clinfo->mapToUseForWhichShapes->projection.numargs == 1 &&
+            strcmp(clinfo->mapToUseForWhichShapes->projection.args[0],
+                   "init=epsg:3857") == 0 &&
+            (clinfo->mapToUseForWhichShapes->extent.minx <
+                 -WEB_MERCATOR_MAX_X ||
+             clinfo->mapToUseForWhichShapes->extent.maxx >
+                 WEB_MERCATOR_MAX_X) &&
+            msProjIsGeographicCRS(&layer->projection) &&
+            clinfo->extent.minx > -180 - 2 * adfGeoTransform[1] &&
+            clinfo->extent.maxx < 180 + 2 * adfGeoTransform[1]) {
+
+          // First do a reprojection with +over to compute cellsize_x
+          msProjectRect(&map->projection, &layer->projection, &mapRect);
+          map_cellsize_x_override =
+              MS_CELLSIZE(mapRect.minx, mapRect.maxx, map->width);
+
+          // Then clamp to +/- 180 deg
+          mapRect = clinfo->mapToUseForWhichShapes->extent;
+          mapRect.minx = MS_MAX(mapRect.minx, -WEB_MERCATOR_MAX_X);
+          mapRect.maxx = MS_MIN(mapRect.maxx, WEB_MERCATOR_MAX_X);
+        }
+      }
+
       if (msProjectRect(&map->projection, &layer->projection, &mapRect) !=
           MS_SUCCESS) {
         msDebug("msContourLayerReadRaster(%s): unable to reproject map request "
@@ -249,7 +282,10 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect) {
         return MS_FAILURE;
       }
 
-      map_cellsize_x = MS_CELLSIZE(mapRect.minx, mapRect.maxx, map->width);
+      map_cellsize_x =
+          map_cellsize_x_override != 0
+              ? map_cellsize_x_override
+              : MS_CELLSIZE(mapRect.minx, mapRect.maxx, map->width);
       map_cellsize_y = MS_CELLSIZE(mapRect.miny, mapRect.maxy, map->height);
 
       /* if the projection failed to project the extent requested, we need to
@@ -274,6 +310,11 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect) {
         map_cellsize_y = MS_CONVERT_UNIT(
             src_unit, dst_unit, MS_CELLSIZE(rect.miny, rect.maxy, map->height));
       }
+    } else {
+      if (map->cellsize == 0) {
+        map->cellsize = msAdjustExtent(&mapRect, map->width, map->height);
+      }
+      map_cellsize_x = map_cellsize_y = map->cellsize;
     }
 
     if (map_cellsize_x == 0 || map_cellsize_y == 0) {
@@ -826,6 +867,12 @@ int msContourLayerGetItems(layerObj *layer) {
   return MS_SUCCESS;
 }
 
+void msContourLayerUseMapExtentAndProjectionForNextWhichShapes(layerObj *layer,
+                                                               mapObj *map) {
+  contourLayerInfo *clinfo = (contourLayerInfo *)layer->layerinfo;
+  clinfo->mapToUseForWhichShapes = map;
+}
+
 int msContourLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
   int i;
   rectObj newRect;
@@ -890,7 +937,8 @@ int msContourLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) {
     clinfo->ogrLayer.items[i] = msStrdup(layer->items[i]);
   }
 
-  return msLayerWhichShapes(&clinfo->ogrLayer, rect, isQuery);
+  const rectObj invalid_rect = MS_INIT_INVALID_RECT;
+  return msLayerWhichShapes(&clinfo->ogrLayer, invalid_rect, isQuery);
 }
 
 int msContourLayerGetShape(layerObj *layer, shapeObj *shape,

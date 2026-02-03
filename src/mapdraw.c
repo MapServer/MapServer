@@ -1163,6 +1163,8 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image) {
 
         searchrect = msUVRASTERGetSearchRect(layer, map);
         bDone = MS_TRUE;
+      } else if (layer->connectiontype == MS_CONTOUR) {
+        msContourLayerUseMapExtentAndProjectionForNextWhichShapes(layer, map);
       }
 
       if (!bDone)
@@ -1183,6 +1185,8 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image) {
     msUVRASTERLayerUseMapExtentAndProjectionForNextWhichShapes(layer, NULL);
   } else if (layer->connectiontype == MS_RASTER_LABEL) {
     msRasterLabelLayerUseMapExtentAndProjectionForNextWhichShapes(layer, NULL);
+  } else if (layer->connectiontype == MS_CONTOUR) {
+    msContourLayerUseMapExtentAndProjectionForNextWhichShapes(layer, NULL);
   }
 
   if (status == MS_DONE) { /* no overlap */
