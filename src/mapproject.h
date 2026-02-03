@@ -49,7 +49,7 @@ typedef struct projectionContext projectionContext;
 typedef enum {
   LINE_CUTTING_UNKNOWN = -1,
   LINE_CUTTING_NONE = 0,
-  LINE_CUTTING_FROM_POLAR = 1,
+  LINE_CUTTING_WITH_SHAPE = 1,
   LINE_CUTTING_FROM_LONGLAT_WRAP0 = 2
 } msLineCuttingCase;
 #endif
