@@ -3303,6 +3303,9 @@ void msRasterLabelLayerUseMapExtentAndProjectionForNextWhichShapes(
     layerObj *layer, mapObj *map);
 rectObj msRasterLabelGetSearchRect(layerObj *layer, mapObj *map);
 
+void msContourLayerUseMapExtentAndProjectionForNextWhichShapes(layerObj *layer,
+                                                               mapObj *map);
+
 /* ==================================================================== */
 /*      Prototypes for functions in mapdraw.c                           */
 /* ==================================================================== */
