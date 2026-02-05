@@ -3721,7 +3721,8 @@ MS_DLL_EXPORT int msCopyProjection(projectionObj *dst,
                                    const projectionObj *src);
 MS_DLL_EXPORT int msCopyProjectionExtended(projectionObj *dst,
                                            const projectionObj *src,
-                                           char **args, int num_args);
+                                           const char *const *args,
+                                           int num_args);
 int msCopyExpression(expressionObj *dst, const expressionObj *src);
 int msCopyProjection(projectionObj *dst, const projectionObj *src);
 MS_DLL_EXPORT int msCopyRasterBuffer(rasterBufferObj *dst,

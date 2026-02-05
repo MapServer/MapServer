@@ -1,0 +1,49 @@
+#
+#
+# Test querying in EPSG:4326 a raster georeferenced in rotated pole lat/lon
+# with lon_0 > 180
+#
+#
+
+# RUN_PARMS: wcs_input_rot_pole_lon_lat_space_lon0_beyond_180.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetCoverage&SERVICE=WCS&VERSION=2.0.1&COVERAGEID=hrepa-sample&FORMAT=image/tiff&SUBSETTINGCRS=EPSG:4326&SUBSET=x(-120,-85)&SUBSET=y(48,66)" > [RESULT_DEMIME]
+
+MAP
+    NAME ""
+    IMAGETYPE "PNG"
+    EXTENT -180 -90 180 90
+    MAXSIZE 16384
+    SIZE 500 300
+    CONFIG "PROJ_LIB" "./data/proj/input_rot_pole_lon_lat_space_lon0_beyond_180"
+    PROJECTION
+        "init=epsg:4326"
+    END
+    OUTPUTFORMAT
+        NAME "GEOTIFF_32"
+        DRIVER "GDAL/GTiff"
+        MIMETYPE "image/tiff"
+        IMAGEMODE FLOAT32
+        EXTENSION "tif"
+    END
+    WEB
+        METADATA
+            "ows_srs" "EPSG:4326 EPSG:102977"
+            "ows_enable_request" "*"
+            "ows_extent" "-180 -90 180 90"
+            "ows_onlineresource" "http://example.com"
+        END
+    END
+    LAYER
+        NAME "hrepa-sample"
+        TYPE RASTER
+        TEMPLATE "ttt.html"
+        PROJECTION
+            "init=epsg:102977"
+        END
+        DATA "data/input_rot_pole_lon_lat_space_lon0_beyond_180.tif"
+        METADATA
+            "ows_extent" "-13.6849561 -11.1662507 41.1700330 15.5637507"
+            "ows_size" "200 97"
+            "ows_resolution" "0.274274945045819 -0.275567024872444"
+        END
+    END
+END
