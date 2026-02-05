@@ -56,7 +56,7 @@
  **********************************************************************/
 
 int msCopyProjectionExtended(projectionObj *dst, const projectionObj *src,
-                             char **args, int num_args) {
+                             const char *const *args, int num_args) {
   MS_COPYSTELEM(numargs);
   MS_COPYSTELEM(gt);
 

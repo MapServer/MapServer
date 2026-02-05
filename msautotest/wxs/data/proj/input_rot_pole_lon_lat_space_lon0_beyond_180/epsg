@@ -1,0 +1,2 @@
+<4326> +proj=longlat +datum=WGS84 +no_defs  <>
+<102977> +proj=ob_tran +o_proj=longlat +o_lon_p=0 +o_lat_p=36.0885204096624 +lon_0=245.305141958434 +ellps=sphere +no_defs <> # CaLDAS-NSRPS/HREPA
