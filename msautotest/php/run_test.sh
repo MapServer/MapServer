@@ -7,8 +7,8 @@ cd msautotest
 echo "PHP version"
 php -v
 PHPVersionMinor=$(php --version | head -n 1 | cut -d " " -f 2 | cut -c 1,3)
-if [ ${PHPVersionMinor} -ge 83 ]; then
-    PHPUnitVersion=12
+if [ ${PHPVersionMinor} -ge 84 ]; then
+    PHPUnitVersion=13
 else
     PHPUnitVersion=10
 fi
