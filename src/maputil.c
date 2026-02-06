@@ -2600,7 +2600,17 @@ void *msSmallCalloc(size_t nCount, size_t nSize) {
 ** NULL in case of error.
 */
 char *msBuildOnlineResource(const mapObj *map, const cgiRequestObj *req) {
-  (void)map;
+  (void)map; // unused parameter
+
+  // first check if a value has been set in the
+  // CONFIG file
+  const char *config_online_resource =
+      CPLGetConfigOption("MS_ONLINERESOURCE", NULL);
+
+  if (config_online_resource) {
+    return msStrdup(config_online_resource);
+  }
+
   char *online_resource = NULL;
   const char *value, *protocol = "http", *mapparam = NULL;
   char **hostname_array = NULL;
