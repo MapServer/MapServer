@@ -1969,7 +1969,7 @@ int msProjectHasLonWrap(projectionObj *in, double *pdfLonWrap) {
 /************************************************************************/
 
 int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect) {
-  char *over = "+over";
+  const char *over = "+over";
   int ret;
   int bFreeInOver = MS_FALSE;
   int bFreeOutOver = MS_FALSE;

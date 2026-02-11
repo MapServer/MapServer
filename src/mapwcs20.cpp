@@ -4656,6 +4656,17 @@ this request. Check wcs/ows_enable_request settings.",
       }
 
       msProjectRect(&imageProj, &subsetProj, &(layer->extent));
+      fprintf(stderr, "%f %f %f %f\n", layer->extent.minx, layer->extent.miny,
+              layer->extent.maxx, layer->extent.maxy);
+      if (msProjIsGeographicCRS(&subsetProj)) {
+        if (layer->extent.minx > 180 && subsets.maxx <= 180) {
+          layer->extent.minx -= 360;
+          layer->extent.maxx -= 360;
+        } else if (layer->extent.maxx < -180 && subsets.minx >= -180) {
+          layer->extent.minx += 360;
+          layer->extent.maxx += 360;
+        }
+      }
       map->extent = layer->extent;
       msFreeProjection(&(map->projection));
       map->projection = subsetProj;
