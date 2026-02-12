@@ -297,11 +297,6 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item,
   return pszExpression;
 }
 
-int FLTogrConvertGeometry(OGRGeometryH hGeometry, shapeObj *psShape,
-                          OGRwkbGeometryType nType) {
-  return msOGRGeometryToShape(hGeometry, psShape, nType);
-}
-
 static int FLTShapeFromGMLTree(CPLXMLNode *psTree, shapeObj *psShape,
                                char **ppszSRS) {
   const char *pszSRS = NULL;
@@ -322,7 +317,7 @@ static int FLTShapeFromGMLTree(CPLXMLNode *psTree, shapeObj *psShape,
         nType = wkbLineString;
       else if (nType == wkbPoint25D || nType == wkbMultiPoint25D)
         nType = wkbPoint;
-      FLTogrConvertGeometry(hGeometry, psShape, nType);
+      msOGRGeometryToShape(hGeometry, psShape, nType);
 
       OGR_G_DestroyGeometry(hGeometry);
 
