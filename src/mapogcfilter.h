@@ -110,10 +110,6 @@ MS_DLL_EXPORT shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode,
 
 MS_DLL_EXPORT int FLTHasSpatialFilter(FilterEncodingNode *psFilterNode);
 
-/*SQL expressions related functions.*/
-MS_DLL_EXPORT int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode,
-                                          mapObj *map, int iLayerIndex);
-
 MS_DLL_EXPORT char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode,
                                         layerObj *lp);
 MS_DLL_EXPORT char *
