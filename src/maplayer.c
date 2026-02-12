@@ -1974,11 +1974,6 @@ int LayerDefaultGetItems(layerObj *layer) {
   return MS_SUCCESS; /* returning no items is legit */
 }
 
-int msLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
-                                     int iLayerIndex) {
-  return FLTLayerApplyCondSQLFilterToLayer(psNode, map, iLayerIndex);
-}
-
 int msLayerSupportsPaging(layerObj *layer) {
   if (layer && ((layer->connectiontype == MS_ORACLESPATIAL) ||
                 (layer->connectiontype == MS_POSTGIS)))
@@ -1986,9 +1981,6 @@ int msLayerSupportsPaging(layerObj *layer) {
 
   return MS_FALSE;
 }
-
-int msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
-                                   int iLayerIndex);
 
 /*
  * msLayerSupportsSorting()
@@ -2058,11 +2050,6 @@ char *msLayerBuildSQLOrderBy(layerObj *layer) {
     }
   }
   return strOrderBy;
-}
-
-int msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
-                                   int iLayerIndex) {
-  return FLTLayerApplyPlainFilterToLayer(psNode, map, iLayerIndex);
 }
 
 int msLayerGetPaging(layerObj *layer) {
@@ -2332,7 +2319,7 @@ static int populateVirtualTable(layerVTableObj *vtable) {
   vtable->LayerCloseConnection = LayerDefaultCloseConnection;
   vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
 
-  vtable->LayerApplyFilterToLayer = msLayerApplyPlainFilterToLayer;
+  vtable->LayerApplyFilterToLayer = FLTLayerApplyPlainFilterToLayer;
 
   vtable->LayerCreateItems = LayerDefaultCreateItems;
 

@@ -4090,7 +4090,7 @@ MS_DLL_EXPORT int PluginInitializeVirtualTable(layerVTableObj *vtable,
   vtable->LayerGetItems = msMSSQL2008LayerGetItems;
   vtable->LayerGetExtent = msMSSQL2008LayerGetExtent;
 
-  vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
+  /* vtable->LayerApplyFilterToLayer, use default */
 
   /* vtable->LayerGetAutoStyle, not supported for this layer */
   vtable->LayerCloseConnection = msMSSQL2008LayerClose;
@@ -4129,7 +4129,7 @@ int msMSSQL2008LayerInitializeVirtualTable(layerObj *layer) {
   layer->vtable->LayerGetItems = msMSSQL2008LayerGetItems;
   layer->vtable->LayerGetExtent = msMSSQL2008LayerGetExtent;
 
-  layer->vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
+  /* layer->vtable->LayerApplyFilterToLayer, use default */
 
   /* layer->vtable->LayerGetAutoStyle, not supported for this layer */
   layer->vtable->LayerCloseConnection = msMSSQL2008LayerClose;

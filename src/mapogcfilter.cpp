@@ -297,11 +297,6 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item,
   return pszExpression;
 }
 
-int FLTogrConvertGeometry(OGRGeometryH hGeometry, shapeObj *psShape,
-                          OGRwkbGeometryType nType) {
-  return msOGRGeometryToShape(hGeometry, psShape, nType);
-}
-
 static int FLTShapeFromGMLTree(CPLXMLNode *psTree, shapeObj *psShape,
                                char **ppszSRS) {
   const char *pszSRS = NULL;
@@ -322,7 +317,7 @@ static int FLTShapeFromGMLTree(CPLXMLNode *psTree, shapeObj *psShape,
         nType = wkbLineString;
       else if (nType == wkbPoint25D || nType == wkbMultiPoint25D)
         nType = wkbPoint;
-      FLTogrConvertGeometry(hGeometry, psShape, nType);
+      msOGRGeometryToShape(hGeometry, psShape, nType);
 
       OGR_G_DestroyGeometry(hGeometry);
 
@@ -335,231 +330,6 @@ static int FLTShapeFromGMLTree(CPLXMLNode *psTree, shapeObj *psShape,
   }
 
   return MS_FALSE;
-}
-
-int FLTGetGeosOperator(char *pszValue) {
-  if (!pszValue)
-    return -1;
-
-  if (strcasecmp(pszValue, "Equals") == 0)
-    return MS_GEOS_EQUALS;
-  else if (strcasecmp(pszValue, "Intersect") == 0 ||
-           strcasecmp(pszValue, "Intersects") == 0)
-    return MS_GEOS_INTERSECTS;
-  else if (strcasecmp(pszValue, "Disjoint") == 0)
-    return MS_GEOS_DISJOINT;
-  else if (strcasecmp(pszValue, "Touches") == 0)
-    return MS_GEOS_TOUCHES;
-  else if (strcasecmp(pszValue, "Crosses") == 0)
-    return MS_GEOS_CROSSES;
-  else if (strcasecmp(pszValue, "Within") == 0)
-    return MS_GEOS_WITHIN;
-  else if (strcasecmp(pszValue, "Contains") == 0)
-    return MS_GEOS_CONTAINS;
-  else if (strcasecmp(pszValue, "Overlaps") == 0)
-    return MS_GEOS_OVERLAPS;
-  else if (strcasecmp(pszValue, "Beyond") == 0)
-    return MS_GEOS_BEYOND;
-  else if (strcasecmp(pszValue, "DWithin") == 0)
-    return MS_GEOS_DWITHIN;
-
-  return -1;
-}
-
-int FLTIsGeosNode(char *pszValue) {
-  if (FLTGetGeosOperator(pszValue) == -1)
-    return MS_FALSE;
-
-  return MS_TRUE;
-}
-
-/************************************************************************/
-/*                        FLTIsSimpleFilterNoSpatial                    */
-/*                                                                      */
-/*      Filter encoding with only attribute queries                     */
-/************************************************************************/
-int FLTIsSimpleFilterNoSpatial(FilterEncodingNode *psNode) {
-  if (FLTIsSimpleFilter(psNode) && FLTNumberOfFilterType(psNode, "BBOX") == 0)
-    return MS_TRUE;
-
-  return MS_FALSE;
-}
-
-/************************************************************************/
-/*                      FLTApplySimpleSQLFilter()                       */
-/************************************************************************/
-
-int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
-                            int iLayerIndex) {
-  layerObj *lp = NULL;
-  char *szExpression = NULL;
-  rectObj sQueryRect = map->extent;
-  const char *szEPSG = NULL;
-  projectionObj sProjTmp;
-  char *pszBuffer = NULL;
-  int bConcatWhere = 0;
-  int bHasAWhere = 0;
-  char *pszTmp = NULL, *pszTmp2 = NULL;
-  char *tmpfilename = NULL;
-  const char *pszTimeField = NULL;
-  const char *pszTimeValue = NULL;
-
-  lp = (GET_LAYER(map, iLayerIndex));
-
-  /* if there is a bbox use it */
-  szEPSG = FLTGetBBOX(psNode, &sQueryRect);
-  if (szEPSG && map->projection.numargs > 0) {
-    msInitProjection(&sProjTmp);
-    msProjectionInheritContextFrom(&sProjTmp, &map->projection);
-    /* Use the non EPSG variant since axis swapping is done in
-     * FLTDoAxisSwappingIfNecessary */
-    if (msLoadProjectionString(&sProjTmp, szEPSG) == 0) {
-      msProjectRect(&sProjTmp, &map->projection, &sQueryRect);
-    }
-    msFreeProjection(&sProjTmp);
-  }
-
-  if (lp->connectiontype == MS_OGR) {
-    pszTimeValue = FLTGetDuring(psNode, &pszTimeField);
-  }
-
-  /* make sure that the layer can be queried*/
-  if (!lp->_template)
-    lp->_template = msStrdup("ttt.html");
-
-  /* if there is no class, create at least one, so that query by rect would work
-   */
-  if (lp->numclasses == 0) {
-    if (msGrowLayerClasses(lp) == NULL)
-      return MS_FAILURE;
-    initClass(lp->_class[0]);
-  }
-
-  bConcatWhere = 0;
-  bHasAWhere = 0;
-  if (lp->connectiontype == MS_POSTGIS ||
-      lp->connectiontype == MS_ORACLESPATIAL ||
-      lp->connectiontype == MS_PLUGIN) {
-    szExpression = FLTGetSQLExpression(psNode, lp);
-    if (szExpression) {
-      pszTmp = msStrdup("(");
-      pszTmp = msStringConcatenate(pszTmp, szExpression);
-      pszTmp = msStringConcatenate(pszTmp, ")");
-      msFree(szExpression);
-      szExpression = pszTmp;
-    }
-  }
-  /* concatenates the WHERE clause for OGR layers. This only applies if
-     the expression was empty or not of an expression string. If there
-     is an sql type expression, it is assumed to have the WHERE clause.
-     If it is an expression and does not have a WHERE it is assumed to be a
-     mapserver type expression*/
-  else if (lp->connectiontype == MS_OGR) {
-    if (lp->filter.type != MS_EXPRESSION) {
-      szExpression = FLTGetSQLExpression(psNode, lp);
-      bConcatWhere = 1;
-    } else {
-      if (lp->filter.string && EQUALN(lp->filter.string, "WHERE ", 6)) {
-        szExpression = FLTGetSQLExpression(psNode, lp);
-        bHasAWhere = 1;
-        bConcatWhere = 1;
-      } else {
-        szExpression = FLTGetCommonExpression(psNode, lp);
-      }
-    }
-  } else {
-    szExpression = FLTGetCommonExpression(psNode, lp);
-  }
-
-  if (szExpression) {
-    if (bConcatWhere)
-      pszBuffer = msStringConcatenate(pszBuffer, "WHERE ");
-
-    /* if the filter is set and it's an expression type, concatenate it with
-                 this filter. If not just free it */
-    if (lp->filter.string && lp->filter.type == MS_EXPRESSION) {
-      pszBuffer = msStringConcatenate(pszBuffer, "((");
-      if (bHasAWhere)
-        pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string + 6);
-      else
-        pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
-      pszBuffer = msStringConcatenate(pszBuffer, ") and ");
-    } else if (lp->filter.string)
-      msFreeExpression(&lp->filter);
-
-    pszBuffer = msStringConcatenate(pszBuffer, szExpression);
-
-    if (lp->filter.string && lp->filter.type == MS_EXPRESSION)
-      pszBuffer = msStringConcatenate(pszBuffer, ")");
-
-    msLoadExpressionString(&lp->filter, pszBuffer);
-    free(szExpression);
-  }
-
-  if (pszTimeField && pszTimeValue)
-    msLayerSetTimeFilter(lp, pszTimeValue, pszTimeField);
-
-  if (pszBuffer)
-    free(pszBuffer);
-
-  map->query.type = MS_QUERY_BY_RECT;
-  map->query.mode = MS_QUERY_MULTIPLE;
-  map->query.layer = lp->index;
-  map->query.rect = sQueryRect;
-
-  if (map->debug == MS_DEBUGLEVEL_VVV) {
-    tmpfilename = msTmpFile(map, map->mappath, NULL, "_filter.map");
-    if (tmpfilename == NULL) {
-      tmpfilename = msTmpFile(map, NULL, NULL, "_filter.map");
-    }
-    if (tmpfilename) {
-      msSaveMap(map, tmpfilename);
-      msDebug(
-          "FLTApplySimpleSQLFilter(): Map file after Filter was applied %s\n",
-          tmpfilename);
-      msFree(tmpfilename);
-    }
-  }
-
-  /*for oracle connection, if we have a simple filter with no spatial
-    constraints we should set the connection function to NONE to have a better
-    performance
-    (#2725)*/
-
-  if (lp->connectiontype == MS_ORACLESPATIAL &&
-      FLTIsSimpleFilterNoSpatial(psNode)) {
-    if (strcasestr(lp->data, "USING") == 0)
-      lp->data = msStringConcatenate(lp->data, " USING NONE");
-    else if (strcasestr(lp->data, "NONE") == 0) {
-      /*if one of the functions is used, just replace it with NONE*/
-      if (strcasestr(lp->data, "FILTER"))
-        lp->data = msCaseReplaceSubstring(lp->data, "FILTER", "NONE");
-      else if (strcasestr(lp->data, "GEOMRELATE"))
-        lp->data = msCaseReplaceSubstring(lp->data, "GEOMRELATE", "NONE");
-      else if (strcasestr(lp->data, "RELATE"))
-        lp->data = msCaseReplaceSubstring(lp->data, "RELATE", "NONE");
-      else if (strcasestr(lp->data, "VERSION")) {
-        /*should add NONE just before the VERSION. Cases are:
-          DATA "ORA_GEOMETRY FROM data USING VERSION 10g
-          DATA "ORA_GEOMETRY FROM data  USING UNIQUE FID VERSION 10g"
-         */
-        pszTmp = (char *)strcasestr(lp->data, "VERSION");
-        pszTmp2 = msStringConcatenate(pszTmp2, " NONE ");
-        pszTmp2 = msStringConcatenate(pszTmp2, pszTmp);
-
-        lp->data = msCaseReplaceSubstring(lp->data, pszTmp, pszTmp2);
-
-        msFree(pszTmp2);
-
-      } else if (strcasestr(lp->data, "SRID")) {
-        lp->data = msStringConcatenate(lp->data, " NONE");
-      }
-    }
-  }
-
-  return msQueryByRect(map);
-
-  /* return MS_SUCCESS; */
 }
 
 /************************************************************************/
@@ -671,16 +441,6 @@ int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
   if (!layer->vtable)
     return MS_FAILURE;
   return layer->vtable->LayerApplyFilterToLayer(psNode, map, iLayerIndex);
-}
-
-/************************************************************************/
-/*               FLTLayerApplyCondSQLFilterToLayer                       */
-/*                                                                      */
-/* Helper function for layer virtual table architecture                 */
-/************************************************************************/
-int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
-                                      int iLayerIndex) {
-  return FLTLayerApplyPlainFilterToLayer(psNode, map, iLayerIndex);
 }
 
 /************************************************************************/

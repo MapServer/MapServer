@@ -3233,12 +3233,6 @@ MS_DLL_EXPORT int msLayerMakePlainTimeFilter(layerObj *lp,
                                              const char *timestring,
                                              const char *timefield);
 
-MS_DLL_EXPORT int msLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode,
-                                                   mapObj *map,
-                                                   int iLayerIndex);
-MS_DLL_EXPORT int msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode,
-                                                 mapObj *map, int iLayerIndex);
-
 /* maplayer.c */
 MS_DLL_EXPORT int msLayerGetNumFeatures(layerObj *layer);
 

@@ -4762,7 +4762,6 @@ MS_DLL_EXPORT int PluginInitializeVirtualTable(layerVTableObj *vtable,
   /* layer->vtable->LayerGetAutoStyle, use default */
   /* layer->vtable->LayerApplyFilterToLayer, use default */
   vtable->LayerCloseConnection = msOracleSpatialLayerClose;
-  vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
   vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
   // vtable->LayerSetTimeFilter = msOracleSpatialLayerSetTimeFilter;
   // vtable->LayerEscapePropertyName = msOracleSpatialEscapePropertyName;
@@ -4796,7 +4795,7 @@ int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer) {
   layer->vtable->LayerGetExtent = msOracleSpatialLayerGetExtent;
   /* layer->vtable->LayerGetAutoStyle, use default */
   layer->vtable->LayerCloseConnection = msOracleSpatialLayerClose;
-  layer->vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
+  /* layer->vtable->LayerApplyFilterToLayer, use default */
   layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
   // layer->vtable->LayerSetTimeFilter = msOracleSpatialLayerSetTimeFilter;
   // layer->vtable->LayerEscapePropertyName = msOracleSpatialEscapePropertyName;
