@@ -39,6 +39,7 @@
 
 #include <algorithm>
 #include <map>
+#include <set>
 #include <string>
 #include <iostream>
 #include <utility>
@@ -70,6 +71,13 @@ constexpr const char *CRS84_URL =
     "http://www.opengis.net/def/crs/OGC/1.3/CRS84";
 
 #ifdef USE_OGCAPI_SVR
+
+/** Returns whether we enforce compliance mode. Defaults to true */
+static bool msOGCAPIComplianceMode(mapObj *map) {
+  const char *compliance_mode =
+      msOWSLookupMetadata(&(map->web.metadata), "A", "compliance_mode");
+  return compliance_mode == NULL || strcasecmp(compliance_mode, "true") == 0;
+}
 
 /*
 ** Returns a JSON object using and a description.
@@ -174,7 +182,7 @@ static int getDefaultLimit(mapObj *map, layerObj *layer) {
   return default_limit;
 }
 
-static std::string getExtraParameters(mapObj *map, layerObj *layer) {
+static std::string getExtraParameterString(mapObj *map, layerObj *layer) {
 
   std::string extra_params;
 
@@ -182,7 +190,7 @@ static std::string getExtraParameters(mapObj *map, layerObj *layer) {
   if (layer) {
     const char *layerVal =
         msOWSLookupMetadata(&(layer->metadata), "AO", "extra_params");
-    if (layerVal) // only check for null
+    if (layerVal)
       extra_params = std::string("&") + layerVal;
   }
 
@@ -194,6 +202,54 @@ static std::string getExtraParameters(mapObj *map, layerObj *layer) {
   }
 
   return extra_params;
+}
+
+static std::set<std::string>
+getExtraParameters(const char *pszExtraParameters) {
+  std::set<std::string> ret;
+  for (const auto &param : msStringSplit(pszExtraParameters, '&')) {
+    const auto keyValue = msStringSplit(param.c_str(), '=');
+    if (!keyValue.empty())
+      ret.insert(keyValue[0]);
+  }
+  return ret;
+}
+
+static std::set<std::string> getExtraParameters(mapObj *map, layerObj *layer) {
+
+  // first check layer metadata if layer is not null
+  if (layer) {
+    const char *layerVal =
+        msOWSLookupMetadata(&(layer->metadata), "AO", "extra_params");
+    if (layerVal)
+      return getExtraParameters(layerVal);
+  }
+
+  if (map) {
+    const char *mapVal =
+        msOWSLookupMetadata(&(map->web.metadata), "AO", "extra_params");
+    if (mapVal)
+      return getExtraParameters(mapVal);
+  }
+
+  return {};
+}
+
+static bool
+msOOGCAPICheckQueryParameters(mapObj *map, cgiRequestObj *request,
+                              const std::set<std::string> &allowedParameters) {
+  if (msOGCAPIComplianceMode(map)) {
+    for (int j = 0; j < request->NumParams; j++) {
+      const char *paramName = request->ParamNames[j];
+      if (allowedParameters.find(paramName) == allowedParameters.end()) {
+        msOGCAPIOutputError(
+            OGCAPI_PARAM_ERROR,
+            (std::string("Unknown query parameter: ") + paramName).c_str());
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 /*
@@ -839,7 +895,7 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format,
 
   const int geometry_precision = getGeometryPrecision(map, layer);
 
-  const std::string extra_params = getExtraParameters(map, layer);
+  const std::string extra_params = getExtraParameterString(map, layer);
 
   // build collection object
   collection = {
@@ -1029,7 +1085,7 @@ static void outputResponse(
                               // object in the template
 
     // extend the JSON with a few things that we need for templating
-    const std::string extra_params = getExtraParameters(map, nullptr);
+    const std::string extra_params = getExtraParameterString(map, nullptr);
 
     j["template"] = {{"path", json::array()},
                      {"params", json::object()},
@@ -1078,6 +1134,12 @@ static int processLandingRequest(mapObj *map, cgiRequestObj *request,
                                  OGCAPIFormat format) {
   json response;
 
+  auto allowedParameters = getExtraParameters(map, nullptr);
+  allowedParameters.insert("f");
+  if (!msOOGCAPICheckQueryParameters(map, request, allowedParameters)) {
+    return MS_SUCCESS;
+  }
+
   // define ambiguous elements
   const char *description =
       msOWSLookupMetadata(&(map->web.metadata), "A", "description");
@@ -1086,7 +1148,7 @@ static int processLandingRequest(mapObj *map, cgiRequestObj *request,
         msOWSLookupMetadata(&(map->web.metadata), "OF",
                             "abstract"); // fallback on abstract if necessary
 
-  const std::string extra_params = getExtraParameters(map, nullptr);
+  const std::string extra_params = getExtraParameterString(map, nullptr);
 
   // define api root url
   std::string api_root = msOGCAPIGetApiRootUrl(map, request);
@@ -1155,6 +1217,12 @@ static int processLandingRequest(mapObj *map, cgiRequestObj *request,
 static int processConformanceRequest(mapObj *map, cgiRequestObj *request,
                                      OGCAPIFormat format) {
   json response;
+
+  auto allowedParameters = getExtraParameters(map, nullptr);
+  allowedParameters.insert("f");
+  if (!msOOGCAPICheckQueryParameters(map, request, allowedParameters)) {
+    return MS_SUCCESS;
+  }
 
   // build response object
   response = {
@@ -1243,6 +1311,18 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
     }
   } else {
     extraHeaders["Content-Crs"].push_back('<' + std::string(CRS84_URL) + '>');
+  }
+
+  auto allowedParameters = getExtraParameters(map, layer);
+  allowedParameters.insert("f");
+  allowedParameters.insert("bbox");
+  allowedParameters.insert("bbox-crs");
+  allowedParameters.insert("datetime");
+  allowedParameters.insert("limit");
+  allowedParameters.insert("offset");
+  allowedParameters.insert("crs");
+  if (!msOOGCAPICheckQueryParameters(map, request, allowedParameters)) {
+    return MS_SUCCESS;
   }
 
   struct ReprojectionObjects {
@@ -1402,7 +1482,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
     }
   }
 
-  const std::string extra_params = getExtraParameters(map, layer);
+  const std::string extra_params = getExtraParameterString(map, layer);
 
   // build response object
   if (!featureId) {
@@ -1613,9 +1693,16 @@ static int processCollectionRequest(mapObj *map, cgiRequestObj *request,
     return MS_SUCCESS;
   }
 
+  layerObj *layer = map->layers[l];
+  auto allowedParameters = getExtraParameters(map, layer);
+  allowedParameters.insert("f");
+  if (!msOOGCAPICheckQueryParameters(map, request, allowedParameters)) {
+    return MS_SUCCESS;
+  }
+
   try {
-    response = getCollection(map, map->layers[l], format,
-                             msOGCAPIGetApiRootUrl(map, request));
+    response =
+        getCollection(map, layer, format, msOGCAPIGetApiRootUrl(map, request));
     if (response.is_null()) { // same as not found
       msOGCAPIOutputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
       return MS_SUCCESS;
@@ -1636,9 +1723,15 @@ static int processCollectionsRequest(mapObj *map, cgiRequestObj *request,
   json response;
   int i;
 
+  auto allowedParameters = getExtraParameters(map, nullptr);
+  allowedParameters.insert("f");
+  if (!msOOGCAPICheckQueryParameters(map, request, allowedParameters)) {
+    return MS_SUCCESS;
+  }
+
   // define api root url
   std::string api_root = msOGCAPIGetApiRootUrl(map, request);
-  const std::string extra_params = getExtraParameters(map, nullptr);
+  const std::string extra_params = getExtraParameterString(map, nullptr);
 
   // build response object
   response = {{"links",
@@ -1673,6 +1766,12 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
                              OGCAPIFormat format) {
   // Strongly inspired from
   // https://github.com/geopython/pygeoapi/blob/master/pygeoapi/openapi.py
+
+  auto allowedParameters = getExtraParameters(map, nullptr);
+  allowedParameters.insert("f");
+  if (!msOOGCAPICheckQueryParameters(map, request, allowedParameters)) {
+    return MS_SUCCESS;
+  }
 
   json response;
 

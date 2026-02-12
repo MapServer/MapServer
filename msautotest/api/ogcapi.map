@@ -28,6 +28,13 @@
 # RUN_PARMS: ogcapi_invalid_api_signature1.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/invalid" "QUERY_STRING=f=json" > [RESULT_DEVERSION]
 # RUN_PARMS: ogcapi_invalid_api_signature2.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/invalid/" "QUERY_STRING=f=json" > [RESULT_DEVERSION]
 
+# RUN_PARMS: ogcapi_landing_page_unknown_parameter.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi" "QUERY_STRING=f=json&unknown=parameter" > [RESULT]
+# RUN_PARMS: ogcapi_api_unknown_parameter.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/api" "QUERY_STRING=f=json&unknown=parameter" > [RESULT]
+# RUN_PARMS: ogcapi_conformance_unknown_parameter.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/conformance" "QUERY_STRING=f=json&unknown=parameter" > [RESULT]
+# RUN_PARMS: ogcapi_collections_unknown_parameter.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections" "QUERY_STRING=f=json&unknown=parameter" > [RESULT]
+# RUN_PARMS: ogcapi_collection_unknown_parameter.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties" "QUERY_STRING=f=json&unknown=parameter" > [RESULT]
+# RUN_PARMS: ogcapi_collections_items_unknown_parameter.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&unknown=parameter" > [RESULT]
+
 MAP
   EXTENT 190012.242200 4816648.737800 762254.477900 5472427.737000
   SIZE 800 800
