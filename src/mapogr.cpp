@@ -5180,8 +5180,6 @@ char *msOGREscapePropertyName(layerObj *layer, const char *pszString) {
   return pszEscapedStr;
 }
 
-static int msOGRLayerSupportsCommonFilters(layerObj *) { return MS_FALSE; }
-
 static void msOGREnablePaging(layerObj *layer, int value) {
   msOGRFileInfo *layerinfo = NULL;
 
@@ -5229,7 +5227,7 @@ int msOGRLayerInitializeVirtualTable(layerObj *layer) {
 
   layer->vtable->LayerTranslateFilter = msOGRTranslateMsExpressionToOGRSQL;
 
-  layer->vtable->LayerSupportsCommonFilters = msOGRLayerSupportsCommonFilters;
+  /* layer->vtable->LayerSupportsCommonFilters, use default */
   layer->vtable->LayerInitItemInfo = msOGRLayerInitItemInfo;
   layer->vtable->LayerFreeItemInfo = msOGRLayerFreeItemInfo;
   layer->vtable->LayerOpen = msOGRLayerOpenVT;
