@@ -69,9 +69,6 @@ MS_DLL_EXPORT char **FLTSplitFilters(const char *pszStr, int *pnTokens);
 MS_DLL_EXPORT int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
                                         int iLayerIndex);
 
-MS_DLL_EXPORT int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode,
-                                                    mapObj *map,
-                                                    int iLayerIndex);
 MS_DLL_EXPORT int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode,
                                                   mapObj *map, int iLayerIndex);
 

@@ -444,16 +444,6 @@ int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 }
 
 /************************************************************************/
-/*               FLTLayerApplyCondSQLFilterToLayer                       */
-/*                                                                      */
-/* Helper function for layer virtual table architecture                 */
-/************************************************************************/
-int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
-                                      int iLayerIndex) {
-  return FLTLayerApplyPlainFilterToLayer(psNode, map, iLayerIndex);
-}
-
-/************************************************************************/
 /*                           FLTGetTopBBOX                              */
 /*                                                                      */
 /* Return the "top" BBOX if there's a unique one.                       */

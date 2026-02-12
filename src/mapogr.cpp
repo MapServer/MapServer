@@ -5243,7 +5243,7 @@ int msOGRLayerInitializeVirtualTable(layerObj *layer) {
   layer->vtable->LayerGetExtent = msOGRLayerGetExtent;
   layer->vtable->LayerGetAutoStyle = msOGRLayerGetAutoStyle;
   /* layer->vtable->LayerCloseConnection, use default */
-  layer->vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
+  /* layer->vtable->LayerApplyFilterToLayer, use default */
   layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
   /* layer->vtable->LayerCreateItems, use default */
   layer->vtable->LayerGetNumFeatures = msOGRLayerGetNumFeatures;

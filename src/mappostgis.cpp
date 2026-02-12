@@ -4040,7 +4040,7 @@ int msPostGISLayerInitializeVirtualTable(layerObj *layer) {
   layer->vtable->LayerClose = msPostGISLayerClose;
   layer->vtable->LayerGetItems = msPostGISLayerGetItems;
   layer->vtable->LayerGetExtent = msPostGISLayerGetExtent;
-  layer->vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
+  /* layer->vtable->LayerApplyFilterToLayer, use default */
   /* layer->vtable->LayerGetAutoStyle, not supported for this layer */
   /* layer->vtable->LayerCloseConnection = msPostGISLayerClose; */
   // layer->vtable->LayerSetTimeFilter = msPostGISLayerSetTimeFilter;
