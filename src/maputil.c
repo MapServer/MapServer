@@ -2645,9 +2645,9 @@ char *msBuildOnlineResource(const mapObj *map, const cgiRequestObj *req) {
       map_len = strlen(mapparam) + 5; /* "map=" + "&" */
     }
 
-    /* +1 for '?' if mapparam exists, +1 for '\0' */
+    // add 2 to buffer_size for '?' and '\0'
     size_t buffer_size =
-        config_len + path_len + (mapparam ? 1 : 0) + map_len + 1;
+        config_len + path_len + map_len + 2;
 
     char *result = (char *)msSmallMalloc(buffer_size);
     if (!result) {
@@ -2660,7 +2660,7 @@ char *msBuildOnlineResource(const mapObj *map, const cgiRequestObj *req) {
       snprintf(result, buffer_size, "%s%s?map=%s&", config_online_resource,
                path, mapparam);
     } else {
-      snprintf(result, buffer_size, "%s%s", config_online_resource, path);
+      snprintf(result, buffer_size, "%s%s?", config_online_resource, path);
     }
 
     return result;
