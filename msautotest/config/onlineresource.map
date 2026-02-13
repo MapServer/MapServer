@@ -1,0 +1,43 @@
+# RUN_PARMS: onlineresource_index.json [MAPSERV] -conf onlineresource.conf PATH_INFO="/ONLINERESOURCE/" QUERY_STRING="f=json" > [RESULT_DEMIME]
+# RUN_PARMS: onlineresource_index_empty.json [MAPSERV] -conf onlineresource_empty.conf PATH_INFO="/ONLINERESOURCE/" QUERY_STRING="f=json" > [RESULT_DEMIME]
+# RUN_PARMS: onlineresource_ogcapi.json [MAPSERV] -conf onlineresource.conf PATH_INFO="/onlineresource/ogcapi/" QUERY_STRING="f=json" > [RESULT_DEMIME]
+# RUN_PARMS: onlineresource_ogcapi_collections.json [MAPSERV] -conf onlineresource.conf PATH_INFO="/onlineresource/ogcapi/collections/" QUERY_STRING="f=json" > [RESULT_DEMIME]
+# RUN_PARMS: onlineresource_wms_getcapabiltities.xml [MAPSERV] -conf onlineresource.conf PATH_INFO="/onlineresource/" QUERY_STRING="SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities" > [RESULT_DEMIME]
+# RUN_PARMS: onlineresource_wfs_getcapabiltities.xml [MAPSERV] -conf onlineresource.conf PATH_INFO="/onlineresource/" QUERY_STRING="SERVICE=WFS&VERSION=2.0.0&REQUEST=GetCapabilities" > [RESULT_DEMIME]
+# RUN_PARMS: onlineresource_wms_getcapabiltities_mapfile.xml [MAPSERV] -conf onlineresource.conf QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities" > [RESULT_DEMIME]
+
+MAP
+    NAME "TEST"
+    SIZE 800 800
+    EXTENT -180.0 -90 180 90
+    PROJECTION
+        "EPSG:4326"
+    END
+    WEB
+        METADATA
+            "ows_title" "Example Map"
+            "oga_enable_request" "*"
+            "ows_enable_request" "*"
+        END
+    END
+
+    LAYER
+        NAME "ne_110m_land"
+        STATUS OFF
+        CONNECTION "./data/ne_110m_land.fgb"
+        TYPE POLYGON
+        CONNECTIONTYPE OGR
+        TEMPLATE "ttt"
+        METADATA
+            "ows_title" "ne_110m_land"
+            "gml_include_items" "all"
+            "gml_featureid" "fid"
+        END
+        CLASS
+            NAME "land"
+            STYLE
+                COLOR "#556b2f"
+            END
+        END
+    END
+END
