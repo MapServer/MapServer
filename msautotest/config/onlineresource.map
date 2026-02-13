@@ -1,4 +1,5 @@
 # RUN_PARMS: onlineresource_index.json [MAPSERV] -conf onlineresource.conf PATH_INFO="/ONLINERESOURCE/" QUERY_STRING="f=json" > [RESULT_DEMIME]
+# RUN_PARMS: onlineresource_index_empty.json [MAPSERV] -conf onlineresource_empty.conf PATH_INFO="/ONLINERESOURCE/" QUERY_STRING="f=json" > [RESULT_DEMIME]
 # RUN_PARMS: onlineresource_ogcapi.json [MAPSERV] -conf onlineresource.conf PATH_INFO="/onlineresource/ogcapi/" QUERY_STRING="f=json" > [RESULT_DEMIME]
 # RUN_PARMS: onlineresource_ogcapi_collections.json [MAPSERV] -conf onlineresource.conf PATH_INFO="/onlineresource/ogcapi/collections/" QUERY_STRING="f=json" > [RESULT_DEMIME]
 # RUN_PARMS: onlineresource_wms_getcapabiltities.xml [MAPSERV] -conf onlineresource.conf PATH_INFO="/onlineresource/" QUERY_STRING="SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities" > [RESULT_DEMIME]
