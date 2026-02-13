@@ -2646,8 +2646,7 @@ char *msBuildOnlineResource(const mapObj *map, const cgiRequestObj *req) {
     }
 
     // add 2 to buffer_size for '?' and '\0'
-    size_t buffer_size =
-        config_len + path_len + map_len + 2;
+    size_t buffer_size = config_len + path_len + map_len + 2;
 
     char *result = (char *)msSmallMalloc(buffer_size);
     if (!result) {

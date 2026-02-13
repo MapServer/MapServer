@@ -1,4 +1,5 @@
 # RUN_PARMS: index_wms_onlineresource.json [MAPSERV] -conf index.conf "PATH_INFO=/WMS_MAP_ONLINERESOURCE/" QUERY_STRING="f=json" > [RESULT_DEMIME]
+# RUN_PARMS: index_wms_onlineresource2.json [MAPSERV] -conf onlineresource.conf "PATH_INFO=/WMS_MAP_ONLINERESOURCE/" QUERY_STRING="f=json" > [RESULT_DEMIME]
 
 MAP
     NAME "WMSMAP"
