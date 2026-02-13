@@ -2599,7 +2599,7 @@ void *msSmallCalloc(size_t nCount, size_t nSize) {
 ** Returns a newly allocated string that should be freed by the caller or
 ** NULL in case of error.
 */
-char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req) {
+char *msBuildOnlineResource(const mapObj *map, const cgiRequestObj *req) {
   (void)map;
   char *online_resource = NULL;
   const char *value, *protocol = "http", *mapparam = NULL;

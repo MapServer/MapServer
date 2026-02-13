@@ -250,31 +250,35 @@ FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNode,
   return expr;
 }
 
-static std::string
-FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode,
-                                       layerObj *lp) {
+std::string FLTGetBinaryComparisonCommonExpression(layerObj *lp,
+                                                   const char *pszPropertyName,
+                                                   bool bForceString,
+                                                   const char *pszOp,
+                                                   const char *pszValue) {
+  assert(pszPropertyName);
+  assert(pszOp);
+
   /* -------------------------------------------------------------------- */
   /*      check if the value is a numeric value or alphanumeric. If it    */
   /*      is alphanumeric, add quotes around attribute and values.        */
   /* -------------------------------------------------------------------- */
   bool bString = false;
   bool bDateTime = false;
-  if (psFilterNode->psRightNode->pszValue) {
-    const char *pszType = msOWSLookupMetadata(
-        &(lp->metadata), "OFG",
-        (std::string(psFilterNode->psLeftNode->pszValue) + "_type").c_str());
+  if (pszValue) {
+    const char *pszType =
+        msOWSLookupMetadata(&(lp->metadata), "OFG",
+                            (std::string(pszPropertyName) + "_type").c_str());
     if (pszType != NULL && (strcasecmp(pszType, "Character") == 0))
       bString = true;
     else if (pszType != NULL && (strcasecmp(pszType, "Date") == 0))
       bDateTime = true;
-    else if (FLTIsNumeric(psFilterNode->psRightNode->pszValue) == MS_FALSE)
+    else if (FLTIsNumeric(pszValue) == MS_FALSE)
       bString = true;
   }
 
   /* special case to be able to have empty strings in the expression. */
   /* propertyislike is always treated as string */
-  if (psFilterNode->psRightNode->pszValue == NULL ||
-      strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
+  if (!pszValue || bForceString)
     bString = true;
 
   /* attribute */
@@ -284,35 +288,14 @@ FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode,
   else
     expr = "([";
 
-  expr += FLTEscapePropertyName(psFilterNode->psLeftNode->pszValue,
-                                bString ? '"' : ']');
+  expr += FLTEscapePropertyName(pszPropertyName, bString ? '"' : ']');
 
   if (bString)
     expr += "]\" ";
   else
     expr += "] ";
 
-  if (strcasecmp(psFilterNode->pszValue, "PropertyIsEqualTo") == 0) {
-    /* case insensitive set ? */
-    if (psFilterNode->psRightNode->pOther &&
-        (*(int *)psFilterNode->psRightNode->pOther) == 1)
-      expr += "=*";
-    else
-      expr += "=";
-  } else if (strcasecmp(psFilterNode->pszValue, "PropertyIsNotEqualTo") == 0)
-    expr += "!=";
-  else if (strcasecmp(psFilterNode->pszValue, "PropertyIsLessThan") == 0)
-    expr += "<";
-  else if (strcasecmp(psFilterNode->pszValue, "PropertyIsGreaterThan") == 0)
-    expr += ">";
-  else if (strcasecmp(psFilterNode->pszValue, "PropertyIsLessThanOrEqualTo") ==
-           0)
-    expr += "<=";
-  else if (strcasecmp(psFilterNode->pszValue,
-                      "PropertyIsGreaterThanOrEqualTo") == 0)
-    expr += ">=";
-  else if (strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
-    expr += "~";
+  expr += pszOp;
   expr += ' ';
 
   /* value */
@@ -322,8 +305,8 @@ FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode,
     expr += "`";
   }
 
-  if (psFilterNode->psRightNode->pszValue) {
-    expr += msStdStringEscape(psFilterNode->psRightNode->pszValue);
+  if (pszValue) {
+    expr += msStdStringEscape(pszValue);
   }
 
   if (bString) {
@@ -335,6 +318,48 @@ FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode,
   expr += ")";
 
   return expr;
+}
+
+static std::string
+FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode,
+                                       layerObj *lp) {
+
+  const char *pszPropertyName = psFilterNode->psLeftNode->pszValue;
+  const char *pszValue = psFilterNode->psRightNode->pszValue;
+  const char *pszXMLOp = psFilterNode->pszValue;
+  if (pszPropertyName && pszXMLOp) {
+    /* special case to be able to have empty strings in the expression. */
+    /* propertyislike is always treated as string */
+    const bool bForceString = (strcasecmp(pszXMLOp, "PropertyIsLike") == 0);
+
+    const char *pszOp = nullptr;
+    if (strcasecmp(pszXMLOp, "PropertyIsEqualTo") == 0) {
+      /* case insensitive set ? */
+      if (psFilterNode->psRightNode->pOther &&
+          (*(int *)psFilterNode->psRightNode->pOther) == 1)
+        pszOp = "=*";
+      else
+        pszOp = "=";
+    } else if (strcasecmp(pszXMLOp, "PropertyIsNotEqualTo") == 0)
+      pszOp = "!=";
+    else if (strcasecmp(pszXMLOp, "PropertyIsLessThan") == 0)
+      pszOp = "<";
+    else if (strcasecmp(pszXMLOp, "PropertyIsGreaterThan") == 0)
+      pszOp = ">";
+    else if (strcasecmp(pszXMLOp, "PropertyIsLessThanOrEqualTo") == 0)
+      pszOp = "<=";
+    else if (strcasecmp(pszXMLOp, "PropertyIsGreaterThanOrEqualTo") == 0)
+      pszOp = ">=";
+    else if (strcasecmp(pszXMLOp, "PropertyIsLike") == 0)
+      pszOp = "~";
+    else
+      return std::string();
+
+    return FLTGetBinaryComparisonCommonExpression(
+        lp, pszPropertyName, bForceString, pszOp, pszValue);
+  }
+
+  return std::string();
 }
 
 static std::string

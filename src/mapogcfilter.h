@@ -174,6 +174,13 @@ int FLTLayerSetInvalidRectIfSupported(layerObj *lp, rectObj *rect,
 
 #ifdef __cplusplus
 }
+
+std::string FLTGetBinaryComparisonCommonExpression(layerObj *lp,
+                                                   const char *pszPropertyName,
+                                                   bool bForceString,
+                                                   const char *pszOp,
+                                                   const char *pszValue);
+
 std::string FLTGetTimeExpression(FilterEncodingNode *psFilterNode,
                                  layerObj *lp);
 

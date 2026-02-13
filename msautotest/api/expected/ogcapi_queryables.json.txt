@@ -1,0 +1,3 @@
+Content-Type: application/schema+json
+
+{"$id":"http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi/collections/mn_counties/queryables","$schema":"https://json-schema.org/draft/2020-12/schema","additionalProperties":false,"description":"This is the standard Minnesota State County Boundary dataset.","properties":{"CTYONLY_":{"description":"Queryable item 'CTYONLY_'","type":"integer"},"LASTMOD":{"description":"Queryable item 'LASTMOD'","format":"date-time","type":"string"},"Name":{"description":"Queryable item 'Name'","type":"string"}},"title":"State of Minnesota County Boundaries","type":"object"}

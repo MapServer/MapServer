@@ -18,6 +18,8 @@
 # test with limit parameter and empty token
 # RUN_PARMS: ogcapi_extraparams_collection_items_limit.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_population_centers/items" "QUERY_STRING=f=json&limit=2" > [RESULT_DEMIME]
 
+# RUN_PARMS: ogcapi_extraparams_collections_items_unknown_parameter.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_population_centers/items" "QUERY_STRING=f=json&unknown=parameter" > [RESULT]
+
 
 MAP
   EXTENT 190012.242200 4816648.737800 762254.477900 5472427.737000
