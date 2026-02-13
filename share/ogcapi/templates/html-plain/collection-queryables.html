@@ -1,0 +1,16 @@
+{% include "header.html" %}
+
+<h1>{{ template.title }} - Collection Queryables: {{ response.description }}</h1>
+
+<h2>Queryables:</h2>
+<ul>
+{% for key, value in response.properties %}
+  <li>{{ key }}: {{ value.type }}
+  {% if existsIn(value, "format") %}
+  , {{ value.format }}
+  {% endif %}
+  </li>
+{% endfor %}
+</ul>
+
+{% include "footer.html" %}

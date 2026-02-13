@@ -1,0 +1,8 @@
+Content-Type: application/geo+json
+Content-Crs: <http://www.opengis.net/def/crs/OGC/1.3/CRS84>
+Link: <http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi/collections/mn_counties/items?f=json&limit=9&offset=0&Name=no_match>; rel="self"; title="Items for this collection as GeoJSON"; type="application/geo+json"
+Link: <http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi/collections/mn_counties/items?f=html&limit=9&offset=0&Name=no_match>; rel="alternate"; title="Items for this collection as HTML"; type="text/html"
+OGC-NumberMatched: 0
+OGC-NumberReturned: 0
+
+{"features":[],"links":[{"href":"http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi/collections/mn_counties/items?f=json&limit=9&offset=0&Name=no_match","rel":"self","title":"Items for this collection as GeoJSON","type":"application/geo+json"},{"href":"http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi/collections/mn_counties/items?f=html&limit=9&offset=0&Name=no_match","rel":"alternate","title":"Items for this collection as HTML","type":"text/html"}],"numberMatched":0,"numberReturned":0,"type":"FeatureCollection"}

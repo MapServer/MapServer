@@ -966,8 +966,8 @@ static const char *msOWSGetPrefixFromNamespace(char chNamespace) {
 ** If namespaces is NULL then this function just does a regular metadata
 ** lookup.
 */
-const char *msOWSLookupMetadata(hashTableObj *metadata, const char *namespaces,
-                                const char *name) {
+const char *msOWSLookupMetadata(const hashTableObj *metadata,
+                                const char *namespaces, const char *name) {
   const char *value = NULL;
 
   if (namespaces == NULL) {
