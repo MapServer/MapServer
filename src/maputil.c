@@ -2602,20 +2602,74 @@ void *msSmallCalloc(size_t nCount, size_t nSize) {
 char *msBuildOnlineResource(const mapObj *map, const cgiRequestObj *req) {
   (void)map; // unused parameter
 
-  // first check if a value has been set in the
+  const char *pathinfo = getenv("PATH_INFO");
+  if (!pathinfo) {
+    pathinfo = "";
+  }
+
+  /* If map=.. was explicitly set then we'll include it in onlineresource
+   */
+
+  const char *mapparam = NULL;
+  if (req->type == MS_GET_REQUEST) {
+    int i;
+    for (i = 0; i < req->NumParams; i++) {
+      if (strcasecmp(req->ParamNames[i], "map") == 0) {
+        mapparam = req->ParamValues[i];
+        break;
+      }
+    }
+  }
+
+  // check if MS_ONLINERESOURCE has been set in the
   // CONFIG file
   const char *config_online_resource =
       CPLGetConfigOption("MS_ONLINERESOURCE", NULL);
 
   if (config_online_resource) {
-    return msStrdup(config_online_resource);
+
+    // append the PATH_INFO to the MS_ONLINERESOURCE value and return it
+    const char *path = pathinfo;
+    size_t config_len = strlen(config_online_resource);
+
+    /* avoid double slash */
+    if (config_len > 0 && config_online_resource[config_len - 1] == '/' &&
+        pathinfo[0] == '/') {
+      path = pathinfo + 1;
+    }
+
+    size_t path_len = strlen(path);
+    size_t map_len = 0;
+
+    if (mapparam) {
+      map_len = strlen(mapparam) + 5; /* "map=" + "&" */
+    }
+
+    /* +1 for '?' if mapparam exists, +1 for '\0' */
+    size_t buffer_size =
+        config_len + path_len + (mapparam ? 1 : 0) + map_len + 1;
+
+    char *result = (char *)msSmallMalloc(buffer_size);
+    if (!result) {
+      msSetError(MS_MEMERR, "Memory allocation failed",
+                 "msBuildOnlineResource()");
+      return NULL;
+    }
+
+    if (mapparam) {
+      snprintf(result, buffer_size, "%s%s?map=%s&", config_online_resource,
+               path, mapparam);
+    } else {
+      snprintf(result, buffer_size, "%s%s", config_online_resource, path);
+    }
+
+    return result;
   }
 
   char *online_resource = NULL;
-  const char *value, *protocol = "http", *mapparam = NULL;
+  const char *value, *protocol = "http";
   char **hostname_array = NULL;
   int mapparam_len = 0, hostname_array_len = 0;
-
   const char *hostname = getenv("HTTP_X_FORWARDED_HOST");
   if (!hostname)
     hostname = getenv("SERVER_NAME");
@@ -2630,11 +2684,6 @@ char *msBuildOnlineResource(const mapObj *map, const cgiRequestObj *req) {
   if (!port)
     port = getenv("SERVER_PORT");
 
-  const char *pathinfo = getenv("PATH_INFO");
-  if (!pathinfo) {
-    pathinfo = "";
-  }
-
   const char *script = getenv("SCRIPT_NAME");
 
   /* HTTPS is set by Apache to "on" in an HTTPS server ... if not set */
@@ -2645,19 +2694,6 @@ char *msBuildOnlineResource(const mapObj *map, const cgiRequestObj *req) {
   }
   if ((value = getenv("HTTP_X_FORWARDED_PROTO"))) {
     protocol = value;
-  }
-
-  /* If map=.. was explicitly set then we'll include it in onlineresource
-   */
-  if (req->type == MS_GET_REQUEST) {
-    int i;
-    for (i = 0; i < req->NumParams; i++) {
-      if (strcasecmp(req->ParamNames[i], "map") == 0) {
-        mapparam = req->ParamValues[i];
-        mapparam_len = strlen(mapparam) + 5; /* +5 for "map="+"&" */
-        break;
-      }
-    }
   }
 
   if (hostname && port && script) {
