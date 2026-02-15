@@ -13,6 +13,39 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.6.0 release (2025-12-03)
+--------------------------
+
+- CI: upgrade PCRE2 to 10.47 release (#7400)
+(see major changes below)
+
+8.6.0-rc1 release (2025-11-27)
+------------------------------
+
+- OGCAPI: return OGC-NumberReturned, OGC-NumberMatched and Link HTTP headers (#7390)
+
+- output GDAL files: fix from init=epsg:xxxx layers (#7392)
+
+8.6.0-beta2 release (2025-11-18)
+--------------------------------
+
+- additional URL creation logic for generated index URLs (#7388)
+
+8.6.0-beta1 release (2025-11-13)
+--------------------------------
+
+- allow append of additional query parameters for OGCAPI: Features (#7360)
+
+- new MapServer index page (#7350)
+
+- WMS GetFeatureInfo: add options to precisely identify points through their symbols (#7318)
+
+- add FALLBACK parameter for CLASS object, to be applied if none of the previously defined classes has been applied (#7309)
+
+- add vendorSpecificParameters to OpenAPI document (#7295)
+
+see detailed changelog for other fixes                                
+
 8.4.1 release (2025-09-19)
 --------------------------
 

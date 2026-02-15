@@ -139,21 +139,21 @@ Content-Type: text/xml; charset=UTF-8
     <BoundingBox CRS="EPSG:4326"
                 minx="-1.000000" miny="-1.000000" maxx="-1.000000" maxy="-1.000000" />
     <Layer queryable="1" opaque="0" cascaded="0">
-        <Name>road</Name>
-        <Title>road</Title>
-        <CRS>EPSG:43204</CRS>
-        <EX_GeographicBoundingBox>
-            <westBoundLongitude>-66.633318</westBoundLongitude>
-            <eastBoundLongitude>-59.292114</eastBoundLongitude>
-            <southBoundLatitude>42.382054</southBoundLatitude>
-            <northBoundLatitude>48.295512</northBoundLatitude>
-        </EX_GeographicBoundingBox>
-        <BoundingBox CRS="EPSG:43204"
-                    minx="2.25898e+06" miny="-70747.9" maxx="2.61535e+06" maxy="495481" />
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/ows?request=GetMetadata&amp;layer=road"/>
-        </MetadataURL>
+      <Name>road</Name>
+      <Title>road</Title>
+      <CRS>EPSG:43204</CRS>
+      <EX_GeographicBoundingBox>
+          <westBoundLongitude>-66.633318</westBoundLongitude>
+          <eastBoundLongitude>-59.292114</eastBoundLongitude>
+          <southBoundLatitude>42.382054</southBoundLatitude>
+          <northBoundLatitude>48.295512</northBoundLatitude>
+      </EX_GeographicBoundingBox>
+      <BoundingBox CRS="EPSG:43204"
+                  minx="2.25898e+06" miny="-70747.9" maxx="2.61535e+06" maxy="495481" />
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/ows?request=GetMetadata&amp;layer=road"/>
+      </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>
@@ -164,19 +164,19 @@ Content-Type: text/xml; charset=UTF-8
         </Style>
     </Layer>
     <Layer queryable="0" opaque="0" cascaded="0">
-        <Name>province</Name>
+      <Name>province</Name>
 <!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
-        <Title>province</Title>
-        <EX_GeographicBoundingBox>
-            <westBoundLongitude>-66.724329</westBoundLongitude>
-            <eastBoundLongitude>-57.721680</eastBoundLongitude>
-            <southBoundLatitude>41.770508</southBoundLatitude>
-            <northBoundLatitude>48.477314</northBoundLatitude>
-        </EX_GeographicBoundingBox>
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/ows?request=GetMetadata&amp;layer=province"/>
-        </MetadataURL>
+      <Title>province</Title>
+      <EX_GeographicBoundingBox>
+          <westBoundLongitude>-66.724329</westBoundLongitude>
+          <eastBoundLongitude>-57.721680</eastBoundLongitude>
+          <southBoundLatitude>41.770508</southBoundLatitude>
+          <northBoundLatitude>48.477314</northBoundLatitude>
+      </EX_GeographicBoundingBox>
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/ows?request=GetMetadata&amp;layer=province"/>
+      </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>

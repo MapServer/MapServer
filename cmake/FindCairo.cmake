@@ -38,14 +38,11 @@ FIND_PATH(CAIRO_INCLUDE_DIR
     PATH_SUFFIXES cairo
 )
 
-IF(APPLE)
-   #On Mountain Lion we need this for the XQuartz supplied version of cairo
-    PKG_CHECK_MODULES(PC_FONTCONFIG fontconfig) # FIXME: After we require CMake 2.8.2 we can pass QUIET to this call.
-    FIND_PATH(FC_INCLUDE_DIR
-       NAMES fontconfig/fontconfig.h
-       HINTS ${PC_FONTCONFIG_INCLUDEDIR}
-    )
-ENDIF(APPLE)
+PKG_CHECK_MODULES(PC_FONTCONFIG fontconfig) # FIXME: After we require CMake 2.8.2 we can pass QUIET to this call.
+FIND_PATH(FC_INCLUDE_DIR
+   NAMES fontconfig/fontconfig.h
+   HINTS ${PC_FONTCONFIG_INCLUDEDIR}
+)
 
 FIND_LIBRARY(CAIRO_LIBRARY
     NAMES cairo

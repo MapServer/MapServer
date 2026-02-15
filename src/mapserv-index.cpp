@@ -62,8 +62,17 @@ std::string getOnlineResource(mapObj *map, cgiRequestObj *request,
     onlineResource = "./?";
   }
 
-  if (!onlineResource.empty() && onlineResource.back() != '?') {
-    onlineResource += '?';
+  if (!onlineResource.empty()) {
+    if (onlineResource.find('?') != std::string::npos) {
+      // URL already has a query string
+      char last = onlineResource.back();
+      if (last != '?' && last != '&') {
+        onlineResource += '&';
+      }
+    } else {
+      // no query string so append '?'
+      onlineResource += '?';
+    }
   }
 
   return onlineResource;
@@ -325,6 +334,11 @@ static json createMapSummary(mapObj *map, const char *key,
     onlineResource = "./"; // fallback
   }
 
+  // make sure the root URL end with a '/'
+  if (!onlineResource.empty() && onlineResource.back() != '/') {
+    onlineResource += '/';
+  }
+
   mapJson["service-desc"] =
       json::array({{{"href", onlineResource + std::string(key) + "/?f=json"},
                     {"title", key},
@@ -374,7 +388,14 @@ static mapObj *getMapFromConfig(configObj *config, const char *key) {
   char pathBuf[MS_MAXPATHLEN];
   mapfilePath = msConfigGetMap(config, key, pathBuf);
 
-  return msLoadMap(mapfilePath, nullptr, config);
+  if (!mapfilePath) {
+    return nullptr;
+  }
+  char *mapfilePathCopy = msStrdup(mapfilePath);
+  mapObj *map = msLoadMap(mapfilePathCopy, nullptr, config);
+  msFree(mapfilePathCopy);
+
+  return map;
 }
 
 /**
@@ -419,6 +440,10 @@ int msOGCAPIDispatchMapIndexRequest(mapservObj *mapserv, configObj *config) {
   const char *key = request->api_path[0];
 
   mapObj *map = getMapFromConfig(config, key);
+  if (!map) {
+    msOGCAPIOutputError(OGCAPI_CONFIG_ERROR, "Mapfile not found in config.");
+    return MS_FAILURE;
+  }
   json response = createMapDetails(map, request);
 
   // add in summary map details
@@ -438,6 +463,7 @@ int msOGCAPIDispatchMapIndexRequest(mapservObj *mapserv, configObj *config) {
     msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
   }
 
+  msFreeMap(map);
   return MS_SUCCESS;
 
 #else

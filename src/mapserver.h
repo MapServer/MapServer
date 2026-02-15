@@ -1800,6 +1800,7 @@ typedef struct {
     %immutable;
 #endif            /* SWIG */
   int numresults; ///< Length of result set
+  int hasnext;    ///< If any there are any more features left
   rectObj bounds; ///< Bounding box of query results
 
 #ifdef SWIG
@@ -3302,6 +3303,9 @@ void msRasterLabelLayerUseMapExtentAndProjectionForNextWhichShapes(
     layerObj *layer, mapObj *map);
 rectObj msRasterLabelGetSearchRect(layerObj *layer, mapObj *map);
 
+void msContourLayerUseMapExtentAndProjectionForNextWhichShapes(layerObj *layer,
+                                                               mapObj *map);
+
 /* ==================================================================== */
 /*      Prototypes for functions in mapdraw.c                           */
 /* ==================================================================== */
@@ -3717,7 +3721,8 @@ MS_DLL_EXPORT int msCopyProjection(projectionObj *dst,
                                    const projectionObj *src);
 MS_DLL_EXPORT int msCopyProjectionExtended(projectionObj *dst,
                                            const projectionObj *src,
-                                           char **args, int num_args);
+                                           const char *const *args,
+                                           int num_args);
 int msCopyExpression(expressionObj *dst, const expressionObj *src);
 int msCopyProjection(projectionObj *dst, const projectionObj *src);
 MS_DLL_EXPORT int msCopyRasterBuffer(rasterBufferObj *dst,

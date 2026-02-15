@@ -49,7 +49,7 @@ typedef struct projectionContext projectionContext;
 typedef enum {
   LINE_CUTTING_UNKNOWN = -1,
   LINE_CUTTING_NONE = 0,
-  LINE_CUTTING_FROM_POLAR = 1,
+  LINE_CUTTING_WITH_SHAPE = 1,
   LINE_CUTTING_FROM_LONGLAT_WRAP0 = 2
 } msLineCuttingCase;
 #endif
@@ -139,6 +139,7 @@ MS_DLL_EXPORT char *msProjectionObj2OGCWKT(projectionObj *proj);
 MS_DLL_EXPORT void msFreeProjection(projectionObj *p);
 MS_DLL_EXPORT void msFreeProjectionExceptContext(projectionObj *p);
 MS_DLL_EXPORT int msInitProjection(projectionObj *p);
+int msCloneProjectionFrom(projectionObj *p, projectionObj *pSource);
 MS_DLL_EXPORT void msProjectionInheritContextFrom(projectionObj *pDst,
                                                   const projectionObj *pSrc);
 MS_DLL_EXPORT void msProjectionSetContext(projectionObj *p,
@@ -158,7 +159,8 @@ MS_DLL_EXPORT void msAxisDenormalizePoints(projectionObj *proj, int count,
 MS_DLL_EXPORT void msSetPROJ_DATA(const char *, const char *);
 MS_DLL_EXPORT void msProjDataInitFromEnv();
 
-int msProjIsGeographicCRS(projectionObj *proj);
+int msProjIsGeographicCRS(const projectionObj *proj);
+double msProjGetSemiMajorAxis(const projectionObj *proj);
 int msProjectTransformPoints(reprojectionObj *reprojector, int npoints,
                              double *x, double *y);
 

@@ -16,7 +16,7 @@ include(CheckIncludeFile)
 include(CheckCSourceCompiles)
 
 set (MapServer_VERSION_MAJOR 8)
-set (MapServer_VERSION_MINOR 5)
+set (MapServer_VERSION_MINOR 7)
 set (MapServer_VERSION_REVISION 0)
 set (MapServer_VERSION_SUFFIX "")
 
@@ -327,7 +327,7 @@ endif()
 
 set(mapserver_SOURCES src/fontcache.c
 src/cgiutil.c src/mapgeos.c src/maporaclespatial.c src/mapsearch.c src/mapwms.cpp src/classobject.c
-src/mapgml.c src/mapoutput.c src/mapwmslayer.c src/layerobject.c src/mapgraticule.c src/mapows.c src/mapogcapi.cpp
+src/mapgml.c src/mapoutput.c src/mapwmslayer.c src/layerobject.c src/mapgraticule.c src/mapows.cpp src/mapogcapi.cpp
 src/mapservutil.c src/mapxbase.c src/maphash.c src/mapowscommon.c src/mapshape.c src/mapxml.c src/mapbits.c
 src/maphttp.c src/mapparser.c src/mapstring.cpp src/mapxmp.c src/mapcairo.c src/mapimageio.c
 src/mappluginlayer.c src/mapsymbol.c src/mapchart.c src/mapimagemap.c src/mappool.c src/maptclutf.c
@@ -463,9 +463,9 @@ find_package(Freetype)
 if(NOT FREETYPE_FOUND)
   report_mandatory_not_found(FREETYPE)
 endif(NOT FREETYPE_FOUND)
-include_directories(${FREETYPE_INCLUDE_DIR})
+include_directories(${FREETYPE_INCLUDE_DIRS})
 ms_link_libraries( ${FREETYPE_LIBRARY})
-list(APPEND ALL_INCLUDE_DIRS ${FREETYPE_INCLUDE_DIR})
+list(APPEND ALL_INCLUDE_DIRS ${FREETYPE_INCLUDE_DIRS})
 
 
 find_package(Proj)
@@ -535,11 +535,11 @@ endif( USE_FRIBIDI AND NOT(USE_HARFBUZZ) )
 
 
 if(WITH_ICONV)
-  find_package(ICONV)
+  find_package(Iconv)
   if(ICONV_FOUND)
-    include_directories(${ICONV_INCLUDE_DIR})
-    ms_link_libraries( ${ICONV_LIBRARY})
-    list(APPEND ALL_INCLUDE_DIRS ${ICONV_INCLUDE_DIR})
+    include_directories(${Iconv_INCLUDE_DIR})
+    ms_link_libraries( ${Iconv_LIBRARY})
+    list(APPEND ALL_INCLUDE_DIRS ${Iconv_INCLUDE_DIR})
     set (USE_ICONV 1)
   else(ICONV_FOUND)
     report_optional_not_found(ICONV)

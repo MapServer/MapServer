@@ -127,29 +127,29 @@
        </LegendURL>
     </Style>
     <Layer queryable="0" opaque="0" cascaded="0">
-        <Name>TN.RoadTransportNetwork.RoadLink</Name>
-        <Title>Verkehrsnetze: Straßensegment</Title>
-        <Abstract>myroadlinklayerabstractger</Abstract>
-        <KeywordList>
-            <Keyword>myroadlinklayerkeyword1</Keyword>
-            <Keyword>myroadlinklayerkeyword2</Keyword>
-        </KeywordList>
-        <EX_GeographicBoundingBox>
-            <westBoundLongitude>-66.633318</westBoundLongitude>
-            <eastBoundLongitude>-59.292114</eastBoundLongitude>
-            <southBoundLatitude>42.382054</southBoundLatitude>
-            <northBoundLatitude>48.295512</northBoundLatitude>
-        </EX_GeographicBoundingBox>
-        <BoundingBox CRS="EPSG:4326"
-                    minx="42.382054" miny="-66.633318" maxx="48.295512" maxy="-59.292114" />
-        <BoundingBox CRS="EPSG:4269"
-                    minx="42.382054" miny="-66.633318" maxx="48.295512" maxy="-59.292114" />
-        <BoundingBox CRS="EPSG:3035"
-                    minx="4.90936e+06" miny="-622089" maxx="5.34642e+06" maxy="-91098.1" />
-        <MetadataURL type="TC211">
-          <Format>text/xml</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://path/to/onlineresource...?language=ger&amp;request=GetMetadata&amp;layer=TN.RoadTransportNetwork.RoadLink"/>
-        </MetadataURL>
+      <Name>TN.RoadTransportNetwork.RoadLink</Name>
+      <Title>Verkehrsnetze: Straßensegment</Title>
+      <Abstract>myroadlinklayerabstractger</Abstract>
+      <KeywordList>
+          <Keyword>myroadlinklayerkeyword1</Keyword>
+          <Keyword>myroadlinklayerkeyword2</Keyword>
+      </KeywordList>
+      <EX_GeographicBoundingBox>
+          <westBoundLongitude>-66.633318</westBoundLongitude>
+          <eastBoundLongitude>-59.292114</eastBoundLongitude>
+          <southBoundLatitude>42.382054</southBoundLatitude>
+          <northBoundLatitude>48.295512</northBoundLatitude>
+      </EX_GeographicBoundingBox>
+      <BoundingBox CRS="EPSG:4326"
+                  minx="42.382054" miny="-66.633318" maxx="48.295512" maxy="-59.292114" />
+      <BoundingBox CRS="EPSG:4269"
+                  minx="42.382054" miny="-66.633318" maxx="48.295512" maxy="-59.292114" />
+      <BoundingBox CRS="EPSG:3035"
+                  minx="4.90936e+06" miny="-622089" maxx="5.34642e+06" maxy="-91098.1" />
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://path/to/onlineresource...?language=ger&amp;request=GetMetadata&amp;layer=TN.RoadTransportNetwork.RoadLink"/>
+      </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>
@@ -163,14 +163,14 @@
       <Name>TN.CommonTransportElements.TransportLink</Name>
       <Title>Verkehrsnetze: Generisches Verkehrssegment</Title>
       <Abstract>mygenerictransportlinklayerabstract</Abstract>
-    <Style>
-       <Name>inspire_common:DEFAULT</Name>
-       <Title>mygenerictransportlinklayerstyletitle</Title>
-       <LegendURL width="85" height="40">
-          <Format>image/png</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://path/to/onlineresource...generictransportlink"/>
-       </LegendURL>
-    </Style>
+      <Style>
+        <Name>inspire_common:DEFAULT</Name>
+        <Title>mygenerictransportlinklayerstyletitle</Title>
+      <LegendURL width="85" height="40">
+        <Format>image/png</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://path/to/onlineresource...generictransportlink"/>
+      </LegendURL>
+      </Style>
       <Layer queryable="0" opaque="0" cascaded="0">
         <Name>TN.RailTransportNetwork.RailwayLink</Name>
         <Title>Verkehrsnetze: Eisenbahnverbindung</Title>

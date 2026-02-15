@@ -28,7 +28,7 @@
     <script>
 window.addEventListener('load', function() {
   const ui = SwaggerUIBundle({
-    url: '{{ template.api_root }}/api?f=json',
+    url: '{{ template.api_root }}/api?f=json{{ template.extra_params }}',
     dom_id: '#swagger-ui',
     deepLinking: true,
     presets: [

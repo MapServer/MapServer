@@ -13,7 +13,7 @@ else ()
     swig_add_module(rubymapscript ruby ../mapscript.i)
 endif ()
 
-swig_link_libraries(rubymapscript ${RUBY_LIBRARY} ${MAPSERVER_LIBMAPSERVER})
+target_link_libraries(rubymapscript PRIVATE ${RUBY_LIBRARY} ${MAPSERVER_LIBMAPSERVER})
 
 set_target_properties(${SWIG_MODULE_rubymapscript_REAL_NAME} PROPERTIES PREFIX "")
 set_target_properties(${SWIG_MODULE_rubymapscript_REAL_NAME} PROPERTIES OUTPUT_NAME mapscript)

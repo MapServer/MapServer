@@ -138,14 +138,14 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
       <Name>Imagery</Name>
       <Title>Imagery</Title>
       <Abstract>Imagery layers</Abstract>
-    <Style>
-       <Name>default</Name>
-       <Title>default</Title>
+      <Style>
+        <Name>default</Name>
+        <Title>default</Title>
        <LegendURL width="35" height="5">
           <Format>image/png</Format>
           <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=Imagery&amp;format=image/png&amp;STYLE=default"/>
        </LegendURL>
-    </Style>
+      </Style>
       <Layer queryable="1" opaque="1" cascaded="0">
         <Name>land_shallow_topo_2048</Name>
         <Title>Land Surface, Shallow Water, and Shaded Topography</Title>
@@ -179,14 +179,14 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
       <Name>Vectors</Name>
       <Title>Vectors</Title>
       <Abstract>Vector layers</Abstract>
-    <Style>
-       <Name>default</Name>
-       <Title>default</Title>
+      <Style>
+        <Name>default</Name>
+        <Title>default</Title>
        <LegendURL width="71" height="20">
           <Format>image/png</Format>
           <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=Vectors&amp;format=image/png&amp;STYLE=default"/>
        </LegendURL>
-    </Style>
+      </Style>
       <Layer queryable="1" opaque="0" cascaded="0">
         <Name>rivers</Name>
         <Title>Rivers</Title>
@@ -218,28 +218,28 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
       </Layer>
     </Layer>
     <Layer queryable="0" opaque="1" cascaded="0">
-        <Name>toronto</Name>
-        <Title>Toronto Landsat 5 TM</Title>
-        <Abstract>Toronto Landsat 5 TM</Abstract>
-        <KeywordList>
-            <Keyword>Toronto</Keyword>
-            <Keyword>Landsat</Keyword>
-            <Keyword>TM</Keyword>
-        </KeywordList>
-        <SRS>EPSG:26917</SRS>
-        <SRS>EPSG:4326</SRS>
-        <LatLonBoundingBox minx="-81.545268" miny="42.713551" maxx="-78.387425" maxy="44.767292" />
-        <BoundingBox SRS="EPSG:26917"
-                    minx="456850" miny="4.7321e+06" maxx="706850" maxy="4.9571e+06"
-                    resx="100" resy="100" />
-        <MetadataURL type="FGDC">
-          <Format>text/html</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://geogratis.cgdi.gc.ca/clf/en?action=fullMetadata&amp;entryId=4373"/>
-        </MetadataURL>
-        <DataURL>
-          <Format>image/tiff</Format>
-          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://geogratis.cgdi.gc.ca/download/landsat/l5_city/toronto/toronto_500_nc.tif"/>
-        </DataURL>
+      <Name>toronto</Name>
+      <Title>Toronto Landsat 5 TM</Title>
+      <Abstract>Toronto Landsat 5 TM</Abstract>
+      <KeywordList>
+          <Keyword>Toronto</Keyword>
+          <Keyword>Landsat</Keyword>
+          <Keyword>TM</Keyword>
+      </KeywordList>
+      <SRS>EPSG:26917</SRS>
+      <SRS>EPSG:4326</SRS>
+      <LatLonBoundingBox minx="-81.545268" miny="42.713551" maxx="-78.387425" maxy="44.767292" />
+      <BoundingBox SRS="EPSG:26917"
+                  minx="456850" miny="4.7321e+06" maxx="706850" maxy="4.9571e+06"
+                  resx="100" resy="100" />
+      <MetadataURL type="FGDC">
+        <Format>text/html</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://geogratis.cgdi.gc.ca/clf/en?action=fullMetadata&amp;entryId=4373"/>
+      </MetadataURL>
+      <DataURL>
+        <Format>image/tiff</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://geogratis.cgdi.gc.ca/download/landsat/l5_city/toronto/toronto_500_nc.tif"/>
+      </DataURL>
     </Layer>
   </Layer>
 </Capability>

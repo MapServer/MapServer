@@ -1970,7 +1970,7 @@ void msWCSApplyDatasetMetadataAsCreationOptions(layerObj *lp,
         int nDstBand = i + 1;
         GDALRasterBandH hBand = GDALGetRasterBand(hDS, nSrcBand);
         if (hBand) {
-          char **papszMD = GDALGetMetadata(hBand, NULL);
+          CSLConstList papszMD = GDALGetMetadata(hBand, NULL);
           const char *pszMDI = CSLFetchNameValue(papszMD, "GRIB_IDS");
           // Make sure it is a GRIB2 band
           if (pszMDI) {
@@ -2307,9 +2307,9 @@ void msWCSApplySourceDatasetMetadata(layerObj *lp, outputFormatObj *format,
       }
 
       {
-        char **papszMD = GDALGetMetadata(hDS, NULL);
+        CSLConstList papszMD = GDALGetMetadata(hDS, NULL);
         if (papszMD) {
-          for (char **papszIter = papszMD; *papszIter; ++papszIter) {
+          for (CSLConstList papszIter = papszMD; *papszIter; ++papszIter) {
             // Copy netCDF global attributes, as well as the ones
             // of the extra dimension for 3D netCDF files
             if (STARTS_WITH(*papszIter, "NC_GLOBAL#") ||
@@ -2334,9 +2334,9 @@ void msWCSApplySourceDatasetMetadata(layerObj *lp, outputFormatObj *format,
         int nDstBand = i + 1;
         GDALRasterBandH hBand = GDALGetRasterBand(hDS, nSrcBand);
         if (hBand) {
-          char **papszMD = GDALGetMetadata(hBand, NULL);
+          CSLConstList papszMD = GDALGetMetadata(hBand, NULL);
           if (papszMD) {
-            for (char **papszIter = papszMD; *papszIter; ++papszIter) {
+            for (CSLConstList papszIter = papszMD; *papszIter; ++papszIter) {
               char *pszKey = nullptr;
               const char *pszValue = CPLParseNameValue(*papszIter, &pszKey);
               if (pszKey && pszValue && !EQUAL(pszKey, "grid_name") &&

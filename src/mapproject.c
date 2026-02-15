@@ -538,6 +538,23 @@ void msFreeProjection(projectionObj *p) {
   p->generation_number++;
 }
 
+int msCloneProjectionFrom(projectionObj *p, projectionObj *pSource) {
+  msFreeProjection(p);
+  p->gt.need_geotransform = pSource->gt.need_geotransform;
+  p->is_polar = pSource->is_polar;
+  p->wellknownprojection = pSource->wellknownprojection;
+  msProjectionInheritContextFrom(p, pSource);
+  if (pSource->proj)
+    p->proj = proj_clone(p->proj_ctx->proj_ctx, pSource->proj);
+  p->args = (char **)malloc(MS_MAXPROJARGS * sizeof(char *));
+  MS_CHECK_ALLOC(p->args, MS_MAXPROJARGS * sizeof(char *), -1);
+  p->numargs = pSource->numargs;
+  for (int i = 0; i < p->numargs; ++i) {
+    p->args[i] = msStrdup(pSource->args[i]);
+  }
+  return 0;
+}
+
 void msFreeProjectionExceptContext(projectionObj *p) {
   projectionContext *ctx = p->proj_ctx;
   p->proj_ctx = NULL;
@@ -1056,7 +1073,11 @@ msProjectGetLineCuttingCase(reprojectionObj *reprojector) {
     }
   }
 
-  if (!(!in->gt.need_geotransform && !msProjIsGeographicCRS(in) &&
+  const bool isRotatedPole =
+      msProjIsGeographicCRS(in) && in->proj &&
+      proj_crs_is_derived(in->proj_ctx->proj_ctx, in->proj);
+  if (!(!in->gt.need_geotransform &&
+        (!msProjIsGeographicCRS(in) || isRotatedPole) &&
         (msProjIsGeographicCRS(out) ||
          (out->numargs == 1 && strcmp(out->args[0], "init=epsg:3857") == 0)))) {
     reprojector->lineCuttingCase = LINE_CUTTING_NONE;
@@ -1065,6 +1086,7 @@ msProjectGetLineCuttingCase(reprojectionObj *reprojector) {
 
   int srcIsPolar;
   double extremeLongEasting;
+  double extremeLatNorthing;
   if (msProjIsGeographicCRS(out)) {
     pointObj p;
     double gt3 = out->gt.need_geotransform ? out->gt.geotransform[3] : 0.0;
@@ -1075,6 +1097,7 @@ msProjectGetLineCuttingCase(reprojectionObj *reprojector) {
     srcIsPolar = msProjectPointEx(reprojector, &p) == MS_SUCCESS &&
                  fabs(gt3 + p.x * gt4 + p.y * gt5 - 90) < 1e-8;
     extremeLongEasting = 180;
+    extremeLatNorthing = 90;
   } else {
     pointObj p1;
     pointObj p2;
@@ -1087,44 +1110,143 @@ msProjectGetLineCuttingCase(reprojectionObj *reprojector) {
                  msProjectPointEx(reprojector, &p2) == MS_SUCCESS &&
                  fabs((p1.x - p2.x) * gt1) > 20e6;
     extremeLongEasting = 20037508.3427892;
+    extremeLatNorthing = extremeLongEasting;
   }
-  if (!srcIsPolar) {
+  if (!srcIsPolar && !isRotatedPole) {
     reprojector->lineCuttingCase = LINE_CUTTING_NONE;
     return reprojector->lineCuttingCase;
   }
 
   pointObj p = {0}; // initialize
-  double invgt0 = out->gt.need_geotransform ? out->gt.invgeotransform[0] : 0.0;
-  double invgt1 = out->gt.need_geotransform ? out->gt.invgeotransform[1] : 1.0;
-  double invgt3 = out->gt.need_geotransform ? out->gt.invgeotransform[3] : 0.0;
-  double invgt4 = out->gt.need_geotransform ? out->gt.invgeotransform[4] : 0.0;
+  const double invgt0 =
+      out->gt.need_geotransform ? out->gt.invgeotransform[0] : 0.0;
+  const double invgt1 =
+      out->gt.need_geotransform ? out->gt.invgeotransform[1] : 1.0;
+  const double invgt3 =
+      out->gt.need_geotransform ? out->gt.invgeotransform[3] : 0.0;
+  const double invgt4 =
+      out->gt.need_geotransform ? out->gt.invgeotransform[4] : 0.0;
+  const double invgt5 =
+      out->gt.need_geotransform ? out->gt.invgeotransform[5] : 1.0;
 
   lineObj newLine = {0, NULL};
 
-  p.x = invgt0 + -extremeLongEasting * (1 - EPS) * invgt1;
-  p.y = invgt3 + -extremeLongEasting * (1 - EPS) * invgt4;
-  /* coverity[swapped_arguments] */
-  msProjectPoint(out, in, &p);
-  pointObj first = p;
-  msAddPointToLine(&newLine, &p);
+  if (isRotatedPole) {
+    // Thresholds determined experimentally...
+    const double EPSILON = 1e-5;
+    if (msProjIsGeographicCRS(out)) {
+      const int stepCountMiddleLat = 400;
+      const int stepCountHighLat = 100;
+      const double middleLat = 80;
+      const double poleLat = 90;
 
-  p.x = invgt0 + extremeLongEasting * (1 - EPS) * invgt1;
-  p.y = invgt3 + extremeLongEasting * (1 - EPS) * invgt4;
-  /* coverity[swapped_arguments] */
-  msProjectPoint(out, in, &p);
-  msAddPointToLine(&newLine, &p);
+      for (int j = 0; j <= stepCountHighLat; j++) {
+        p.x = invgt0 + extremeLongEasting * (1 - EPSILON) * invgt1;
+        p.y =
+            invgt3 +
+            (-poleLat + (poleLat - middleLat) * j / stepCountHighLat) * invgt5;
+        /* coverity[swapped_arguments] */
+        msProjectPoint(out, in, &p);
+        msAddPointToLine(&newLine, &p);
+      }
 
-  p.x = 0;
-  p.y = 0;
-  msAddPointToLine(&newLine, &p);
+      for (int j = 0; j <= stepCountMiddleLat; j++) {
+        p.x = invgt0 + extremeLongEasting * (1 - EPSILON) * invgt1;
+        p.y = invgt3 +
+              (-middleLat + (2 * middleLat) * j / stepCountMiddleLat) * invgt5;
+        /* coverity[swapped_arguments] */
+        msProjectPoint(out, in, &p);
+        msAddPointToLine(&newLine, &p);
+      }
 
-  msAddPointToLine(&newLine, &first);
+      for (int j = 0; j <= stepCountHighLat; ++j) {
+        p.x = invgt0 + extremeLongEasting * (1 - EPSILON) * invgt1;
+        p.y =
+            invgt3 +
+            (middleLat + (poleLat - middleLat) * j / stepCountHighLat) * invgt5;
+        /* coverity[swapped_arguments] */
+        msProjectPoint(out, in, &p);
+        msAddPointToLine(&newLine, &p);
+      }
+
+      for (int j = stepCountHighLat; j >= 0; --j) {
+        p.x = invgt0 - extremeLongEasting * (1 - EPSILON) * invgt1;
+        p.y =
+            invgt3 +
+            (middleLat + (poleLat - middleLat) * j / stepCountHighLat) * invgt5;
+        /* coverity[swapped_arguments] */
+        msProjectPoint(out, in, &p);
+        msAddPointToLine(&newLine, &p);
+      }
+
+      for (int j = stepCountMiddleLat; j >= 0; --j) {
+        p.x = invgt0 - extremeLongEasting * (1 - EPSILON) * invgt1;
+        p.y = invgt3 +
+              (-middleLat + (2 * middleLat) * j / stepCountMiddleLat) * invgt5;
+        /* coverity[swapped_arguments] */
+        msProjectPoint(out, in, &p);
+        msAddPointToLine(&newLine, &p);
+      }
+
+      for (int j = stepCountHighLat; j >= 0; --j) {
+        p.x = invgt0 - extremeLongEasting * (1 - EPSILON) * invgt1;
+        p.y =
+            invgt3 +
+            (-poleLat + (poleLat - middleLat) * j / stepCountHighLat) * invgt5;
+        /* coverity[swapped_arguments] */
+        msProjectPoint(out, in, &p);
+        msAddPointToLine(&newLine, &p);
+      }
+    } else {
+      const int stepCountHalf = 200;
+      for (int j = 0; j <= 2 * stepCountHalf; j++) {
+        p.x = invgt0 + extremeLongEasting * (1 - EPSILON) * invgt1;
+        p.y = invgt3 +
+              (-extremeLatNorthing + extremeLatNorthing * j / stepCountHalf) *
+                  invgt5;
+        /* coverity[swapped_arguments] */
+        msProjectPoint(out, in, &p);
+        msAddPointToLine(&newLine, &p);
+      }
+
+      for (int j = 2 * stepCountHalf; j >= 0; j--) {
+        p.x = invgt0 - extremeLongEasting * (1 - EPSILON) * invgt1;
+        p.y = invgt3 +
+              (-extremeLatNorthing + extremeLatNorthing * j / stepCountHalf) *
+                  invgt5;
+        /* coverity[swapped_arguments] */
+        msProjectPoint(out, in, &p);
+        msAddPointToLine(&newLine, &p);
+      }
+    }
+
+    pointObj firstPoint = newLine.point[0];
+    msAddPointToLine(&newLine, &firstPoint);
+  } else {
+    p.x = invgt0 + -extremeLongEasting * (1 - EPS) * invgt1;
+    p.y = invgt3 + -extremeLongEasting * (1 - EPS) * invgt4;
+    /* coverity[swapped_arguments] */
+    msProjectPoint(out, in, &p);
+    pointObj first = p;
+    msAddPointToLine(&newLine, &p);
+
+    p.x = invgt0 + extremeLongEasting * (1 - EPS) * invgt1;
+    p.y = invgt3 + extremeLongEasting * (1 - EPS) * invgt4;
+    msProjectPoint(out, in, &p);
+    msAddPointToLine(&newLine, &p);
+
+    p.x = 0;
+    p.y = 0;
+    msAddPointToLine(&newLine, &p);
+
+    msAddPointToLine(&newLine, &first);
+  }
 
   msInitShape(&(reprojector->splitShape));
   reprojector->splitShape.type = MS_SHAPE_POLYGON;
   msAddLineDirectly(&(reprojector->splitShape), &newLine);
 
-  reprojector->lineCuttingCase = LINE_CUTTING_FROM_POLAR;
+  reprojector->lineCuttingCase = LINE_CUTTING_WITH_SHAPE;
   return reprojector->lineCuttingCase;
 }
 #endif
@@ -1219,7 +1341,7 @@ static int msProjectShapeLine(reprojectionObj *reprojector, shapeObj *shape,
   int use_splitShape = MS_FALSE;
   int use_splitShape_check_intersects = MS_FALSE;
   if (shape->type == MS_SHAPE_LINE &&
-      msProjectGetLineCuttingCase(reprojector) == LINE_CUTTING_FROM_POLAR) {
+      msProjectGetLineCuttingCase(reprojector) == LINE_CUTTING_WITH_SHAPE) {
     use_splitShape = MS_TRUE;
     use_splitShape_check_intersects = MS_TRUE;
   } else if (shape->type == MS_SHAPE_LINE &&
@@ -1864,7 +1986,7 @@ int msProjectHasLonWrap(projectionObj *in, double *pdfLonWrap) {
 /************************************************************************/
 
 int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect) {
-  char *over = "+over";
+  const char *over = "+over";
   int ret;
   int bFreeInOver = MS_FALSE;
   int bFreeOutOver = MS_FALSE;
@@ -2391,7 +2513,7 @@ void msAxisDenormalizePoints(projectionObj *proj, int count, double *x,
 /*      Returns whether a CRS is a geographic one.                      */
 /************************************************************************/
 
-int msProjIsGeographicCRS(projectionObj *proj) {
+int msProjIsGeographicCRS(const projectionObj *proj) {
   PJ_TYPE type;
   if (!proj->proj)
     return FALSE;
@@ -2406,6 +2528,27 @@ int msProjIsGeographicCRS(projectionObj *proj) {
            type == PJ_TYPE_GEOGRAPHIC_3D_CRS;
   }
   return FALSE;
+}
+
+/************************************************************************/
+/*                      msProjGetSemiMajorAxis()                        */
+/*                                                                      */
+/*      Returns the semi-major axis of the ellipsoid of the CRS         */
+/************************************************************************/
+
+double msProjGetSemiMajorAxis(const projectionObj *proj) {
+  const double GRS80_SEMI_MAJOR = 6378137.0;
+  if (!proj->proj)
+    return GRS80_SEMI_MAJOR;
+  PJ *ellps = proj_get_ellipsoid(proj->proj_ctx->proj_ctx, proj->proj);
+  if (!ellps)
+    return GRS80_SEMI_MAJOR;
+
+  double dfSemiMajor = 0.0;
+  proj_ellipsoid_get_parameters(proj->proj_ctx->proj_ctx, ellps, &dfSemiMajor,
+                                NULL, NULL, NULL);
+  proj_destroy(ellps);
+  return dfSemiMajor;
 }
 
 /************************************************************************/
