@@ -11,6 +11,27 @@ endif(WIN32)
 FIND_PACKAGE(PHP REQUIRED)
 INCLUDE(UseSWIG)
 
+if(NOT PHP_EXTENSION_DIR)
+    execute_process(COMMAND php-config --extension-dir 
+                    OUTPUT_VARIABLE PHP_EXTENSION_DIR 
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif()
+
+if(NOT PHP_EXTENSION_DIR)
+    message(WARNING "PHP_EXTENSION_DIR is empty after php-config probe. Defaulting to lib/php/extensions")
+    set(PHP_EXTENSION_DIR "lib/php/extensions")
+endif()
+
+message(STATUS "PHP Extension Directory: ${PHP_EXTENSION_DIR}")
+
+if(NOT PHP_INCLUDE_PATH)
+    execute_process(COMMAND php-config --includes 
+                    OUTPUT_VARIABLE PHP_O_INCLUDE_PATH 
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
+    string(REPLACE "-I" "" PHP_INCLUDE_PATH "${PHP_O_INCLUDE_PATH}") 
+    string(REPLACE " " ";" PHP_INCLUDE_PATH "${PHP_INCLUDE_PATH}")
+endif()
+
 if(WIN32)
   add_definitions(/DWIN32 /DZEND_WIN32 /DPHP_WIN32 /DZEND_DEBUG=0)
   if(NOT CMAKE_CL_64)
