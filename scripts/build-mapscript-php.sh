@@ -3,7 +3,7 @@ set -eu  # Exit on error and treat unset variables as errors
 
 cd "$WORK_DIR"
 
-# Ensure the Python version is provided
+# Ensure the PHP version is provided
 if [ -z "${PHP_VERSION:-}" ]; then
     echo "Error: PHP version not specified. Make sure to pass it as an environment variable."
     exit 1
