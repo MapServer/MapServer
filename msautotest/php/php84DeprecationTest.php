@@ -7,6 +7,8 @@
  * PHP 8.5 further tightens type handling. These tests verify that
  * the SWIG-generated mapscript extension works without triggering
  * deprecation notices or errors on PHP 8.4+.
+ *
+ * @group php84
  */
 class php84DeprecationTest extends \PHPUnit\Framework\TestCase
 {

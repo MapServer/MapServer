@@ -16,10 +16,16 @@ curl -LO https://phar.phpunit.de/phpunit-$PHPUnitVersion.phar
 echo "PHPUnit version"
 php phpunit-$PHPUnitVersion.phar --version
 
+# Exclude php84DeprecationTest.php on PHP < 8.4 to avoid skipped tests
+EXCLUDE_ARGS=""
+if [ ${PHPVersionMinor} -lt 84 ]; then
+    EXCLUDE_ARGS="--exclude-group php84"
+fi
+
 if test -z $PHP_MAPSCRIPT_SO; then
-   php phpunit-$PHPUnitVersion.phar "$@"
+   php phpunit-$PHPUnitVersion.phar $EXCLUDE_ARGS "$@"
    exit $?
 else
-   php -d "extension=$PHP_MAPSCRIPT_SO" phpunit-$PHPUnitVersion.phar "$@"
+   php -d "extension=$PHP_MAPSCRIPT_SO" phpunit-$PHPUnitVersion.phar $EXCLUDE_ARGS "$@"
    exit $?
 fi
