@@ -43,6 +43,7 @@ class mapZoomObjTest extends \PHPUnit\Framework\TestCase
         $pixPos = new pointObj();
         // Click off-center to pan
         $pixPos->setXY($this->map->width / 4, $this->map->height / 4);
+        $this->map->setExtent($this->map->extent->minx, $this->map->extent->miny, $this->map->extent->maxx, $this->map->extent->maxy);
         $geoExt = $this->map->extent;
         $origDelta = $geoExt->maxx - $geoExt->minx;
 
@@ -58,7 +59,11 @@ class mapZoomObjTest extends \PHPUnit\Framework\TestCase
         $geoExt = $this->map->extent;
         // Pixel rectangle (note: miny > maxy per mapzoom.i convention)
         $pixRect = new rectObj();
-        $pixRect->setExtent(50, 150, 150, 50);
+        // $pixRect->setExtent(50, 150, 150, 50);
+        $pixRect->minx = 50;
+        $pixRect->miny = 150;
+        $pixRect->maxx = 150;
+        $pixRect->maxy = 50;
 
         $result = $this->map->zoomRectangle($pixRect, $this->map->width, $this->map->height, $geoExt, null);
         $this->assertEquals(MS_SUCCESS, $result);
@@ -80,8 +85,11 @@ class mapZoomObjTest extends \PHPUnit\Framework\TestCase
         $pixPos->setXY($this->map->width / 2, $this->map->height / 2);
         $geoExt = $this->map->extent;
         $maxExt = new rectObj();
-        $maxExt->setExtent($geoExt->minx - 10, $geoExt->miny - 10,
-                           $geoExt->maxx + 10, $geoExt->maxy + 10);
+        // $maxExt->setExtent(...)
+        $maxExt->minx = $geoExt->minx - 10;
+        $maxExt->miny = $geoExt->miny - 10;
+        $maxExt->maxx = $geoExt->maxx + 10;
+        $maxExt->maxy = $geoExt->maxy + 10;
 
         $result = $this->map->zoomPoint(2, $pixPos, $this->map->width, $this->map->height, $geoExt, $maxExt);
         $this->assertEquals(MS_SUCCESS, $result);
@@ -93,5 +101,3 @@ class mapZoomObjTest extends \PHPUnit\Framework\TestCase
         unset($this->map);
     }
 }
-
-?>

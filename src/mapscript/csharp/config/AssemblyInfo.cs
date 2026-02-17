@@ -84,7 +84,7 @@ using System.Security;
 //       documentation for more information on this.
 //
 [assembly: AssemblyDelaySign(false)]
-[assembly: AssemblyKeyFile("mapscript.snk")]
+// [assembly: AssemblyKeyFile("mapscript.snk")]
 [assembly: AssemblyKeyName("")]
 
 // The AllowPartiallyTrustedCallersAttribute requires the assembly to be signed with a strong name key.

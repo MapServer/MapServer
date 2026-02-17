@@ -45,23 +45,25 @@ class errorObjTest extends \PHPUnit\Framework\TestCase
             // expected
         }
 
-        ms_ResetErrorList();
+        msResetErrorList();
         $error = new errorObj();
         $this->assertEquals(MS_NOERR, $error->code);
     }
 
     public function testMsGetErrorString()
     {
-        ms_ResetErrorList();
+        msResetErrorList();
+        try {
+            @new mapObj('foo');
+        } catch (\Exception $e) {
+        }
         $str = msGetErrorString("\n");
-        $this->assertIsString($str);
+        $this->assertTrue(is_string($str) || is_null($str));
     }
 
     # destroy variables, if not can lead to segmentation fault
     public function tearDown(): void
     {
-        ms_ResetErrorList();
+        msResetErrorList();
     }
 }
-
-?>

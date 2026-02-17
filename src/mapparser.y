@@ -22,8 +22,7 @@ int yyerror(parseObj *, const char *);
 
 /* Bison/Yacc declarations */
 
-/* %define api.pure */
-%pure-parser
+%define api.pure
 %parse-param {parseObj *p}
 %lex-param {parseObj *p}
 

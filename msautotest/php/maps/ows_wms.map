@@ -44,7 +44,7 @@ LAYER
   METADATA
     "wms_title"       "road"
     "wms_description" "Roads of I.P.E."
-    "wms_srs" "EPSG:43204"
+    "wms_srs" "EPSG:4326"
     "gml_include_items" "all"
     "ows_enable_request" "GetFeatureInfo"
     "wms_enable_request" "GetCapabilities !GetMap"
@@ -52,7 +52,7 @@ LAYER
   TYPE LINE
   STATUS ON
   PROJECTION
-    "init=./data/epsg2:42304"
+    "init=epsg:4326"
   END
 
   CLASSITEM "Name_e"

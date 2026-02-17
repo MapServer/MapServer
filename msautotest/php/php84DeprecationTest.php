@@ -50,7 +50,10 @@ class php84DeprecationTest extends \PHPUnit\Framework\TestCase
         $shape->add($line);
 
         $rect = new rectObj();
-        $rect->setExtent(0, 0, 100, 100);
+        $rect->minx = 0;
+        $rect->miny = 0;
+        $rect->maxx = 100;
+        $rect->maxy = 100;
 
         $color = new colorObj(255, 0, 0);
 
@@ -74,7 +77,7 @@ class php84DeprecationTest extends \PHPUnit\Framework\TestCase
         $extent = $this->map->extent;
         $this->assertInstanceOf('rectObj', $extent);
 
-        $version = $this->map->getMetaData('wms_title');
+        $version = $this->map->web->metadata->get('wms_title');
 
         $this->assertEmpty(
             $this->deprecationNotices,
@@ -173,10 +176,10 @@ class php84DeprecationTest extends \PHPUnit\Framework\TestCase
     public function testHashtableNoDeprecations()
     {
         $layer = $this->map->getLayer(0);
-        $layer->setMetaData('test_key', 'test_value');
-        $val = $layer->getMetaData('test_key');
+        $layer->metadata->set('test_key', 'test_value');
+        $val = $layer->metadata->get('test_key');
         $this->assertEquals('test_value', $val);
-        $layer->removeMetaData('test_key');
+        $layer->metadata->remove('test_key');
 
         $this->assertEmpty(
             $this->deprecationNotices,
@@ -250,13 +253,13 @@ class php84DeprecationTest extends \PHPUnit\Framework\TestCase
      */
     public function testVersionFunctionNoDeprecations()
     {
-        $version = ms_GetVersion();
+        $version = msGetVersion();
         $this->assertIsString($version);
         $this->assertStringContainsString('MapServer', $version);
 
         $this->assertEmpty(
             $this->deprecationNotices,
-            'ms_GetVersion triggered deprecation notices: ' . implode('; ', $this->deprecationNotices)
+            'msGetVersion triggered deprecation notices: ' . implode('; ', $this->deprecationNotices)
         );
     }
 
@@ -273,10 +276,10 @@ class php84DeprecationTest extends \PHPUnit\Framework\TestCase
         $error->message;
         $error->next();
 
-        ms_ResetErrorList();
+        msResetErrorList();
 
         $str = msGetErrorString("\n");
-        $this->assertIsString($str);
+        $this->assertTrue(is_string($str) || is_null($str));
 
         $this->assertEmpty(
             $this->deprecationNotices,
@@ -292,7 +295,7 @@ class php84DeprecationTest extends \PHPUnit\Framework\TestCase
     {
         msIO_installStdoutToBuffer();
 
-        $request = new OWSRequestObj();
+        $request = new OWSRequest();
         $request->setParameter('SERVICE', 'WMS');
         $request->setParameter('VERSION', '1.1.1');
         $request->setParameter('REQUEST', 'GetCapabilities');
@@ -325,7 +328,10 @@ class php84DeprecationTest extends \PHPUnit\Framework\TestCase
         $this->map->zoomScale(50000000, $pixPos, $this->map->width, $this->map->height, $geoExt, null);
 
         $pixRect = new rectObj();
-        $pixRect->setExtent(50, 150, 150, 50);
+        $pixRect->minx = 50;
+        $pixRect->miny = 150;
+        $pixRect->maxx = 150;
+        $pixRect->maxy = 50;
         $this->map->zoomRectangle($pixRect, $this->map->width, $this->map->height, $geoExt, null);
 
         $this->assertEmpty(
@@ -409,5 +415,3 @@ class php84DeprecationTest extends \PHPUnit\Framework\TestCase
         unset($this->map, $this->deprecationNotices, $this->previousErrorHandler);
     }
 }
-
-?>

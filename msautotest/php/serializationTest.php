@@ -95,8 +95,11 @@ class serializationTest extends \PHPUnit\Framework\TestCase
     public function testReferenceMapRoundtrip()
     {
         $ref = $this->map->reference;
+        $str = "REFERENCE IMAGE 'foo.png' EXTENT 0 0 100 100 STATUS ON END";
+        $this->assertEquals(MS_SUCCESS, $ref->updateFromString($str));
         $str = $ref->convertToString();
         $this->assertIsString($str);
+        $this->assertStringContainsString("REFERENCE", $str);
         $this->assertEquals(MS_SUCCESS, $ref->updateFromString($str));
     }
 
@@ -104,8 +107,12 @@ class serializationTest extends \PHPUnit\Framework\TestCase
     {
         $layer = $this->map->getLayer(0);
         $cluster = $layer->cluster;
+        $str = "CLUSTER MAXDISTANCE 20 BUFFER 5 REGION 'ellipse' END";
+        $this->assertEquals(MS_SUCCESS, $cluster->updateFromString($str));
         $str = $cluster->convertToString();
         $this->assertIsString($str);
+        $this->assertStringContainsString("CLUSTER", $str);
+        $this->assertEquals(MS_SUCCESS, $cluster->updateFromString($str));
     }
 
     # destroy variables, if not can lead to segmentation fault
@@ -114,5 +121,3 @@ class serializationTest extends \PHPUnit\Framework\TestCase
         unset($this->map);
     }
 }
-
-?>

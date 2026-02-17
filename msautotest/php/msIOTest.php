@@ -15,7 +15,7 @@ class msIOTest extends \PHPUnit\Framework\TestCase
         msIO_installStdoutToBuffer();
 
         $map = new mapObj('maps/ows_wms.map');
-        $request = new OWSRequestObj();
+        $request = new OWSRequest();
         $request->setParameter('SERVICE', 'WMS');
         $request->setParameter('VERSION', '1.1.1');
         $request->setParameter('REQUEST', 'GetCapabilities');
@@ -33,7 +33,7 @@ class msIOTest extends \PHPUnit\Framework\TestCase
         msIO_installStdoutToBuffer();
 
         $map = new mapObj('maps/ows_wms.map');
-        $request = new OWSRequestObj();
+        $request = new OWSRequest();
         $request->setParameter('SERVICE', 'WMS');
         $request->setParameter('VERSION', '1.1.1');
         $request->setParameter('REQUEST', 'GetCapabilities');
@@ -50,7 +50,7 @@ class msIOTest extends \PHPUnit\Framework\TestCase
         msIO_installStdoutToBuffer();
 
         $map = new mapObj('maps/ows_wms.map');
-        $request = new OWSRequestObj();
+        $request = new OWSRequest();
         $request->setParameter('SERVICE', 'WMS');
         $request->setParameter('VERSION', '1.1.1');
         $request->setParameter('REQUEST', 'GetCapabilities');
@@ -70,7 +70,7 @@ class msIOTest extends \PHPUnit\Framework\TestCase
         msIO_installStdoutToBuffer();
 
         $map = new mapObj('maps/ows_wms.map');
-        $request = new OWSRequestObj();
+        $request = new OWSRequest();
         $request->setParameter('SERVICE', 'WMS');
         $request->setParameter('VERSION', '1.1.1');
         $request->setParameter('REQUEST', 'GetCapabilities');
@@ -97,5 +97,3 @@ class msIOTest extends \PHPUnit\Framework\TestCase
         msIO_resetHandlers();
     }
 }
-
-?>

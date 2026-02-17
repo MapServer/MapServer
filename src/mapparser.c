@@ -85,7 +85,7 @@
 int yylex(YYSTYPE *, parseObj *); /* prototype functions, defined after the grammar */
 int yyerror(parseObj *, const char *);
 
-#line 89 "src/mapparser.c"
+#line 89 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -571,17 +571,17 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,    68,    68,    69,    82,    96,   110,   120,   121,   122,
-     126,   134,   143,   151,   160,   168,   177,   185,   194,   195,
-     196,   216,   236,   242,   248,   254,   260,   266,   272,   280,
-     288,   296,   304,   312,   320,   326,   332,   338,   344,   350,
-     356,   377,   397,   403,   411,   417,   434,   451,   468,   485,
-     502,   519,   536,   553,   570,   587,   604,   621,   638,   655,
-     672,   689,   705,   723,   724,   725,   726,   727,   728,   729,
-     736,   737,   738,   739,   750,   751,   754,   755,   756,   770,
-     784,   798,   812,   826,   840,   854,   868,   882,   896,   910,
-     924,   939,   961,   962,   963,   969,   978,   982,   986,   990,
-     994,  1000,  1001
+       0,    67,    67,    68,    81,    95,   109,   119,   120,   121,
+     125,   133,   142,   150,   159,   167,   176,   184,   193,   194,
+     195,   215,   235,   241,   247,   253,   259,   265,   271,   279,
+     287,   295,   303,   311,   319,   325,   331,   337,   343,   349,
+     355,   376,   396,   402,   410,   416,   433,   450,   467,   484,
+     501,   518,   535,   552,   569,   586,   603,   620,   637,   654,
+     671,   688,   704,   722,   723,   724,   725,   726,   727,   728,
+     735,   736,   737,   738,   749,   750,   753,   754,   755,   769,
+     783,   797,   811,   825,   839,   853,   867,   881,   895,   909,
+     923,   938,   960,   961,   962,   968,   977,   981,   985,   989,
+     993,   999,  1000
 };
 #endif
 
@@ -1372,7 +1372,7 @@ yyreduce:
   switch (yyn)
     {
   case 3: /* input: logical_exp  */
-#line 69 "src/mapparser.y"
+#line 68 "src/mapparser.y"
                 {
     switch(p->type) {
     case(MS_PARSE_TYPE_BOOLEAN):
@@ -1386,11 +1386,11 @@ yyreduce:
       break;
     }
   }
-#line 1390 "src/mapparser.c"
+#line 1390 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 4: /* input: math_exp  */
-#line 82 "src/mapparser.y"
+#line 81 "src/mapparser.y"
              {
     switch(p->type) {
     case(MS_PARSE_TYPE_BOOLEAN):
@@ -1405,11 +1405,11 @@ yyreduce:
       break;
     }
   }
-#line 1409 "src/mapparser.c"
+#line 1409 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 5: /* input: string_exp  */
-#line 96 "src/mapparser.y"
+#line 95 "src/mapparser.y"
                {
     switch(p->type) {
     case(MS_PARSE_TYPE_BOOLEAN):
@@ -1424,11 +1424,11 @@ yyreduce:
       break;
     }
   }
-#line 1428 "src/mapparser.c"
+#line 1428 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 6: /* input: shape_exp  */
-#line 110 "src/mapparser.y"
+#line 109 "src/mapparser.y"
               {
     switch(p->type) {
     case(MS_PARSE_TYPE_SHAPE):
@@ -1437,26 +1437,26 @@ yyreduce:
       break;
     }
   }
-#line 1441 "src/mapparser.c"
+#line 1441 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 8: /* logical_exp: '(' logical_exp ')'  */
-#line 121 "src/mapparser.y"
+#line 120 "src/mapparser.y"
                         { (yyval.intval) = (yyvsp[-1].intval); }
-#line 1447 "src/mapparser.c"
+#line 1447 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 9: /* logical_exp: logical_exp EQ logical_exp  */
-#line 122 "src/mapparser.y"
+#line 121 "src/mapparser.y"
                                {
     (yyval.intval) = MS_FALSE;
     if((yyvsp[-2].intval) == (yyvsp[0].intval)) (yyval.intval) = MS_TRUE;
   }
-#line 1456 "src/mapparser.c"
+#line 1456 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 10: /* logical_exp: logical_exp OR logical_exp  */
-#line 126 "src/mapparser.y"
+#line 125 "src/mapparser.y"
                                {
     if((yyvsp[-2].intval) == MS_TRUE)
       (yyval.intval) = MS_TRUE;
@@ -1465,11 +1465,11 @@ yyreduce:
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1469 "src/mapparser.c"
+#line 1469 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 11: /* logical_exp: logical_exp AND logical_exp  */
-#line 134 "src/mapparser.y"
+#line 133 "src/mapparser.y"
                                 {
     if((yyvsp[-2].intval) == MS_TRUE) {
       if((yyvsp[0].intval) == MS_TRUE)
@@ -1479,11 +1479,11 @@ yyreduce:
     } else
       (yyval.intval) = MS_FALSE;
   }
-#line 1483 "src/mapparser.c"
+#line 1483 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 12: /* logical_exp: logical_exp OR math_exp  */
-#line 143 "src/mapparser.y"
+#line 142 "src/mapparser.y"
                             {
     if((yyvsp[-2].intval) == MS_TRUE)
       (yyval.intval) = MS_TRUE;
@@ -1492,11 +1492,11 @@ yyreduce:
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1496 "src/mapparser.c"
+#line 1496 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 13: /* logical_exp: logical_exp AND math_exp  */
-#line 151 "src/mapparser.y"
+#line 150 "src/mapparser.y"
                              {
     if((yyvsp[-2].intval) == MS_TRUE) {
       if((yyvsp[0].dblval) != 0)
@@ -1506,11 +1506,11 @@ yyreduce:
     } else
       (yyval.intval) = MS_FALSE;
   }
-#line 1510 "src/mapparser.c"
+#line 1510 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 14: /* logical_exp: math_exp OR logical_exp  */
-#line 160 "src/mapparser.y"
+#line 159 "src/mapparser.y"
                             {
     if((yyvsp[-2].dblval) != 0)
       (yyval.intval) = MS_TRUE;
@@ -1519,11 +1519,11 @@ yyreduce:
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1523 "src/mapparser.c"
+#line 1523 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 15: /* logical_exp: math_exp AND logical_exp  */
-#line 168 "src/mapparser.y"
+#line 167 "src/mapparser.y"
                              {
     if((yyvsp[-2].dblval) != 0) {
       if((yyvsp[0].intval) == MS_TRUE)
@@ -1533,11 +1533,11 @@ yyreduce:
     } else
       (yyval.intval) = MS_FALSE;
   }
-#line 1537 "src/mapparser.c"
+#line 1537 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 16: /* logical_exp: math_exp OR math_exp  */
-#line 177 "src/mapparser.y"
+#line 176 "src/mapparser.y"
                          {
     if((yyvsp[-2].dblval) != 0)
       (yyval.intval) = MS_TRUE;
@@ -1546,11 +1546,11 @@ yyreduce:
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1550 "src/mapparser.c"
+#line 1550 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 17: /* logical_exp: math_exp AND math_exp  */
-#line 185 "src/mapparser.y"
+#line 184 "src/mapparser.y"
                                {
     if((yyvsp[-2].dblval) != 0) {
       if((yyvsp[0].dblval) != 0)
@@ -1560,23 +1560,23 @@ yyreduce:
     } else
       (yyval.intval) = MS_FALSE;
   }
-#line 1564 "src/mapparser.c"
+#line 1564 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 18: /* logical_exp: NOT logical_exp  */
-#line 194 "src/mapparser.y"
+#line 193 "src/mapparser.y"
                     { (yyval.intval) = !(yyvsp[0].intval); }
-#line 1570 "src/mapparser.c"
+#line 1570 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 19: /* logical_exp: NOT math_exp  */
-#line 195 "src/mapparser.y"
+#line 194 "src/mapparser.y"
                  { (yyval.intval) = !(yyvsp[0].dblval); }
-#line 1576 "src/mapparser.c"
+#line 1576 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 20: /* logical_exp: string_exp RE string_exp  */
-#line 196 "src/mapparser.y"
+#line 195 "src/mapparser.y"
                              {
     ms_regex_t re;
 
@@ -1597,11 +1597,11 @@ yyreduce:
     msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
     msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
-#line 1601 "src/mapparser.c"
+#line 1601 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 21: /* logical_exp: string_exp IRE string_exp  */
-#line 216 "src/mapparser.y"
+#line 215 "src/mapparser.y"
                               {
     ms_regex_t re;
 
@@ -1622,77 +1622,77 @@ yyreduce:
     msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
     msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
-#line 1626 "src/mapparser.c"
+#line 1626 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 22: /* logical_exp: math_exp EQ math_exp  */
-#line 236 "src/mapparser.y"
+#line 235 "src/mapparser.y"
                          {
     if((yyvsp[-2].dblval) == (yyvsp[0].dblval))
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1637 "src/mapparser.c"
+#line 1637 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 23: /* logical_exp: math_exp NE math_exp  */
-#line 242 "src/mapparser.y"
+#line 241 "src/mapparser.y"
                          {
     if((yyvsp[-2].dblval) != (yyvsp[0].dblval))
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1648 "src/mapparser.c"
+#line 1648 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 24: /* logical_exp: math_exp GT math_exp  */
-#line 248 "src/mapparser.y"
+#line 247 "src/mapparser.y"
                          {    
     if((yyvsp[-2].dblval) > (yyvsp[0].dblval))
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1659 "src/mapparser.c"
+#line 1659 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 25: /* logical_exp: math_exp LT math_exp  */
-#line 254 "src/mapparser.y"
+#line 253 "src/mapparser.y"
                          {
     if((yyvsp[-2].dblval) < (yyvsp[0].dblval))
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1670 "src/mapparser.c"
+#line 1670 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 26: /* logical_exp: math_exp GE math_exp  */
-#line 260 "src/mapparser.y"
+#line 259 "src/mapparser.y"
                          {
     if((yyvsp[-2].dblval) >= (yyvsp[0].dblval))
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1681 "src/mapparser.c"
+#line 1681 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 27: /* logical_exp: math_exp LE math_exp  */
-#line 266 "src/mapparser.y"
+#line 265 "src/mapparser.y"
                          {
     if((yyvsp[-2].dblval) <= (yyvsp[0].dblval))
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1692 "src/mapparser.c"
+#line 1692 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 28: /* logical_exp: string_exp EQ string_exp  */
-#line 272 "src/mapparser.y"
+#line 271 "src/mapparser.y"
                              {
     if(strcmp((yyvsp[-2].strval), (yyvsp[0].strval)) == 0)
       (yyval.intval) = MS_TRUE;
@@ -1701,11 +1701,11 @@ yyreduce:
     msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
     msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
-#line 1705 "src/mapparser.c"
+#line 1705 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 29: /* logical_exp: string_exp NE string_exp  */
-#line 280 "src/mapparser.y"
+#line 279 "src/mapparser.y"
                              {
     if(strcmp((yyvsp[-2].strval), (yyvsp[0].strval)) != 0)
       (yyval.intval) = MS_TRUE;
@@ -1714,11 +1714,11 @@ yyreduce:
     msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
     msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
-#line 1718 "src/mapparser.c"
+#line 1718 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 30: /* logical_exp: string_exp GT string_exp  */
-#line 288 "src/mapparser.y"
+#line 287 "src/mapparser.y"
                              {
     if(strcmp((yyvsp[-2].strval), (yyvsp[0].strval)) > 0)
       (yyval.intval) = MS_TRUE;
@@ -1727,11 +1727,11 @@ yyreduce:
     msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
     msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
-#line 1731 "src/mapparser.c"
+#line 1731 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 31: /* logical_exp: string_exp LT string_exp  */
-#line 296 "src/mapparser.y"
+#line 295 "src/mapparser.y"
                              {
     if(strcmp((yyvsp[-2].strval), (yyvsp[0].strval)) < 0)
       (yyval.intval) = MS_TRUE;
@@ -1740,11 +1740,11 @@ yyreduce:
     msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
     msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
-#line 1744 "src/mapparser.c"
+#line 1744 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 32: /* logical_exp: string_exp GE string_exp  */
-#line 304 "src/mapparser.y"
+#line 303 "src/mapparser.y"
                              {
     if(strcmp((yyvsp[-2].strval), (yyvsp[0].strval)) >= 0)
       (yyval.intval) = MS_TRUE;
@@ -1753,11 +1753,11 @@ yyreduce:
     msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
     msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
-#line 1757 "src/mapparser.c"
+#line 1757 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 33: /* logical_exp: string_exp LE string_exp  */
-#line 312 "src/mapparser.y"
+#line 311 "src/mapparser.y"
                              {
     if(strcmp((yyvsp[-2].strval), (yyvsp[0].strval)) <= 0)
       (yyval.intval) = MS_TRUE;
@@ -1766,77 +1766,77 @@ yyreduce:
     msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
     msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
-#line 1770 "src/mapparser.c"
+#line 1770 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 34: /* logical_exp: time_exp EQ time_exp  */
-#line 320 "src/mapparser.y"
+#line 319 "src/mapparser.y"
                          {
     if(msTimeCompare(&((yyvsp[-2].tmval)), &((yyvsp[0].tmval))) == 0)
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1781 "src/mapparser.c"
+#line 1781 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 35: /* logical_exp: time_exp NE time_exp  */
-#line 326 "src/mapparser.y"
+#line 325 "src/mapparser.y"
                          {
     if(msTimeCompare(&((yyvsp[-2].tmval)), &((yyvsp[0].tmval))) != 0)
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1792 "src/mapparser.c"
+#line 1792 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 36: /* logical_exp: time_exp GT time_exp  */
-#line 332 "src/mapparser.y"
+#line 331 "src/mapparser.y"
                          {
     if(msTimeCompare(&((yyvsp[-2].tmval)), &((yyvsp[0].tmval))) > 0)
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1803 "src/mapparser.c"
+#line 1803 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 37: /* logical_exp: time_exp LT time_exp  */
-#line 338 "src/mapparser.y"
+#line 337 "src/mapparser.y"
                          {
     if(msTimeCompare(&((yyvsp[-2].tmval)), &((yyvsp[0].tmval))) < 0)
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1814 "src/mapparser.c"
+#line 1814 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 38: /* logical_exp: time_exp GE time_exp  */
-#line 344 "src/mapparser.y"
+#line 343 "src/mapparser.y"
                          {
     if(msTimeCompare(&((yyvsp[-2].tmval)), &((yyvsp[0].tmval))) >= 0)
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1825 "src/mapparser.c"
+#line 1825 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 39: /* logical_exp: time_exp LE time_exp  */
-#line 350 "src/mapparser.y"
+#line 349 "src/mapparser.y"
                          {
     if(msTimeCompare(&((yyvsp[-2].tmval)), &((yyvsp[0].tmval))) <= 0)
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1836 "src/mapparser.c"
+#line 1836 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 40: /* logical_exp: string_exp IN string_exp  */
-#line 356 "src/mapparser.y"
+#line 355 "src/mapparser.y"
                              {
     char *delim, *bufferp;
 
@@ -1858,11 +1858,11 @@ yyreduce:
     msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
     msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
-#line 1862 "src/mapparser.c"
+#line 1862 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 41: /* logical_exp: math_exp IN string_exp  */
-#line 377 "src/mapparser.y"
+#line 376 "src/mapparser.y"
                            {
     char *delim,*bufferp;
 
@@ -1883,22 +1883,22 @@ yyreduce:
       (yyval.intval) = MS_TRUE;  
     msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
-#line 1887 "src/mapparser.c"
+#line 1887 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 42: /* logical_exp: math_exp IEQ math_exp  */
-#line 397 "src/mapparser.y"
+#line 396 "src/mapparser.y"
                           {
     if((yyvsp[-2].dblval) == (yyvsp[0].dblval))
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1898 "src/mapparser.c"
+#line 1898 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 43: /* logical_exp: string_exp IEQ string_exp  */
-#line 403 "src/mapparser.y"
+#line 402 "src/mapparser.y"
                               {
     if(strcasecmp((yyvsp[-2].strval), (yyvsp[0].strval)) == 0)
       (yyval.intval) = MS_TRUE;
@@ -1907,22 +1907,22 @@ yyreduce:
     msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
     msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
-#line 1911 "src/mapparser.c"
+#line 1911 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 44: /* logical_exp: time_exp IEQ time_exp  */
-#line 411 "src/mapparser.y"
+#line 410 "src/mapparser.y"
                           {
     if(msTimeCompare(&((yyvsp[-2].tmval)), &((yyvsp[0].tmval))) == 0)
       (yyval.intval) = MS_TRUE;
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 1922 "src/mapparser.c"
+#line 1922 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 45: /* logical_exp: shape_exp EQ shape_exp  */
-#line 417 "src/mapparser.y"
+#line 416 "src/mapparser.y"
                            {
     int rval;
     rval = msGEOSEquals((yyvsp[-2].shpval), (yyvsp[0].shpval));
@@ -1940,11 +1940,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 1944 "src/mapparser.c"
+#line 1944 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 46: /* logical_exp: EQUALS '(' shape_exp ',' shape_exp ')'  */
-#line 434 "src/mapparser.y"
+#line 433 "src/mapparser.y"
                                            {
     int rval;
     rval = msGEOSEquals((yyvsp[-3].shpval), (yyvsp[-1].shpval));
@@ -1962,11 +1962,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 1966 "src/mapparser.c"
+#line 1966 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 47: /* logical_exp: INTERSECTS '(' shape_exp ',' shape_exp ')'  */
-#line 451 "src/mapparser.y"
+#line 450 "src/mapparser.y"
                                                {
     int rval;
     rval = msGEOSIntersects((yyvsp[-3].shpval), (yyvsp[-1].shpval));
@@ -1984,11 +1984,11 @@ yyreduce:
     } else
     (yyval.intval) = rval;
   }
-#line 1988 "src/mapparser.c"
+#line 1988 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 48: /* logical_exp: shape_exp INTERSECTS shape_exp  */
-#line 468 "src/mapparser.y"
+#line 467 "src/mapparser.y"
                                    {
     int rval;
     rval = msGEOSIntersects((yyvsp[-2].shpval), (yyvsp[0].shpval));
@@ -2006,11 +2006,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2010 "src/mapparser.c"
+#line 2010 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 49: /* logical_exp: DISJOINT '(' shape_exp ',' shape_exp ')'  */
-#line 485 "src/mapparser.y"
+#line 484 "src/mapparser.y"
                                              {
     int rval;
     rval = msGEOSDisjoint((yyvsp[-3].shpval), (yyvsp[-1].shpval));
@@ -2028,11 +2028,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2032 "src/mapparser.c"
+#line 2032 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 50: /* logical_exp: shape_exp DISJOINT shape_exp  */
-#line 502 "src/mapparser.y"
+#line 501 "src/mapparser.y"
                                  {
     int rval;
     rval = msGEOSDisjoint((yyvsp[-2].shpval), (yyvsp[0].shpval));
@@ -2050,11 +2050,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2054 "src/mapparser.c"
+#line 2054 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 51: /* logical_exp: TOUCHES '(' shape_exp ',' shape_exp ')'  */
-#line 519 "src/mapparser.y"
+#line 518 "src/mapparser.y"
                                             {
     int rval;
     rval = msGEOSTouches((yyvsp[-3].shpval), (yyvsp[-1].shpval));
@@ -2072,11 +2072,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2076 "src/mapparser.c"
+#line 2076 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 52: /* logical_exp: shape_exp TOUCHES shape_exp  */
-#line 536 "src/mapparser.y"
+#line 535 "src/mapparser.y"
                                 {
     int rval;
     rval = msGEOSTouches((yyvsp[-2].shpval), (yyvsp[0].shpval));
@@ -2094,11 +2094,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2098 "src/mapparser.c"
+#line 2098 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 53: /* logical_exp: OVERLAPS '(' shape_exp ',' shape_exp ')'  */
-#line 553 "src/mapparser.y"
+#line 552 "src/mapparser.y"
                                              {
     int rval;
     rval = msGEOSOverlaps((yyvsp[-3].shpval), (yyvsp[-1].shpval));
@@ -2116,11 +2116,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2120 "src/mapparser.c"
+#line 2120 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 54: /* logical_exp: shape_exp OVERLAPS shape_exp  */
-#line 570 "src/mapparser.y"
+#line 569 "src/mapparser.y"
                                  {
     int rval;
      rval = msGEOSOverlaps((yyvsp[-2].shpval), (yyvsp[0].shpval));
@@ -2138,11 +2138,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2142 "src/mapparser.c"
+#line 2142 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 55: /* logical_exp: CROSSES '(' shape_exp ',' shape_exp ')'  */
-#line 587 "src/mapparser.y"
+#line 586 "src/mapparser.y"
                                             {
     int rval;
     rval = msGEOSCrosses((yyvsp[-3].shpval), (yyvsp[-1].shpval));
@@ -2160,11 +2160,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2164 "src/mapparser.c"
+#line 2164 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 56: /* logical_exp: shape_exp CROSSES shape_exp  */
-#line 604 "src/mapparser.y"
+#line 603 "src/mapparser.y"
                                 {
     int rval;
     rval = msGEOSCrosses((yyvsp[-2].shpval), (yyvsp[0].shpval));
@@ -2182,11 +2182,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2186 "src/mapparser.c"
+#line 2186 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 57: /* logical_exp: WITHIN '(' shape_exp ',' shape_exp ')'  */
-#line 621 "src/mapparser.y"
+#line 620 "src/mapparser.y"
                                            {
     int rval;
     rval = msGEOSWithin((yyvsp[-3].shpval), (yyvsp[-1].shpval));
@@ -2204,11 +2204,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2208 "src/mapparser.c"
+#line 2208 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 58: /* logical_exp: shape_exp WITHIN shape_exp  */
-#line 638 "src/mapparser.y"
+#line 637 "src/mapparser.y"
                                {
     int rval;
     rval = msGEOSWithin((yyvsp[-2].shpval), (yyvsp[0].shpval));
@@ -2226,11 +2226,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2230 "src/mapparser.c"
+#line 2230 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 59: /* logical_exp: CONTAINS '(' shape_exp ',' shape_exp ')'  */
-#line 655 "src/mapparser.y"
+#line 654 "src/mapparser.y"
                                              {
     int rval;
     rval = msGEOSContains((yyvsp[-3].shpval), (yyvsp[-1].shpval));
@@ -2248,11 +2248,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2252 "src/mapparser.c"
+#line 2252 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 60: /* logical_exp: shape_exp CONTAINS shape_exp  */
-#line 672 "src/mapparser.y"
+#line 671 "src/mapparser.y"
                                  {
     int rval;
     rval = msGEOSContains((yyvsp[-2].shpval), (yyvsp[0].shpval));
@@ -2270,11 +2270,11 @@ yyreduce:
     } else
       (yyval.intval) = rval;
   }
-#line 2274 "src/mapparser.c"
+#line 2274 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 61: /* logical_exp: DWITHIN '(' shape_exp ',' shape_exp ',' math_exp ')'  */
-#line 689 "src/mapparser.y"
+#line 688 "src/mapparser.y"
                                                          {
     double d;
     d = msGEOSDistance((yyvsp[-5].shpval), (yyvsp[-3].shpval));
@@ -2291,11 +2291,11 @@ yyreduce:
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 2295 "src/mapparser.c"
+#line 2295 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 62: /* logical_exp: BEYOND '(' shape_exp ',' shape_exp ',' math_exp ')'  */
-#line 705 "src/mapparser.y"
+#line 704 "src/mapparser.y"
                                                         {
     double d;
     d = msGEOSDistance((yyvsp[-5].shpval), (yyvsp[-3].shpval));
@@ -2312,41 +2312,41 @@ yyreduce:
     else
       (yyval.intval) = MS_FALSE;
   }
-#line 2316 "src/mapparser.c"
+#line 2316 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 64: /* math_exp: '(' math_exp ')'  */
-#line 724 "src/mapparser.y"
+#line 723 "src/mapparser.y"
                      { (yyval.dblval) = (yyvsp[-1].dblval); }
-#line 2322 "src/mapparser.c"
+#line 2322 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 65: /* math_exp: math_exp '+' math_exp  */
-#line 725 "src/mapparser.y"
+#line 724 "src/mapparser.y"
                           { (yyval.dblval) = (yyvsp[-2].dblval) + (yyvsp[0].dblval); }
-#line 2328 "src/mapparser.c"
+#line 2328 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 66: /* math_exp: math_exp '-' math_exp  */
-#line 726 "src/mapparser.y"
+#line 725 "src/mapparser.y"
                           { (yyval.dblval) = (yyvsp[-2].dblval) - (yyvsp[0].dblval); }
-#line 2334 "src/mapparser.c"
+#line 2334 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 67: /* math_exp: math_exp '*' math_exp  */
-#line 727 "src/mapparser.y"
+#line 726 "src/mapparser.y"
                           { (yyval.dblval) = (yyvsp[-2].dblval) * (yyvsp[0].dblval); }
-#line 2340 "src/mapparser.c"
+#line 2340 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 68: /* math_exp: math_exp '%' math_exp  */
-#line 728 "src/mapparser.y"
+#line 727 "src/mapparser.y"
                           { (yyval.dblval) = (int)(yyvsp[-2].dblval) % (int)(yyvsp[0].dblval); }
-#line 2346 "src/mapparser.c"
+#line 2346 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 69: /* math_exp: math_exp '/' math_exp  */
-#line 729 "src/mapparser.y"
+#line 728 "src/mapparser.y"
                           {
     if((yyvsp[0].dblval) == 0.0) {
       yyerror(p, "Division by zero.");
@@ -2354,29 +2354,29 @@ yyreduce:
     } else
       (yyval.dblval) = (yyvsp[-2].dblval) / (yyvsp[0].dblval); 
   }
-#line 2358 "src/mapparser.c"
+#line 2358 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 70: /* math_exp: '-' math_exp  */
-#line 736 "src/mapparser.y"
+#line 735 "src/mapparser.y"
                            { (yyval.dblval) = (yyvsp[0].dblval); }
-#line 2364 "src/mapparser.c"
+#line 2364 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 71: /* math_exp: math_exp '^' math_exp  */
-#line 737 "src/mapparser.y"
+#line 736 "src/mapparser.y"
                           { (yyval.dblval) = pow((yyvsp[-2].dblval), (yyvsp[0].dblval)); }
-#line 2370 "src/mapparser.c"
+#line 2370 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 72: /* math_exp: LENGTH '(' string_exp ')'  */
-#line 738 "src/mapparser.y"
+#line 737 "src/mapparser.y"
                               { (yyval.dblval) = strlen((yyvsp[-1].strval)); }
-#line 2376 "src/mapparser.c"
+#line 2376 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 73: /* math_exp: AREA '(' shape_exp ')'  */
-#line 739 "src/mapparser.y"
+#line 738 "src/mapparser.y"
                            {
     if((yyvsp[-1].shpval)->type != MS_SHAPE_POLYGON) {
       yyerror(p, "Area can only be computed for polygon shapes.");
@@ -2388,29 +2388,29 @@ yyreduce:
       free((yyvsp[-1].shpval));
     }
   }
-#line 2392 "src/mapparser.c"
+#line 2392 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 74: /* math_exp: ROUND '(' math_exp ',' math_exp ')'  */
-#line 750 "src/mapparser.y"
+#line 749 "src/mapparser.y"
                                         { (yyval.dblval) = (MS_NINT((yyvsp[-3].dblval)/(yyvsp[-1].dblval)))*(yyvsp[-1].dblval); }
-#line 2398 "src/mapparser.c"
+#line 2398 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 75: /* math_exp: ROUND '(' math_exp ')'  */
-#line 751 "src/mapparser.y"
+#line 750 "src/mapparser.y"
                            { (yyval.dblval) = (MS_NINT((yyvsp[-1].dblval))); }
-#line 2404 "src/mapparser.c"
+#line 2404 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 77: /* shape_exp: '(' shape_exp ')'  */
-#line 755 "src/mapparser.y"
+#line 754 "src/mapparser.y"
                       { (yyval.shpval) = (yyvsp[-1].shpval); }
-#line 2410 "src/mapparser.c"
+#line 2410 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 78: /* shape_exp: YYBUFFER '(' shape_exp ',' math_exp ')'  */
-#line 756 "src/mapparser.y"
+#line 755 "src/mapparser.y"
                                             {
     shapeObj *s;
     s = msGEOSBuffer((yyvsp[-3].shpval), (yyvsp[-1].dblval));
@@ -2425,11 +2425,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2429 "src/mapparser.c"
+#line 2429 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 79: /* shape_exp: INNER '(' shape_exp ')'  */
-#line 770 "src/mapparser.y"
+#line 769 "src/mapparser.y"
                             {
     shapeObj *s;
     s = msRings2Shape((yyvsp[-1].shpval), MS_FALSE);
@@ -2444,11 +2444,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2448 "src/mapparser.c"
+#line 2448 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 80: /* shape_exp: OUTER '(' shape_exp ')'  */
-#line 784 "src/mapparser.y"
+#line 783 "src/mapparser.y"
                             {
     shapeObj *s;
     s = msRings2Shape((yyvsp[-1].shpval), MS_TRUE);
@@ -2463,11 +2463,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2467 "src/mapparser.c"
+#line 2467 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 81: /* shape_exp: CENTERLINE '(' shape_exp ')'  */
-#line 798 "src/mapparser.y"
+#line 797 "src/mapparser.y"
                                  {
     shapeObj *s;
     s = msGEOSCenterline((yyvsp[-1].shpval));
@@ -2482,11 +2482,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2486 "src/mapparser.c"
+#line 2486 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 82: /* shape_exp: DIFFERENCE '(' shape_exp ',' shape_exp ')'  */
-#line 812 "src/mapparser.y"
+#line 811 "src/mapparser.y"
                                                {
     shapeObj *s;
     s = msGEOSDifference((yyvsp[-3].shpval), (yyvsp[-1].shpval));
@@ -2501,11 +2501,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2505 "src/mapparser.c"
+#line 2505 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 83: /* shape_exp: DENSIFY '(' shape_exp ',' math_exp ')'  */
-#line 826 "src/mapparser.y"
+#line 825 "src/mapparser.y"
                                            {
     shapeObj *s;
     s = msDensify((yyvsp[-3].shpval), (yyvsp[-1].dblval));
@@ -2520,11 +2520,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2524 "src/mapparser.c"
+#line 2524 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 84: /* shape_exp: SIMPLIFY '(' shape_exp ',' math_exp ')'  */
-#line 840 "src/mapparser.y"
+#line 839 "src/mapparser.y"
                                             {
     shapeObj *s;
     s = msGEOSSimplify((yyvsp[-3].shpval), (yyvsp[-1].dblval));
@@ -2539,11 +2539,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2543 "src/mapparser.c"
+#line 2543 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 85: /* shape_exp: SIMPLIFYPT '(' shape_exp ',' math_exp ')'  */
-#line 854 "src/mapparser.y"
+#line 853 "src/mapparser.y"
                                               {
     shapeObj *s;
     s = msGEOSTopologyPreservingSimplify((yyvsp[-3].shpval), (yyvsp[-1].dblval));
@@ -2558,11 +2558,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2562 "src/mapparser.c"
+#line 2562 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 86: /* shape_exp: GENERALIZE '(' shape_exp ',' math_exp ')'  */
-#line 868 "src/mapparser.y"
+#line 867 "src/mapparser.y"
                                               {
     shapeObj *s;
     s = msGeneralize((yyvsp[-3].shpval), (yyvsp[-1].dblval));
@@ -2577,11 +2577,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2581 "src/mapparser.c"
+#line 2581 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 87: /* shape_exp: SMOOTHSIA '(' shape_exp ')'  */
-#line 882 "src/mapparser.y"
+#line 881 "src/mapparser.y"
                                 {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[-1].shpval), 3, 1, NULL);
@@ -2596,11 +2596,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2600 "src/mapparser.c"
+#line 2600 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 88: /* shape_exp: SMOOTHSIA '(' shape_exp ',' math_exp ')'  */
-#line 896 "src/mapparser.y"
+#line 895 "src/mapparser.y"
                                              {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[-3].shpval), (yyvsp[-1].dblval), 1, NULL);
@@ -2615,11 +2615,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2619 "src/mapparser.c"
+#line 2619 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 89: /* shape_exp: SMOOTHSIA '(' shape_exp ',' math_exp ',' math_exp ')'  */
-#line 910 "src/mapparser.y"
+#line 909 "src/mapparser.y"
                                                           {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[-5].shpval), (yyvsp[-3].dblval), (yyvsp[-1].dblval), NULL);
@@ -2634,11 +2634,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2638 "src/mapparser.c"
+#line 2638 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 90: /* shape_exp: SMOOTHSIA '(' shape_exp ',' math_exp ',' math_exp ',' string_exp ')'  */
-#line 924 "src/mapparser.y"
+#line 923 "src/mapparser.y"
                                                                          {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[-7].shpval), (yyvsp[-5].dblval), (yyvsp[-3].dblval), (yyvsp[-1].strval));
@@ -2654,11 +2654,11 @@ yyreduce:
     s->scratch = MS_TRUE;
     (yyval.shpval) = s;
   }
-#line 2658 "src/mapparser.c"
+#line 2658 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 91: /* shape_exp: JAVASCRIPT '(' shape_exp ',' string_exp ')'  */
-#line 939 "src/mapparser.y"
+#line 938 "src/mapparser.y"
                                                 {
 #ifdef USE_V8_MAPSCRIPT
     shapeObj *s;
@@ -2679,28 +2679,28 @@ yyreduce:
     return(-1);
 #endif
   }
-#line 2683 "src/mapparser.c"
+#line 2683 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 93: /* string_exp: '(' string_exp ')'  */
-#line 962 "src/mapparser.y"
+#line 961 "src/mapparser.y"
                        { (yyval.strval) = (yyvsp[-1].strval); }
-#line 2689 "src/mapparser.c"
+#line 2689 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 94: /* string_exp: string_exp '+' string_exp  */
-#line 963 "src/mapparser.y"
+#line 962 "src/mapparser.y"
                               { 
     (yyval.strval) = (char *)malloc(strlen((yyvsp[-2].strval)) + strlen((yyvsp[0].strval)) + 1);
     sprintf((yyval.strval), "%s%s", (yyvsp[-2].strval), (yyvsp[0].strval));
     msReplaceFreeableStr(&((yyvsp[-2].strval)), NULL);
     msReplaceFreeableStr(&((yyvsp[0].strval)), NULL);
   }
-#line 2700 "src/mapparser.c"
+#line 2700 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 95: /* string_exp: TOSTRING '(' math_exp ',' string_exp ')'  */
-#line 969 "src/mapparser.y"
+#line 968 "src/mapparser.y"
                                              {
     char* ret = msToString((yyvsp[-1].strval), (yyvsp[-3].dblval));
     msReplaceFreeableStr(&((yyvsp[-1].strval)), NULL);
@@ -2710,62 +2710,62 @@ yyreduce:
     }
     (yyval.strval) = ret;
   }
-#line 2714 "src/mapparser.c"
+#line 2714 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 96: /* string_exp: COMMIFY '(' string_exp ')'  */
-#line 978 "src/mapparser.y"
+#line 977 "src/mapparser.y"
                                {  
     (yyvsp[-1].strval) = msCommifyString((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2723 "src/mapparser.c"
+#line 2723 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 97: /* string_exp: UPPER '(' string_exp ')'  */
-#line 982 "src/mapparser.y"
+#line 981 "src/mapparser.y"
                              {  
     msStringToUpper((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2732 "src/mapparser.c"
+#line 2732 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 98: /* string_exp: LOWER '(' string_exp ')'  */
-#line 986 "src/mapparser.y"
+#line 985 "src/mapparser.y"
                              {  
     msStringToLower((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2741 "src/mapparser.c"
+#line 2741 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 99: /* string_exp: INITCAP '(' string_exp ')'  */
-#line 990 "src/mapparser.y"
+#line 989 "src/mapparser.y"
                                {  
     msStringInitCap((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2750 "src/mapparser.c"
+#line 2750 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 100: /* string_exp: FIRSTCAP '(' string_exp ')'  */
-#line 994 "src/mapparser.y"
+#line 993 "src/mapparser.y"
                                 {  
     msStringFirstCap((yyvsp[-1].strval)); 
     (yyval.strval) = (yyvsp[-1].strval); 
   }
-#line 2759 "src/mapparser.c"
+#line 2759 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
   case 102: /* time_exp: '(' time_exp ')'  */
-#line 1001 "src/mapparser.y"
+#line 1000 "src/mapparser.y"
                      { (yyval.tmval) = (yyvsp[-1].tmval); }
-#line 2765 "src/mapparser.c"
+#line 2765 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
     break;
 
 
-#line 2769 "src/mapparser.c"
+#line 2769 "/home/runner/work/MapServer/MapServer/src/mapparser.c"
 
       default: break;
     }
@@ -2958,7 +2958,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 1004 "src/mapparser.y"
+#line 1003 "src/mapparser.y"
 
 
 /*

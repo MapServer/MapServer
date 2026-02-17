@@ -19,7 +19,7 @@ class referenceMapObjTest extends \PHPUnit\Framework\TestCase
 
     public function testUpdateFromString()
     {
-        $this->assertEquals(MS_SUCCESS, $this->referencemap->updateFromString('REFERENCE STATUS ON END'));
+        $this->assertEquals(MS_SUCCESS, $this->referencemap->updateFromString('REFERENCE STATUS ON IMAGE "data/colorwheel.png" SIZE 100 100 EXTENT 0 0 100 100 END'));
     }
 
     # destroy variables, if not can lead to segmentation fault
@@ -28,5 +28,3 @@ class referenceMapObjTest extends \PHPUnit\Framework\TestCase
         unset($this->referencemap, $this->map);
     }
 }
-
-?>

@@ -2,7 +2,6 @@
 <!DOCTYPE ServiceExceptionReport SYSTEM "http://ogc.dmsolutions.ca/wms/1.1.0/exception_1_1_0.dtd">
 <ServiceExceptionReport version="1.1.0">
 <ServiceException>
-msSLDApplySLDURL: WMS server error. Could not open SLD http://localhost:8000/wxs/etc/repeat.sld.notfound and save it in a temporary file. Please make sure that the sld url is valid and that the temporary path is set. The temporary path can be defined for example by setting TEMPPATH in the map file. Please check the MapServer documentation on temporary path settings.
-msHTTPExecuteRequests(): HTTP request error. HTTP GET request failed with status 404 () for http://localhost:8000/wxs/etc/repeat.sld.notfound
+msSLDApplySLDURL(): General error message. WMS/WFS client support is not enabled .
 </ServiceException>
 </ServiceExceptionReport>

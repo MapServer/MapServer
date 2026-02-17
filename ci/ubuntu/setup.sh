@@ -12,8 +12,8 @@ curl -fsSL https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo tee /e
 echo 'deb [signed-by=/etc/apt/keyrings/kitware-archive-latest.asc] https://apt.kitware.com/ubuntu noble main' | sudo tee /etc/apt/sources.list.d/kitware.list > /dev/null
 
 # Add required repositories
-sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 sudo apt-add-repository -y 'deb https://apt.kitware.com/ubuntu/ noble main'
+sudo add-apt-repository -y ppa:ondrej/php
 
 sudo apt-get update
 
@@ -23,15 +23,20 @@ sudo apt-get install -y --allow-unauthenticated build-essential protobuf-c-compi
             libpcre2-dev \
             postgresql-server-dev-16 postgresql-16-postgis-3 postgresql-16-postgis-3-scripts g++ ca-certificates \
             libmono-system-drawing4.0-cil mono-mcs \
-            libperl-dev \
+            php-dev php8.3-dev php8.4-dev php8.5-dev libperl-dev \
+            php-mbstring php-xml php8.3-mbstring php8.3-xml php8.4-mbstring php8.4-xml php8.5-mbstring php8.5-xml \
             openjdk-8-jdk \
+            python3 python3-pip python3-venv python3.12-venv python-is-python3 \
             libonig5
+
+# ensure python command is available
+sudo ln -sf /usr/bin/python3 /usr/bin/python
 
 # install recent CMake from Kitware
 sudo apt-get install -y --allow-unauthenticated cmake
 
 echo "GDAL version"
-gdal --version
+gdalinfo --version
 
 echo "cmake version"
 cmake --version
@@ -62,12 +67,12 @@ touch src/maplexer.l
 touch src/mapparser.y
 
 # report Python locations
-which python
-which pip
+which python3 || true
+which pip3 || true
 
 export CRYPTOGRAPHY_DONT_BUILD_RUST=1 # to avoid issue when building Cryptography python module
 export PIP_BREAK_SYSTEM_PACKAGES=true
 export PIP_NO_WARN_SCRIPT_LOCATION=true
 
 # install Python dependencies (required for msautotests)
-pip install -r msautotest/requirements.txt
+pip3 install -r msautotest/requirements.txt

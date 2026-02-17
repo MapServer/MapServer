@@ -5923,6 +5923,7 @@ void initQueryMap(queryMapObj *querymap) {
   querymap->style = MS_HILITE;
   querymap->status = MS_OFF;
   MS_INIT_COLOR(querymap->color, 255, 255, 0, 255); /* yellow */
+  querymap->map = NULL;
 }
 
 int loadQueryMap(queryMapObj *querymap, mapObj *map) {
@@ -6333,10 +6334,14 @@ int initMap(mapObj *map) {
   map->symbolset.map = map;
 
   initLegend(&map->legend);
+  map->legend.map = map;
   initScalebar(&map->scalebar);
   initWeb(&map->web);
+  map->web.map = map;
   initReferenceMap(&map->reference);
+  map->reference.map = map;
   initQueryMap(&map->querymap);
+  map->querymap.map = map;
 
   map->projContext = msProjectionContextGetFromPool();
 

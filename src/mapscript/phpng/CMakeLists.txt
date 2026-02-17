@@ -32,7 +32,7 @@ endif()
 
 if(NOT PHP_INCLUDE_PATH)
     # Explicitly find php-config executable
-    find_program(PHP_CONFIG_EXECUTABLE NAMES php-config php-config8 php-config7)
+    find_program(PHP_CONFIG_EXECUTABLE NAMES php-config php-config8.3 php-config8 php-config7)
     
     if(PHP_CONFIG_EXECUTABLE)
         execute_process(COMMAND ${PHP_CONFIG_EXECUTABLE} --includes 
@@ -56,6 +56,10 @@ if(NOT PHP_INCLUDE_PATH)
         /opt/homebrew/include/php
         /usr/include/php/main
         /usr/local/include/php/main
+        /usr/include/php/8.3/main
+        /usr/include/php/8.2/main
+        /usr/include/php/8.1/main
+        /usr/include/php/7.4/main
         ${CMAKE_PREFIX_PATH}/include/php
         ${CMAKE_PREFIX_PATH}/include/php/main
         ENV PHP_INCLUDE_DIR
@@ -139,7 +143,7 @@ IF(APPLE)
 ENDIF(APPLE)
 
 # hide "defined but not used" warnings
-target_compile_options(php_mapscriptng PRIVATE -Wno-unused-label)
+target_compile_options(php_mapscriptng PRIVATE -Wno-unused-label -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast)
 
 target_link_libraries(php_mapscriptng mapserver)
 set_target_properties(${SWIG_MODULE_mapscript_REAL_NAME} PROPERTIES PREFIX "")

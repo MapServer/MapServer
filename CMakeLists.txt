@@ -172,7 +172,7 @@ option(WITH_LIBXML2 "Choose if libxml2 support should be built in (used for sos,
 option(WITH_THREAD_SAFETY "Choose if a thread-safe version of libmapserver should be built (only recommended for some mapscripts)" OFF)
 option(WITH_GIF "Enable GIF support (for PIXMAP loading)" ON)
 option(WITH_PYTHON "Enable Python mapscript support" OFF)
-option(WITH_PHPNG "Enable PHPNG (SWIG) mapscript support" ON)
+option(WITH_PHPNG "Enable PHPNG (SWIG) mapscript support" OFF)
 option(WITH_PERL "Enable Perl mapscript support" OFF)
 option(WITH_RUBY "Enable Ruby mapscript support" OFF)
 option(WITH_JAVA "Enable Java mapscript support" OFF)

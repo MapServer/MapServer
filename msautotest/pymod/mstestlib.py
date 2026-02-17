@@ -36,6 +36,12 @@ import pytest
 from testlib import compare_result
 
 try:
+    from osgeo import gdal
+    gdal.UseExceptions()
+except ImportError:
+    pass
+
+try:
     import xmlvalidate
 
     xmlvalidate_ok = True

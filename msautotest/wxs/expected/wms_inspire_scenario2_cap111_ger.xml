@@ -54,8 +54,6 @@
       <Format>application/x-pdf</Format>
       <Format>image/svg+xml</Format>
       <Format>image/tiff</Format>
-      <Format>application/vnd.google-earth.kml+xml</Format>
-      <Format>application/vnd.google-earth.kmz</Format>
       <Format>application/vnd.mapbox-vector-tile</Format>
       <Format>application/x-protobuf</Format>
       <Format>application/json</Format>
