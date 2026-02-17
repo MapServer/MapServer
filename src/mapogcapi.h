@@ -51,20 +51,29 @@ typedef enum {
   OGCAPI_NOT_FOUND_ERROR = 3,
 } OGCAPIErrorType;
 
-enum class OGCAPIFormat { JSON, GeoJSON, OpenAPI_V3, HTML, Invalid };
+enum class OGCAPIFormat {
+  JSON,
+  GeoJSON,
+  OpenAPI_V3,
+  JSONSchema,
+  HTML,
+  Invalid
+};
 
 #define OGCAPI_MIMETYPE_JSON "application/json"
 #define OGCAPI_MIMETYPE_GEOJSON "application/geo+json"
 #define OGCAPI_MIMETYPE_OPENAPI_V3                                             \
   "application/vnd.oai.openapi+json;version=3.0"
+#define OGCAPI_MIMETYPE_JSON_SCHEMA "application/schema+json"
 #define OGCAPI_MIMETYPE_HTML "text/html"
 
-std::string msOGCAPIGetTemplateDirectory(mapObj *map, const char *key,
+std::string msOGCAPIGetTemplateDirectory(const mapObj *map, const char *key,
                                          const char *envvar);
 
-OGCAPIFormat msOGCAPIGetOutputFormat(cgiRequestObj *request);
+OGCAPIFormat msOGCAPIGetOutputFormat(const cgiRequestObj *request);
 
-std::string msOGCAPIGetApiRootUrl(mapObj *map, cgiRequestObj *request,
+std::string msOGCAPIGetApiRootUrl(const mapObj *map,
+                                  const cgiRequestObj *request,
                                   const char *namespaces = "AO");
 
 void msOGCAPIOutputError(OGCAPIErrorType errorType,

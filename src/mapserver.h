@@ -3503,7 +3503,8 @@ MS_DLL_EXPORT int msIntegerInArray(const int value, int *array,
                                    int numelements);
 
 MS_DLL_EXPORT int msExtentsOverlap(mapObj *map, layerObj *layer);
-MS_DLL_EXPORT char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req);
+MS_DLL_EXPORT char *msBuildOnlineResource(const mapObj *map,
+                                          const cgiRequestObj *req);
 
 /* For mapswf */
 MS_DLL_EXPORT int getRgbColor(mapObj *map, int i, int *r, int *g,

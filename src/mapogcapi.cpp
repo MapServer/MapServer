@@ -39,6 +39,7 @@
 
 #include <algorithm>
 #include <map>
+#include <set>
 #include <string>
 #include <iostream>
 #include <utility>
@@ -57,6 +58,7 @@ using json = nlohmann::json;
 #define OGCAPI_TEMPLATE_HTML_COLLECTIONS "collections.html"
 #define OGCAPI_TEMPLATE_HTML_COLLECTION_ITEMS "collection-items.html"
 #define OGCAPI_TEMPLATE_HTML_COLLECTION_ITEM "collection-item.html"
+#define OGCAPI_TEMPLATE_HTML_COLLECTION_QUERYABLES "collection-queryables.html"
 #define OGCAPI_TEMPLATE_HTML_OPENAPI "openapi.html"
 
 #define OGCAPI_DEFAULT_LIMIT 10 // by specification
@@ -70,6 +72,13 @@ constexpr const char *CRS84_URL =
     "http://www.opengis.net/def/crs/OGC/1.3/CRS84";
 
 #ifdef USE_OGCAPI_SVR
+
+/** Returns whether we enforce compliance mode. Defaults to true */
+static bool msOGCAPIComplianceMode(const mapObj *map) {
+  const char *compliance_mode =
+      msOWSLookupMetadata(&(map->web.metadata), "A", "compliance_mode");
+  return compliance_mode == NULL || strcasecmp(compliance_mode, "true") == 0;
+}
 
 /*
 ** Returns a JSON object using and a description.
@@ -126,16 +135,14 @@ static int includeLayer(mapObj *map, layerObj *layer) {
 ** Returns the value associated with an item from the request's query string and
 *NULL if the item was not found.
 */
-static const char *getRequestParameter(cgiRequestObj *request,
+static const char *getRequestParameter(const cgiRequestObj *request,
                                        const char *item) {
-  int i;
-
-  for (i = 0; i < request->NumParams; i++) {
+  for (int i = 0; i < request->NumParams; i++) {
     if (strcmp(item, request->ParamNames[i]) == 0)
       return request->ParamValues[i];
   }
 
-  return NULL;
+  return nullptr;
 }
 
 static int getMaxLimit(mapObj *map, layerObj *layer) {
@@ -156,7 +163,7 @@ static int getMaxLimit(mapObj *map, layerObj *layer) {
   return max_limit;
 }
 
-static int getDefaultLimit(mapObj *map, layerObj *layer) {
+static int getDefaultLimit(const mapObj *map, const layerObj *layer) {
   int default_limit = OGCAPI_DEFAULT_LIMIT;
 
   // check metadata, layer then map
@@ -174,7 +181,8 @@ static int getDefaultLimit(mapObj *map, layerObj *layer) {
   return default_limit;
 }
 
-static std::string getExtraParameters(mapObj *map, layerObj *layer) {
+static std::string getExtraParameterString(const mapObj *map,
+                                           const layerObj *layer) {
 
   std::string extra_params;
 
@@ -182,7 +190,7 @@ static std::string getExtraParameters(mapObj *map, layerObj *layer) {
   if (layer) {
     const char *layerVal =
         msOWSLookupMetadata(&(layer->metadata), "AO", "extra_params");
-    if (layerVal) // only check for null
+    if (layerVal)
       extra_params = std::string("&") + layerVal;
   }
 
@@ -194,6 +202,117 @@ static std::string getExtraParameters(mapObj *map, layerObj *layer) {
   }
 
   return extra_params;
+}
+
+static std::set<std::string>
+getExtraParameters(const char *pszExtraParameters) {
+  std::set<std::string> ret;
+  for (const auto &param : msStringSplit(pszExtraParameters, '&')) {
+    const auto keyValue = msStringSplit(param.c_str(), '=');
+    if (!keyValue.empty())
+      ret.insert(keyValue[0]);
+  }
+  return ret;
+}
+
+static std::set<std::string> getExtraParameters(const mapObj *map,
+                                                const layerObj *layer) {
+
+  // first check layer metadata if layer is not null
+  if (layer) {
+    const char *layerVal =
+        msOWSLookupMetadata(&(layer->metadata), "AO", "extra_params");
+    if (layerVal)
+      return getExtraParameters(layerVal);
+  }
+
+  if (map) {
+    const char *mapVal =
+        msOWSLookupMetadata(&(map->web.metadata), "AO", "extra_params");
+    if (mapVal)
+      return getExtraParameters(mapVal);
+  }
+
+  return {};
+}
+
+static bool
+msOOGCAPICheckQueryParameters(const mapObj *map, const cgiRequestObj *request,
+                              const std::set<std::string> &allowedParameters) {
+  if (msOGCAPIComplianceMode(map)) {
+    for (int j = 0; j < request->NumParams; j++) {
+      const char *paramName = request->ParamNames[j];
+      if (allowedParameters.find(paramName) == allowedParameters.end()) {
+        msOGCAPIOutputError(
+            OGCAPI_PARAM_ERROR,
+            (std::string("Unknown query parameter: ") + paramName).c_str());
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+static const char *getItemAliasOrName(const layerObj *layer, const char *item) {
+  std::string key = std::string(item) + "_alias";
+  if (const char *value =
+          msOWSLookupMetadata(&(layer->metadata), "OGA", key.c_str())) {
+    return value;
+  }
+  return item;
+}
+
+/** Return the list of queryable items */
+static std::vector<std::string> msOOGCAPIGetLayerQueryables(
+    layerObj *layer, const std::set<std::string> &reservedParams, bool &error) {
+  error = false;
+  std::vector<std::string> queryableItems;
+  if (const char *value =
+          msOWSLookupMetadata(&(layer->metadata), "OGA", "queryable_items")) {
+    queryableItems = msStringSplit(value, ',');
+    if (!queryableItems.empty()) {
+      if (msLayerOpen(layer) != MS_SUCCESS ||
+          msLayerGetItems(layer) != MS_SUCCESS) {
+        msOGCAPIOutputError(OGCAPI_SERVER_ERROR, "Cannot get layer fields");
+        return {};
+      }
+      if (queryableItems[0] == "all") {
+        queryableItems.clear();
+        for (int i = 0; i < layer->numitems; ++i) {
+          if (reservedParams.find(layer->items[i]) == reservedParams.end()) {
+            queryableItems.push_back(layer->items[i]);
+          }
+        }
+      } else {
+        std::set<std::string> validItems;
+        for (int i = 0; i < layer->numitems; ++i) {
+          validItems.insert(layer->items[i]);
+        }
+        for (auto &item : queryableItems) {
+          if (validItems.find(item) == validItems.end()) {
+            // This is not a known field
+            msOGCAPIOutputError(OGCAPI_CONFIG_ERROR,
+                                "Invalid item '" + item +
+                                    "' in queryable_items");
+            error = true;
+            return {};
+          } else if (reservedParams.find(item) != reservedParams.end()) {
+            // Check clashes with OGC API Features reserved keywords (bbox,
+            // etc.)
+            msOGCAPIOutputError(
+                OGCAPI_CONFIG_ERROR,
+                "Item '" + item +
+                    "' in queryable_items is a reserved parameter name");
+            error = true;
+            return {};
+          } else {
+            item = getItemAliasOrName(layer, item.c_str());
+          }
+        }
+      }
+    }
+  }
+  return queryableItems;
 }
 
 /*
@@ -374,7 +493,7 @@ static bool getBbox(mapObj *map, layerObj *layer, cgiRequestObj *request,
 /*
 ** Returns the template directory location or NULL if it isn't set.
 */
-std::string msOGCAPIGetTemplateDirectory(mapObj *map, const char *key,
+std::string msOGCAPIGetTemplateDirectory(const mapObj *map, const char *key,
                                          const char *envvar) {
   const char *directory = NULL;
 
@@ -406,7 +525,7 @@ std::string msOGCAPIGetTemplateDirectory(mapObj *map, const char *key,
 ** Returns the service title from oga_{key} and/or ows_{key} or a default value
 *if not set.
 */
-static const char *getWebMetadata(mapObj *map, const char *domain,
+static const char *getWebMetadata(const mapObj *map, const char *domain,
                                   const char *key, const char *defaultVal) {
   const char *value;
 
@@ -419,7 +538,7 @@ static const char *getWebMetadata(mapObj *map, const char *domain,
 /*
 ** Returns the service title from oga|ows_title or a default value if not set.
 */
-static const char *getTitle(mapObj *map) {
+static const char *getTitle(const mapObj *map) {
   return getWebMetadata(map, "OA", "title", OGCAPI_DEFAULT_TITLE);
 }
 
@@ -427,7 +546,8 @@ static const char *getTitle(mapObj *map) {
 ** Returns the API root URL from oga_onlineresource or builds a value if not
 *set.
 */
-std::string msOGCAPIGetApiRootUrl(mapObj *map, cgiRequestObj *request,
+std::string msOGCAPIGetApiRootUrl(const mapObj *map,
+                                  const cgiRequestObj *request,
                                   const char *namespaces) {
   const char *root;
   if ((root = msOWSLookupMetadata(&(map->web.metadata), namespaces,
@@ -839,7 +959,7 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format,
 
   const int geometry_precision = getGeometryPrecision(map, layer);
 
-  const std::string extra_params = getExtraParameters(map, layer);
+  const std::string extra_params = getExtraParameterString(map, layer);
 
   // build collection object
   collection = {
@@ -855,26 +975,37 @@ static json getCollection(mapObj *map, layerObj *layer, OGCAPIFormat format,
              round_up(bbox.maxy, geometry_precision)}}},
           {"crs", CRS84_URL}}}}},
       {"links",
-       {{{"rel", format == OGCAPIFormat::JSON ? "self" : "alternate"},
-         {"type", OGCAPI_MIMETYPE_JSON},
-         {"title", "This collection as JSON"},
-         {"href", api_root + "/collections/" + std::string(id_encoded) +
-                      "?f=json" + extra_params}},
-        {{"rel", format == OGCAPIFormat::HTML ? "self" : "alternate"},
-         {"type", OGCAPI_MIMETYPE_HTML},
-         {"title", "This collection as HTML"},
-         {"href", api_root + "/collections/" + std::string(id_encoded) +
-                      "?f=html" + extra_params}},
-        {{"rel", "items"},
-         {"type", OGCAPI_MIMETYPE_GEOJSON},
-         {"title", "Items for this collection as GeoJSON"},
-         {"href", api_root + "/collections/" + std::string(id_encoded) +
-                      "/items?f=json" + extra_params}},
-        {{"rel", "items"},
-         {"type", OGCAPI_MIMETYPE_HTML},
-         {"title", "Items for this collection as HTML"},
-         {"href", api_root + "/collections/" + std::string(id_encoded) +
-                      "/items?f=html" + extra_params}}
+       {
+           {{"rel", format == OGCAPIFormat::JSON ? "self" : "alternate"},
+            {"type", OGCAPI_MIMETYPE_JSON},
+            {"title", "This collection as JSON"},
+            {"href", api_root + "/collections/" + std::string(id_encoded) +
+                         "?f=json" + extra_params}},
+           {{"rel", format == OGCAPIFormat::HTML ? "self" : "alternate"},
+            {"type", OGCAPI_MIMETYPE_HTML},
+            {"title", "This collection as HTML"},
+            {"href", api_root + "/collections/" + std::string(id_encoded) +
+                         "?f=html" + extra_params}},
+           {{"rel", "items"},
+            {"type", OGCAPI_MIMETYPE_GEOJSON},
+            {"title", "Items for this collection as GeoJSON"},
+            {"href", api_root + "/collections/" + std::string(id_encoded) +
+                         "/items?f=json" + extra_params}},
+           {{"rel", "items"},
+            {"type", OGCAPI_MIMETYPE_HTML},
+            {"title", "Items for this collection as HTML"},
+            {"href", api_root + "/collections/" + std::string(id_encoded) +
+                         "/items?f=html" + extra_params}},
+           {{"rel", "http://www.opengis.net/def/rel/ogc/1.0/queryables"},
+            {"type", OGCAPI_MIMETYPE_JSON_SCHEMA},
+            {"title", "Queryables for this collection as JSON schema"},
+            {"href", api_root + "/collections/" + std::string(id_encoded) +
+                         "/queryables?f=json" + extra_params}},
+           {{"rel", "http://www.opengis.net/def/rel/ogc/1.0/queryables"},
+            {"type", OGCAPI_MIMETYPE_HTML},
+            {"title", "Queryables for this collection as HTML"},
+            {"href", api_root + "/collections/" + std::string(id_encoded) +
+                         "/queryables?f=html" + extra_params}},
 
        }},
       {"itemType", "feature"}};
@@ -1001,7 +1132,7 @@ void msOGCAPIOutputTemplate(const char *directory, const char *filename,
 ** Generic response output.
 */
 static void outputResponse(
-    mapObj *map, cgiRequestObj *request, OGCAPIFormat format,
+    const mapObj *map, const cgiRequestObj *request, OGCAPIFormat format,
     const char *filename, const json &response,
     const std::map<std::string, std::vector<std::string>> &extraHeaders =
         std::map<std::string, std::vector<std::string>>()) {
@@ -1014,6 +1145,8 @@ static void outputResponse(
     msOGCAPIOutputJson(response, OGCAPI_MIMETYPE_GEOJSON, extraHeaders);
   } else if (format == OGCAPIFormat::OpenAPI_V3) {
     msOGCAPIOutputJson(response, OGCAPI_MIMETYPE_OPENAPI_V3, extraHeaders);
+  } else if (format == OGCAPIFormat::JSONSchema) {
+    msOGCAPIOutputJson(response, OGCAPI_MIMETYPE_JSON_SCHEMA, extraHeaders);
   } else if (format == OGCAPIFormat::HTML) {
     path = msOGCAPIGetTemplateDirectory(map, "html_template_directory",
                                         "OGCAPI_HTML_TEMPLATE_DIRECTORY");
@@ -1029,7 +1162,7 @@ static void outputResponse(
                               // object in the template
 
     // extend the JSON with a few things that we need for templating
-    const std::string extra_params = getExtraParameters(map, nullptr);
+    const std::string extra_params = getExtraParameterString(map, nullptr);
 
     j["template"] = {{"path", json::array()},
                      {"params", json::object()},
@@ -1078,6 +1211,12 @@ static int processLandingRequest(mapObj *map, cgiRequestObj *request,
                                  OGCAPIFormat format) {
   json response;
 
+  auto allowedParameters = getExtraParameters(map, nullptr);
+  allowedParameters.insert("f");
+  if (!msOOGCAPICheckQueryParameters(map, request, allowedParameters)) {
+    return MS_SUCCESS;
+  }
+
   // define ambiguous elements
   const char *description =
       msOWSLookupMetadata(&(map->web.metadata), "A", "description");
@@ -1086,7 +1225,7 @@ static int processLandingRequest(mapObj *map, cgiRequestObj *request,
         msOWSLookupMetadata(&(map->web.metadata), "OF",
                             "abstract"); // fallback on abstract if necessary
 
-  const std::string extra_params = getExtraParameters(map, nullptr);
+  const std::string extra_params = getExtraParameterString(map, nullptr);
 
   // define api root url
   std::string api_root = msOGCAPIGetApiRootUrl(map, request);
@@ -1156,6 +1295,12 @@ static int processConformanceRequest(mapObj *map, cgiRequestObj *request,
                                      OGCAPIFormat format) {
   json response;
 
+  auto allowedParameters = getExtraParameters(map, nullptr);
+  allowedParameters.insert("f");
+  if (!msOOGCAPICheckQueryParameters(map, request, allowedParameters)) {
+    return MS_SUCCESS;
+  }
+
   // build response object
   response = {
       {"conformsTo",
@@ -1167,6 +1312,10 @@ static int processConformanceRequest(mapObj *map, cgiRequestObj *request,
            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/html",
            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson",
            "http://www.opengis.net/spec/ogcapi-features-2/1.0/conf/crs",
+           "http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/queryables",
+           "http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/"
+           "queryables-query-parameters",
+           "http://www.opengis.net/spec/ogcapi-features-5/1.0/conf/queryables",
        }}};
 
   outputResponse(map, request, format, OGCAPI_TEMPLATE_HTML_CONFORMANCE,
@@ -1174,32 +1323,31 @@ static int processConformanceRequest(mapObj *map, cgiRequestObj *request,
   return MS_SUCCESS;
 }
 
+static int findLayerIndex(const mapObj *map, const char *collectionId) {
+  for (int i = 0; i < map->numlayers; i++) {
+    if (strcmp(map->layers[i]->name, collectionId) == 0) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
                                          const char *collectionId,
                                          const char *featureId,
                                          OGCAPIFormat format) {
   json response;
-  int i;
-  layerObj *layer;
-
-  int limit;
-  rectObj bbox;
-
-  int numberMatched = 0;
 
   // find the right layer
-  for (i = 0; i < map->numlayers; i++) {
-    if (strcmp(map->layers[i]->name, collectionId) == 0)
-      break; // match
-  }
+  const int iLayer = findLayerIndex(map, collectionId);
 
-  if (i == map->numlayers) { // invalid collectionId
+  if (iLayer < 0) { // invalid collectionId
     msOGCAPIOutputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
     return MS_SUCCESS;
   }
 
-  layer = map->layers[i]; // for convenience
-  layer->status = MS_ON;  // force on (do we need to save and reset?)
+  layerObj *layer = map->layers[iLayer];
+  layer->status = MS_ON; // force on (do we need to save and reset?)
 
   if (!includeLayer(map, layer)) {
     msOGCAPIOutputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
@@ -1209,6 +1357,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
   //
   // handle parameters specific to this endpoint
   //
+  int limit = -1;
   if (getLimit(map, request, layer, &limit) != MS_SUCCESS) {
     msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Bad value for limit.");
     return MS_SUCCESS;
@@ -1243,6 +1392,65 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
     }
   } else {
     extraHeaders["Content-Crs"].push_back('<' + std::string(CRS84_URL) + '>');
+  }
+
+  auto allowedParameters = getExtraParameters(map, layer);
+  allowedParameters.insert("f");
+  allowedParameters.insert("bbox");
+  allowedParameters.insert("bbox-crs");
+  allowedParameters.insert("datetime");
+  allowedParameters.insert("limit");
+  allowedParameters.insert("offset");
+  allowedParameters.insert("crs");
+
+  bool error = false;
+  const std::vector<std::string> queryableItems =
+      msOOGCAPIGetLayerQueryables(layer, allowedParameters, error);
+  if (error) {
+    return MS_SUCCESS;
+  }
+
+  for (const auto &item : queryableItems)
+    allowedParameters.insert(item);
+
+  if (!msOOGCAPICheckQueryParameters(map, request, allowedParameters)) {
+    return MS_SUCCESS;
+  }
+
+  std::string filter;
+  std::string query_kvp;
+  if (!queryableItems.empty()) {
+    for (int i = 0; i < request->NumParams; i++) {
+      if (std::find(queryableItems.begin(), queryableItems.end(),
+                    request->ParamNames[i]) != queryableItems.end()) {
+
+        // Find actual item name from alias
+        const char *pszItem = nullptr;
+        for (int j = 0; j < layer->numitems; ++j) {
+          if (strcmp(request->ParamNames[i],
+                     getItemAliasOrName(layer, layer->items[j])) == 0) {
+            pszItem = layer->items[j];
+            break;
+          }
+        }
+        assert(pszItem);
+
+        const std::string expr = FLTGetBinaryComparisonCommonExpression(
+            layer, pszItem, false, "=", request->ParamValues[i]);
+        if (!filter.empty())
+          filter += " AND ";
+        filter += expr;
+
+        query_kvp += '&';
+        char *encoded = msEncodeUrl(request->ParamNames[i]);
+        query_kvp += encoded;
+        msFree(encoded);
+        query_kvp += '=';
+        encoded = msEncodeUrl(request->ParamValues[i]);
+        query_kvp += encoded;
+        msFree(encoded);
+      }
+    }
   }
 
   struct ReprojectionObjects {
@@ -1303,11 +1511,13 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
     msProjectRect(&(map->projection), &reprObjs.proj, &map->extent);
   }
 
+  rectObj bbox;
   if (!getBbox(map, layer, request, &bbox, &reprObjs.proj)) {
     return MS_SUCCESS;
   }
 
   int offset = 0;
+  int numberMatched = 0;
   if (featureId) {
     const char *featureIdItem =
         msOWSLookupMetadata(&(layer->metadata), "AGFO", "featureid");
@@ -1331,7 +1541,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
 
     map->query.type = MS_QUERY_BY_FILTER;
     map->query.mode = MS_QUERY_SINGLE;
-    map->query.layer = i;
+    map->query.layer = iLayer;
     map->query.rect = bbox;
     map->query.filteritem = strdup(featureIdItem);
 
@@ -1353,9 +1563,16 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
   } else { // bbox query
     map->query.type = MS_QUERY_BY_RECT;
     map->query.mode = MS_QUERY_MULTIPLE;
-    map->query.layer = i;
+    map->query.layer = iLayer;
     map->query.rect = bbox;
     map->query.only_cache_result_count = MS_TRUE;
+
+    if (!filter.empty()) {
+      map->query.type = MS_QUERY_BY_FILTER;
+      msInitExpression(&map->query.filter);
+      map->query.filter.string = msStrdup(filter.c_str());
+      map->query.filter.type = MS_EXPRESSION;
+    }
 
     // get number matched
     if (reprObjs.executeQuery(map) != MS_SUCCESS) {
@@ -1402,7 +1619,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
     }
   }
 
-  const std::string extra_params = getExtraParameters(map, layer);
+  const std::string extra_params = getExtraParameterString(map, layer);
 
   // build response object
   if (!featureId) {
@@ -1421,6 +1638,8 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
     const char *bboxCrs = getRequestParameter(request, "bbox-crs");
     if (bboxCrs)
       other_extra_kvp += "&bbox-crs=" + std::string(bboxCrs);
+
+    other_extra_kvp += query_kvp;
 
     response = {{"type", "FeatureCollection"},
                 {"numberMatched", numberMatched},
@@ -1503,7 +1722,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
 
     const int geometry_precision = getGeometryPrecision(map, layer);
 
-    for (i = 0; i < layer->resultcache->numresults; i++) {
+    for (int i = 0; i < layer->resultcache->numresults; i++) {
       int status =
           msLayerGetShape(layer, &shape, &(layer->resultcache->results[i]));
       if (status != MS_SUCCESS) {
@@ -1597,6 +1816,111 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
   return MS_SUCCESS;
 }
 
+std::pair<const char *, const char *>
+getQueryableTypeAndFormat(const layerObj *layer, const std::string &item) {
+  const char *format = nullptr;
+  const char *type = "string";
+  const char *pszType =
+      msOWSLookupMetadata(&(layer->metadata), "OFG", (item + "_type").c_str());
+  if (pszType != NULL && (strcasecmp(pszType, "Character") == 0))
+    type = "string";
+  else if (pszType != NULL && (strcasecmp(pszType, "Date") == 0)) {
+    type = "string";
+    format = "date";
+  } else if (pszType != NULL && (strcasecmp(pszType, "Time") == 0)) {
+    type = "string";
+    format = "time";
+  } else if (pszType != NULL && (strcasecmp(pszType, "DateTime") == 0)) {
+    type = "string";
+    format = "date-time";
+  } else if (pszType != NULL && (strcasecmp(pszType, "Integer") == 0 ||
+                                 strcasecmp(pszType, "Long") == 0))
+    type = "integer";
+  else if (pszType != NULL && (strcasecmp(pszType, "Real") == 0))
+    type = "numeric";
+  else if (pszType != NULL && (strcasecmp(pszType, "Boolean") == 0))
+    type = "boolean";
+
+  return {type, format};
+}
+
+static int processCollectionQueryablesRequest(mapObj *map,
+                                              const cgiRequestObj *request,
+                                              const char *collectionId,
+                                              OGCAPIFormat format) {
+
+  // find the right layer
+  const int iLayer = findLayerIndex(map, collectionId);
+
+  if (iLayer < 0) { // invalid collectionId
+    msOGCAPIOutputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
+    return MS_SUCCESS;
+  }
+
+  layerObj *layer = map->layers[iLayer];
+  if (!includeLayer(map, layer)) {
+    msOGCAPIOutputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
+    return MS_SUCCESS;
+  }
+
+  auto allowedParameters = getExtraParameters(map, layer);
+  allowedParameters.insert("f");
+
+  if (!msOOGCAPICheckQueryParameters(map, request, allowedParameters)) {
+    return MS_SUCCESS;
+  }
+
+  bool error = false;
+  const std::vector<std::string> queryableItems =
+      msOOGCAPIGetLayerQueryables(layer, allowedParameters, error);
+  if (error) {
+    return MS_SUCCESS;
+  }
+
+  std::unique_ptr<char, decltype(&msFree)> id_encoded(msEncodeUrl(collectionId),
+                                                      msFree);
+
+  json response = {
+      {"$schema", "https://json-schema.org/draft/2020-12/schema"},
+      {"$id", msOGCAPIGetApiRootUrl(map, request) + "/collections/" +
+                  std::string(id_encoded.get()) + "/queryables"},
+      {"type", "object"},
+      {"title", getCollectionTitle(layer)},
+      {"description", getCollectionDescription(layer)},
+      {"properties",
+       {
+#ifdef to_enable_once_we_support_geometry_requests
+           {"shape",
+            {
+                {"title", "Geometry"},
+                {"description", "The geometry of the collection."},
+                {"x-ogc-role", "primary-geometry"},
+                {"format", "geometry-any"},
+            }},
+#endif
+       }},
+      {"additionalProperties", false},
+  };
+
+  for (const std::string &item : queryableItems) {
+    json j;
+    const auto [type, format] = getQueryableTypeAndFormat(layer, item);
+    j["description"] = "Queryable item '" + item + "'";
+    j["type"] = type;
+    if (format)
+      j["format"] = format;
+    response["properties"][item] = j;
+  }
+
+  std::map<std::string, std::vector<std::string>> extraHeaders;
+  outputResponse(
+      map, request,
+      format == OGCAPIFormat::JSON ? OGCAPIFormat::JSONSchema : format,
+      OGCAPI_TEMPLATE_HTML_COLLECTION_QUERYABLES, response, extraHeaders);
+
+  return MS_SUCCESS;
+}
+
 static int processCollectionRequest(mapObj *map, cgiRequestObj *request,
                                     const char *collectionId,
                                     OGCAPIFormat format) {
@@ -1613,9 +1937,16 @@ static int processCollectionRequest(mapObj *map, cgiRequestObj *request,
     return MS_SUCCESS;
   }
 
+  layerObj *layer = map->layers[l];
+  auto allowedParameters = getExtraParameters(map, layer);
+  allowedParameters.insert("f");
+  if (!msOOGCAPICheckQueryParameters(map, request, allowedParameters)) {
+    return MS_SUCCESS;
+  }
+
   try {
-    response = getCollection(map, map->layers[l], format,
-                             msOGCAPIGetApiRootUrl(map, request));
+    response =
+        getCollection(map, layer, format, msOGCAPIGetApiRootUrl(map, request));
     if (response.is_null()) { // same as not found
       msOGCAPIOutputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
       return MS_SUCCESS;
@@ -1636,9 +1967,15 @@ static int processCollectionsRequest(mapObj *map, cgiRequestObj *request,
   json response;
   int i;
 
+  auto allowedParameters = getExtraParameters(map, nullptr);
+  allowedParameters.insert("f");
+  if (!msOOGCAPICheckQueryParameters(map, request, allowedParameters)) {
+    return MS_SUCCESS;
+  }
+
   // define api root url
   std::string api_root = msOGCAPIGetApiRootUrl(map, request);
-  const std::string extra_params = getExtraParameters(map, nullptr);
+  const std::string extra_params = getExtraParameterString(map, nullptr);
 
   // build response object
   response = {{"links",
@@ -1673,6 +2010,12 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
                              OGCAPIFormat format) {
   // Strongly inspired from
   // https://github.com/geopython/pygeoapi/blob/master/pygeoapi/openapi.py
+
+  auto allowedParameters = getExtraParameters(map, nullptr);
+  allowedParameters.insert("f");
+  if (!msOOGCAPICheckQueryParameters(map, request, allowedParameters)) {
+    return MS_SUCCESS;
+  }
 
   json response;
 
@@ -1898,8 +2241,67 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
     };
     items_get["parameters"].emplace_back(param_limit);
 
+    bool error = false;
+    auto reservedParams = getExtraParameters(map, layer);
+    reservedParams.insert("f");
+    reservedParams.insert("bbox");
+    reservedParams.insert("bbox-crs");
+    reservedParams.insert("datetime");
+    reservedParams.insert("limit");
+    reservedParams.insert("offset");
+    reservedParams.insert("crs");
+    const std::vector<std::string> queryableItems =
+        msOOGCAPIGetLayerQueryables(layer, reservedParams, error);
+    for (const auto &item : queryableItems) {
+      const auto [type, format] = getQueryableTypeAndFormat(layer, item);
+      json queryable_param = {
+          {"name", item},
+          {"in", "query"},
+          {"description", "Queryable item '" + item + "'"},
+          {"required", false},
+          {"schema",
+           {
+               {"type", type},
+           }},
+          {"style", "form"},
+          {"explode", false},
+      };
+      if (format) {
+        queryable_param["schema"]["format"] = format;
+      }
+      items_get["parameters"].emplace_back(queryable_param);
+    }
+
     std::string itemsPath(collectionNamePath + "/items");
     paths[itemsPath]["get"] = std::move(items_get);
+
+    json queryables_get = {
+        {"summary",
+         std::string("Get ") + getCollectionTitle(layer) + " queryables"},
+        {"description",
+         std::string("Get ") + getCollectionTitle(layer) + " queryables"},
+        {"tags", {layer->name}},
+        {"operationId", "get" + std::string(layer->name) + "Queryables"},
+        {"parameters",
+         {
+             {{"$ref", "#/components/parameters/f"}},
+             {{"$ref", "#/components/parameters/vendorSpecificParameters"}},
+         }},
+        {"responses",
+         {{"200",
+           {{"description", "The queryable properties of the collection."},
+            {"content",
+             {{"application/schema+json",
+               {{"schema", {{"type", "object"}}}}}}}}},
+          {"400",
+           {{"$ref",
+             oapif_yaml_url + "#/components/responses/InvalidParameter"}}},
+          {"500",
+           {{"$ref",
+             oapif_yaml_url + "#/components/responses/ServerError"}}}}}};
+
+    std::string queryablesPath(collectionNamePath + "/queryables");
+    paths[queryablesPath]["get"] = std::move(queryables_get);
 
     json feature_id_get = {
         {"summary",
@@ -1999,7 +2401,7 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
 
 #endif
 
-OGCAPIFormat msOGCAPIGetOutputFormat(cgiRequestObj *request) {
+OGCAPIFormat msOGCAPIGetOutputFormat(const cgiRequestObj *request) {
   OGCAPIFormat format; // all endpoints need a format
   const char *p = getRequestParameter(request, "f");
 
@@ -2096,6 +2498,10 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request) {
             0) { // middle argument (3) is the collectionId
       return processCollectionItemsRequest(map, request, request->api_path[3],
                                            NULL, format);
+    } else if (strcmp(request->api_path[2], "collections") == 0 &&
+               strcmp(request->api_path[4], "queryables") == 0) {
+      return processCollectionQueryablesRequest(map, request,
+                                                request->api_path[3], format);
     }
 
   } else if (request->api_path_length == 6) {
