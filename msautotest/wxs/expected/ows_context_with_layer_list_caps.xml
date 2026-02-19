@@ -9,8 +9,8 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
 <WMT_MS_Capabilities version="1.1.1">
 <Service>
   <Name>OGC:WMS</Name>
-<!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
-  <Title>OWS_CONTEXT_TEST</Title>
+  <Title>Map Context demo</Title>
+  <Abstract>Demo for map context document</Abstract>
   <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wfs_simple?myparam=something&amp;"/>
   <ContactInformation>
   </ContactInformation>
@@ -36,6 +36,8 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
       <Format>application/x-pdf</Format>
       <Format>image/svg+xml</Format>
       <Format>image/tiff</Format>
+      <Format>application/vnd.google-earth.kml+xml</Format>
+      <Format>application/vnd.google-earth.kmz</Format>
       <Format>application/vnd.mapbox-vector-tile</Format>
       <Format>application/x-protobuf</Format>
       <Format>application/json</Format>
@@ -96,14 +98,13 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
   <VendorSpecificCapabilities />
   <UserDefinedSymbolization SupportSLD="1" UserLayer="0" UserStyle="1" RemoteWFS="0"/>
   <Layer>
-    <Name>OWS_CONTEXT_TEST</Name>
-<!-- WARNING: Mandatory metadata "wms_title" or "ows_title" was missing in this context. -->
-    <Title>OWS_CONTEXT_TEST</Title>
-    <Abstract>OWS_CONTEXT_TEST</Abstract>
+    <Name>mapcontext</Name>
+    <Title>Map Context demo</Title>
+    <Abstract>Demo for map context document</Abstract>
     <SRS>EPSG:4326</SRS>
-    <LatLonBoundingBox minx="-67.572500" miny="42.000000" maxx="-58.927500" maxy="48.500000" />
+    <LatLonBoundingBox minx="-180.000000" miny="-90.000000" maxx="180.000000" maxy="90.000000" />
     <BoundingBox SRS="EPSG:4326"
-                minx="-67.572500" miny="42.000000" maxx="-58.927500" maxy="48.500000" />
+                minx="-180.000000" miny="-90.000000" maxx="180.000000" maxy="90.000000" />
     <Layer queryable="0" opaque="0" cascaded="0">
       <Name>province</Name>
       <Title>province</Title>
@@ -120,6 +121,15 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wfs_simple?myparam=something&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=province&amp;format=image/png&amp;STYLE=default"/>
           </LegendURL>
         </Style>
+    </Layer>
+    <Layer queryable="0" opaque="0" cascaded="1">
+      <Name>test</Name>
+      <Title>test</Title>
+      <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
+      <MetadataURL type="TC211">
+        <Format>text/xml</Format>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wfs_simple?myparam=something&amp;request=GetMetadata&amp;layer=test"/>
+      </MetadataURL>
     </Layer>
   </Layer>
 </Capability>

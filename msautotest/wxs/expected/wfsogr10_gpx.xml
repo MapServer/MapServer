@@ -4,7 +4,7 @@ Content-Type: application/gpx+xml; streamed
 <?xml version="1.0"?>
 <gpx version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ogr="http://osgeo.org/gdal" xmlns="http://www.topografix.com/GPX/1/1" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
 <metadata>
-<bounds minlat="90.000000000000000" minlon="180.000000000000000" maxlat="402556.250000000000000" maxlon="2589745.500000000000000"/>                             
+<bounds minlat="399102.187500000000000" minlon="2576803.500000000000000" maxlat="402556.250000000000000" maxlon="2589745.500000000000000"/>                     
 </metadata>
 <rte>
   <extensions>

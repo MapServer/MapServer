@@ -12,6 +12,7 @@ curl -fsSL https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo tee /e
 echo 'deb [signed-by=/etc/apt/keyrings/kitware-archive-latest.asc] https://apt.kitware.com/ubuntu noble main' | sudo tee /etc/apt/sources.list.d/kitware.list > /dev/null
 
 # Add required repositories
+sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 sudo apt-add-repository -y 'deb https://apt.kitware.com/ubuntu/ noble main'
 sudo add-apt-repository -y ppa:ondrej/php
 

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="5" skipped="0" tests="107" time="45.641" timestamp="2026-02-18T11:18:14.665841+01:00" hostname="MacBook-Pro-3.fritz.box"><testcase classname="misc.run_test" name="test[multipoint_multipoint_png]" time="0.401" /><testcase classname="misc.run_test" name="test[ogr_select_ogr_select_png]" time="0.408" /><testcase classname="misc.run_test" name="test[scaletoken_scaletoken_data_200k_png]" time="0.367" /><testcase classname="misc.run_test" name="test[scaletoken_scaletoken_data_29m_png]" time="0.376" /><testcase classname="misc.run_test" name="test[scaletoken_scaletoken_data_40m_png]" time="0.371" /><testcase classname="misc.run_test" name="test[scaletoken_scaletoken_filter_192k_png]" time="0.415" /><testcase classname="misc.run_test" name="test[scaletoken_scaletoken_filter_424k_png]" time="0.525" /><testcase classname="misc.run_test" name="test[scaletoken_scaletoken_filter_655k_png]" time="0.524" /><testcase classname="misc.run_test" name="test[scaletoken_scaletoken_filteritem_192k_png]" time="0.375" /><testcase classname="misc.run_test" name="test[scaletoken_scaletoken_filteritem_424k_png]" time="0.377" /><testcase classname="misc.run_test" name="test[scaletoken_scaletoken_filterexpression_192k_png]" time="0.384" /><testcase classname="misc.run_test" name="test[scaletoken_scaletoken_filterexpression_424k_png]" time="0.500" /><testcase classname="misc.run_test" name="test[quoted_data_quoted_data_png]" time="0.385" /><testcase classname="misc.run_test" name="test[geopdf_geopdf-iso_pdf]" time="0.435"><failure message="AssertionError: (&quot;results don't match&quot;, '/Users/gfabbian/projects/MapServer/msautotest/misc/geopdf.map', 'geopdf-iso.pdf')">map = '/Users/gfabbian/projects/MapServer/msautotest/misc/geopdf.map'
+out_file = 'geopdf-iso.pdf'
+command = '[MAP2IMG] -m [MAPFILE] -i geopdfiso -o [RESULT]\n'
+extra_args = &lt;_pytest.config.Config object at 0x10a0d3cb0&gt;
+
+    @pytest.mark.parametrize(
+        "map,out_file,command",
+        mstestlib.get_pytests(os.path.dirname(os.path.abspath(__file__))),
+    )
+    def test(map, out_file, command, extra_args):
+&gt;       mstestlib.run_pytest(map, out_file, command, extra_args)
+
+run_test.py:46: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+map = '/Users/gfabbian/projects/MapServer/msautotest/misc/geopdf.map'
+out_file = 'geopdf-iso.pdf'
+command = '[MAP2IMG] -m [MAPFILE] -i geopdfiso -o [RESULT]\n'
+extra_args = &lt;_pytest.config.Config object at 0x10a0d3cb0&gt;
+
+    def run_pytest(map, out_file, command, extra_args):
+    
+        os.chdir(os.path.dirname(map))
+    
+        ret, msg = _run(map, out_file, command, extra_args)
+&gt;       assert ret, msg
+               ^^^
+E       AssertionError: ("results don't match", '/Users/gfabbian/projects/MapServer/msautotest/misc/geopdf.map', 'geopdf-iso.pdf')
+
+../pymod/mstestlib.py:882: AssertionError</failure></testcase><testcase classname="misc.run_test" name="test[geopdf_geopdf-ogc_pdf]" time="0.416"><failure message="AssertionError: (&quot;results don't match&quot;, '/Users/gfabbian/projects/MapServer/msautotest/misc/geopdf.map', 'geopdf-ogc.pdf')">map = '/Users/gfabbian/projects/MapServer/msautotest/misc/geopdf.map'
+out_file = 'geopdf-ogc.pdf'
+command = '[MAP2IMG] -m [MAPFILE] -i geopdfogc -o [RESULT]\n'
+extra_args = &lt;_pytest.config.Config object at 0x10a0d3cb0&gt;
+
+    @pytest.mark.parametrize(
+        "map,out_file,command",
+        mstestlib.get_pytests(os.path.dirname(os.path.abspath(__file__))),
+    )
+    def test(map, out_file, command, extra_args):
+&gt;       mstestlib.run_pytest(map, out_file, command, extra_args)
+
+run_test.py:46: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+map = '/Users/gfabbian/projects/MapServer/msautotest/misc/geopdf.map'
+out_file = 'geopdf-ogc.pdf'
+command = '[MAP2IMG] -m [MAPFILE] -i geopdfogc -o [RESULT]\n'
+extra_args = &lt;_pytest.config.Config object at 0x10a0d3cb0&gt;
+
+    def run_pytest(map, out_file, command, extra_args):
+    
+        os.chdir(os.path.dirname(map))
+    
+        ret, msg = _run(map, out_file, command, extra_args)
+&gt;       assert ret, msg
+               ^^^
+E       AssertionError: ("results don't match", '/Users/gfabbian/projects/MapServer/msautotest/misc/geopdf.map', 'geopdf-ogc.pdf')
+
+../pymod/mstestlib.py:882: AssertionError</failure></testcase><testcase classname="misc.run_test" name="test[ogr_join_ogr_join_png]" time="0.412" /><testcase classname="misc.run_test" name="test[nested_symbolset_nested_symbolset_png]" time="0.370" /><testcase classname="misc.run_test" name="test[listexpression_listexpression_png]" time="0.376" /><testcase classname="misc.run_test" name="test[dateline_dateline_png]" time="0.388" /><testcase classname="misc.run_test" name="test[rot_out_rot_out_png]" time="0.400" /><testcase classname="misc.run_test" name="test[flatgeobuf-shapepath_flatgeobuf-shapepath-continent_png]" time="0.377" /><testcase classname="misc.run_test" name="test[flatgeobuf-shapepath_flatgeobuf-shapepath-classes_png]" time="0.367" /><testcase classname="misc.run_test" name="test[mode_tile_mode_tile_output_png]" time="0.538" /><testcase classname="misc.run_test" name="test[mode_tile_mode_tile_output_512_png]" time="0.458" /><testcase classname="misc.run_test" name="test[ogr_vrtconnect_ogr_vrtconnect_png]" time="0.451" /><testcase classname="misc.run_test" name="test[ogr_direct_ogr_direct_png]" time="0.400" /><testcase classname="misc.run_test" name="test[line_offset_clipped_to_multiline_line_offset_clipped_to_multiline_png]" time="0.376" /><testcase classname="misc.run_test" name="test[union_union_png]" time="0.381" /><testcase classname="misc.run_test" name="test[centerline_centerline1_png]" time="0.399" /><testcase classname="misc.run_test" name="test[centerline_centerline2_png]" time="0.396" /><testcase classname="misc.run_test" name="test[centerline_centerline3_exception_txt]" time="0.400" /><testcase classname="misc.run_test" name="test[centerline_centerline4_exception_txt]" time="0.375" /><testcase classname="misc.run_test" name="test[centerline_centerline5_exception_txt]" time="0.394" /><testcase classname="misc.run_test" name="test[grid_without_label_grid_without_label_png]" time="0.429" /><testcase classname="misc.run_test" name="test[quantized_quantized_png]" time="0.488"><failure message="AssertionError: (&quot;results don't match&quot;, '/Users/gfabbian/projects/MapServer/msautotest/misc/quantized.map', 'quantized.png')">map = '/Users/gfabbian/projects/MapServer/msautotest/misc/quantized.map'
+out_file = 'quantized.png'
+command = '[MAP2IMG] [RENDERER] -m [MAPFILE] -o [RESULT]'
+extra_args = &lt;_pytest.config.Config object at 0x10a0d3cb0&gt;
+
+    @pytest.mark.parametrize(
+        "map,out_file,command",
+        mstestlib.get_pytests(os.path.dirname(os.path.abspath(__file__))),
+    )
+    def test(map, out_file, command, extra_args):
+&gt;       mstestlib.run_pytest(map, out_file, command, extra_args)
+
+run_test.py:46: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+map = '/Users/gfabbian/projects/MapServer/msautotest/misc/quantized.map'
+out_file = 'quantized.png'
+command = '[MAP2IMG] [RENDERER] -m [MAPFILE] -o [RESULT]'
+extra_args = &lt;_pytest.config.Config object at 0x10a0d3cb0&gt;
+
+    def run_pytest(map, out_file, command, extra_args):
+    
+        os.chdir(os.path.dirname(map))
+    
+        ret, msg = _run(map, out_file, command, extra_args)
+&gt;       assert ret, msg
+               ^^^
+E       AssertionError: ("results don't match", '/Users/gfabbian/projects/MapServer/msautotest/misc/quantized.map', 'quantized.png')
+
+../pymod/mstestlib.py:882: AssertionError</failure></testcase><testcase classname="misc.run_test" name="test[ogr_multi_defer_ogr_multi_defer_png]" time="0.404" /><testcase classname="misc.run_test" name="test[bug1526_bug1526_png]" time="0.392" /><testcase classname="misc.run_test" name="test[ogrmultitool_ogrmultitool_png]" time="0.412" /><testcase classname="misc.run_test" name="test[rfc14_rfc14_png]" time="0.376" /><testcase classname="misc.run_test" name="test[tiles_scales_z2_tile_scale_z2_png]" time="0.395" /><testcase classname="misc.run_test" name="test[runtime_sub_runtime_sub_test001_txt]" time="0.404" /><testcase classname="misc.run_test" name="test[runtime_sub_runtime_sub_test002_png]" time="0.397" /><testcase classname="misc.run_test" name="test[runtime_sub_runtime_sub_test003_txt]" time="0.525" /><testcase classname="misc.run_test" name="test[runtime_sub_runtime_sub_test004_png]" time="0.408" /><testcase classname="misc.run_test" name="test[runtime_sub_runtime_sub_test005_txt]" time="0.453" /><testcase classname="misc.run_test" name="test[runtime_sub_runtime_sub_test008_png0]" time="0.415" /><testcase classname="misc.run_test" name="test[runtime_sub_runtime_sub_test008_png1]" time="0.413" /><testcase classname="misc.run_test" name="test[runtime_sub_runtime_sub_test009_png]" time="0.573" /><testcase classname="misc.run_test" name="test[runtime_sub_runtime_sub_test010_png]" time="0.415" /><testcase classname="misc.run_test" name="test[runtime_sub_runtime_sub_test011_png]" time="0.412" /><testcase classname="misc.run_test" name="test[runtime_sub_runtime_sub_test012_png]" time="0.424" /><testcase classname="misc.run_test" name="test[runtime_sub_runtime_sub_test013_png]" time="0.414" /><testcase classname="misc.run_test" name="test[runtime_sub_runtime_sub_test_caps_xml]" time="0.429" /><testcase classname="misc.run_test" name="test[encoding_from_cpg_shp_encodings_png]" time="0.416" /><testcase classname="misc.run_test" name="test[issue5558_issue5581-1_png]" time="0.372" /><testcase classname="misc.run_test" name="test[issue5558_issue5581-2_png]" time="0.375" /><testcase classname="misc.run_test" name="test[ogrbrush_ogrbrush_png]" time="0.406" /><testcase classname="misc.run_test" name="test[tiles_scales_z3_tile_scale_z3_png]" time="0.464" /><testcase classname="misc.run_test" name="test[ogr_empty_geojson_ogr_empty_geojson_json]" time="0.418"><failure message="AssertionError: (&quot;results don't match&quot;, '/Users/gfabbian/projects/MapServer/msautotest/misc/ogr_empty_geojson.map', 'ogr_empty_geojson.json')">map = '/Users/gfabbian/projects/MapServer/msautotest/misc/ogr_empty_geojson.map'
+out_file = 'ogr_empty_geojson.json'
+command = '[MAPSERV] "QUERY_STRING=map=[MAPFILE]&amp;service=WMS&amp;request=GetFeatureInfo&amp;version=1.3.0&amp;CRS=EPSG:3857&amp;width=200&amp;height...son&amp;bbox=-20,-20,20,20&amp;format=image/png&amp;query_layers=geojson&amp;i=0&amp;j=0&amp;&amp;info_format=geojson&amp;STYLES=" &gt; [RESULT_DEMIME]\n'
+extra_args = &lt;_pytest.config.Config object at 0x10a0d3cb0&gt;
+
+    @pytest.mark.parametrize(
+        "map,out_file,command",
+        mstestlib.get_pytests(os.path.dirname(os.path.abspath(__file__))),
+    )
+    def test(map, out_file, command, extra_args):
+&gt;       mstestlib.run_pytest(map, out_file, command, extra_args)
+
+run_test.py:46: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+map = '/Users/gfabbian/projects/MapServer/msautotest/misc/ogr_empty_geojson.map'
+out_file = 'ogr_empty_geojson.json'
+command = '[MAPSERV] "QUERY_STRING=map=[MAPFILE]&amp;service=WMS&amp;request=GetFeatureInfo&amp;version=1.3.0&amp;CRS=EPSG:3857&amp;width=200&amp;height...son&amp;bbox=-20,-20,20,20&amp;format=image/png&amp;query_layers=geojson&amp;i=0&amp;j=0&amp;&amp;info_format=geojson&amp;STYLES=" &gt; [RESULT_DEMIME]\n'
+extra_args = &lt;_pytest.config.Config object at 0x10a0d3cb0&gt;
+
+    def run_pytest(map, out_file, command, extra_args):
+    
+        os.chdir(os.path.dirname(map))
+    
+        ret, msg = _run(map, out_file, command, extra_args)
+&gt;       assert ret, msg
+               ^^^
+E       AssertionError: ("results don't match", '/Users/gfabbian/projects/MapServer/msautotest/misc/ogr_empty_geojson.map', 'ogr_empty_geojson.json')
+
+../pymod/mstestlib.py:882: AssertionError</failure></testcase><testcase classname="misc.run_test" name="test[map2img-argparse_map2img-argparse-s_txt]" time="0.382" /><testcase classname="misc.run_test" name="test[map2img-argparse_map2img-argparse-e_txt]" time="0.375" /><testcase classname="misc.run_test" name="test[map2img-argparse_map2img-argparse-o_txt]" time="0.376" /><testcase classname="misc.run_test" name="test[map2img-argparse_map2img-argparse-c_txt]" time="0.369" /><testcase classname="misc.run_test" name="test[map2img-argparse_map2img-argparse-d_txt]" time="0.459" /><testcase classname="misc.run_test" name="test[map2img-argparse_map2img-argparse-layer_debug_txt]" time="0.376" /><testcase classname="misc.run_test" name="test[tiles_scales_z4_tile_scale_z4_png]" time="0.425" /><testcase classname="misc.run_test" name="test[attrbind_attrbind_test001_png]" time="0.382" /><testcase classname="misc.run_test" name="test[attrbind_attrbind_test002_png]" time="0.396" /><testcase classname="misc.run_test" name="test[encoding_encodings_png]" time="0.406" /><testcase classname="misc.run_test" name="test[encoding_encodings_xml]" time="0.410" /><testcase classname="misc.run_test" name="test[openlayers_browse_html]" time="0.396" /><testcase classname="misc.run_test" name="test[openlayers_wms_html]" time="0.399" /><testcase classname="misc.run_test" name="test[openlayers_wms_projected_html]" time="0.404" /><testcase classname="misc.run_test" name="test[openlayers_wms_projected_extra_html]" time="0.552" /><testcase classname="misc.run_test" name="test[rfc36_ogr_rfc36_ogr_geojson_js]" time="0.558" /><testcase classname="misc.run_test" name="test[rfc36_rfc36_geojson_js]" time="0.478" /><testcase classname="misc.run_test" name="test[ortho_ortho_png]" time="0.389" /><testcase classname="misc.run_test" name="test[contour_contour_png]" time="0.571" /><testcase classname="misc.run_test" name="test[map2img-size_map2img-size_png]" time="0.397" /><testcase classname="misc.run_test" name="test[flatgeobuf_flatgeobuf-continent_png]" time="0.406" /><testcase classname="misc.run_test" name="test[flatgeobuf_flatgeobuf-classes_png]" time="0.393" /><testcase classname="misc.run_test" name="test[flatgeobuf_flatgeobuf-ocean_png]" time="0.410" /><testcase classname="misc.run_test" name="test[flatgeobuf_flatgeobuf-wfs-cap_xml]" time="0.409" /><testcase classname="misc.run_test" name="test[flatgeobuf_flatgeobuf-wfs-describe_xml]" time="0.561" /><testcase classname="misc.run_test" name="test[flatgeobuf_flatgeobuf-wfs-get-feature_xml]" time="0.497" /><testcase classname="misc.run_test" name="test[flatgeobuf_flatgeobuf-wfs-get-feature-propertyname_xml]" time="0.400" /><testcase classname="misc.run_test" name="test[flatgeobuf_flatgeobuf-wfs-get-feature-propertyname-geometry_xml]" time="0.400" /><testcase classname="misc.run_test" name="test[flatgeobuf_flatgeobuf-wfs-get-feature-id_xml]" time="0.399" /><testcase classname="misc.run_test" name="test[scale_factor_inheritance_scale_factor_inheritance_png]" time="0.407" /><testcase classname="misc.run_test" name="test[maxfeatures_maxfeatures_png]" time="0.384" /><testcase classname="misc.run_test" name="test[maxfeatures_maxfeatures-of_png]" time="0.385" /><testcase classname="misc.run_test" name="test[style_opacity_style_opacity_test001_png]" time="0.371" /><testcase classname="misc.run_test" name="test[style_opacity_style_opacity_test002_png]" time="0.375" /><testcase classname="misc.run_test" name="test[style_opacity_style_opacity_test003_png]" time="0.399" /><testcase classname="misc.run_test" name="test[ogrpen_ogrpen_png]" time="0.404" /><testcase classname="misc.run_test" name="test[testuppercase_testuppercase_png]" time="0.393" /><testcase classname="misc.run_test" name="test[contour_with_expr_contour_with_expr_png]" time="0.402" /><testcase classname="misc.run_test" name="test[encrypted_connection_encrypted_connection_postgis_hits_xml]" time="0.398" /><testcase classname="misc.run_test" name="test[ogr_attrfilter_ogr_attrfilter_png]" time="0.392" /><testcase classname="misc.run_test" name="test[ogr_wkt_ogr_wkt_png]" time="0.374" /><testcase classname="misc.run_test" name="test[autostyle_autostyle_png]" time="0.393" /><testcase classname="misc.run_test" name="test[quoting_quoting_png]" time="0.515"><failure message="AssertionError: (&quot;results don't match&quot;, '/Users/gfabbian/projects/MapServer/msautotest/misc/quoting.map', 'quoting.png')">map = '/Users/gfabbian/projects/MapServer/msautotest/misc/quoting.map'
+out_file = 'quoting.png'
+command = '[MAP2IMG] [RENDERER] -m [MAPFILE] -o [RESULT]'
+extra_args = &lt;_pytest.config.Config object at 0x10a0d3cb0&gt;
+
+    @pytest.mark.parametrize(
+        "map,out_file,command",
+        mstestlib.get_pytests(os.path.dirname(os.path.abspath(__file__))),
+    )
+    def test(map, out_file, command, extra_args):
+&gt;       mstestlib.run_pytest(map, out_file, command, extra_args)
+
+run_test.py:46: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+map = '/Users/gfabbian/projects/MapServer/msautotest/misc/quoting.map'
+out_file = 'quoting.png'
+command = '[MAP2IMG] [RENDERER] -m [MAPFILE] -o [RESULT]'
+extra_args = &lt;_pytest.config.Config object at 0x10a0d3cb0&gt;
+
+    def run_pytest(map, out_file, command, extra_args):
+    
+        os.chdir(os.path.dirname(map))
+    
+        ret, msg = _run(map, out_file, command, extra_args)
+&gt;       assert ret, msg
+               ^^^
+E       AssertionError: ("results don't match", '/Users/gfabbian/projects/MapServer/msautotest/misc/quoting.map', 'quoting.png')
+
+../pymod/mstestlib.py:882: AssertionError</failure></testcase><testcase classname="misc.run_test" name="test[autostyle_quoted_autostyle_quoted_png]" time="0.426" /><testcase classname="misc.run_test" name="test[cluster_cluster_png]" time="0.391" /><testcase classname="misc.run_test" name="test[cluster_wms_cluster_cap_latestversion_xml]" time="0.467" /><testcase classname="misc.run_test" name="test[cluster_wms_cluster_cap_xml]" time="0.517" /><testcase classname="misc.run_test" name="test[cluster_wms_get_map_cluster_png]" time="0.441" /></testsuite></testsuites>

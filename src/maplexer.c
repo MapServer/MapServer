@@ -1,6 +1,6 @@
-#line 2 "/home/runner/work/MapServer/MapServer/src/maplexer.c"
+#line 2 "/Users/gfabbian/projects/MapServer/src/maplexer.c"
 
-#line 4 "/home/runner/work/MapServer/MapServer/src/maplexer.c"
+#line 4 "/Users/gfabbian/projects/MapServer/src/maplexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -2293,9 +2293,9 @@ int include_lineno[MAX_INCLUDE_DEPTH];
 int include_stack_ptr = 0;
 char path[MS_MAXPATHLEN];
 
-#line 2297 "/home/runner/work/MapServer/MapServer/src/maplexer.c"
+#line 2297 "/Users/gfabbian/projects/MapServer/src/maplexer.c"
 
-#line 2299 "/home/runner/work/MapServer/MapServer/src/maplexer.c"
+#line 2299 "/Users/gfabbian/projects/MapServer/src/maplexer.c"
 
 #define INITIAL 0
 #define EXPRESSION_STRING 1
@@ -2575,7 +2575,7 @@ YY_DECL
          break;
        }
 
-#line 2579 "/home/runner/work/MapServer/MapServer/src/maplexer.c"
+#line 2579 "/Users/gfabbian/projects/MapServer/src/maplexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -4571,7 +4571,7 @@ YY_RULE_SETUP
 #line 756 "src/maplexer.l"
 ECHO;
 	YY_BREAK
-#line 4575 "/home/runner/work/MapServer/MapServer/src/maplexer.c"
+#line 4575 "/Users/gfabbian/projects/MapServer/src/maplexer.c"
 case YY_STATE_EOF(EXPRESSION_STRING):
 case YY_STATE_EOF(INCLUDE):
 case YY_STATE_EOF(MSSTRING):

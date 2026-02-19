@@ -24,8 +24,17 @@ fi
 
 if test -z $PHP_MAPSCRIPT_SO; then
    php phpunit-$PHPUnitVersion.phar $EXCLUDE_ARGS "$@"
-   exit $?
+   RET=$?
 else
    php -d "extension=$PHP_MAPSCRIPT_SO" phpunit-$PHPUnitVersion.phar $EXCLUDE_ARGS "$@"
-   exit $?
+   RET=$?
 fi
+
+# Generate coverage summary if built with coverage
+if [ -n "${WITH_COVERAGE:-}" ] || find ../../build -name "*.gcda" | grep -q . ; then
+    echo "Generating coverage summary..."
+    lcov --quiet --directory ../../build --capture --output-file coverage.info --base-directory ../../
+    lcov --summary coverage.info
+fi
+
+exit $RET

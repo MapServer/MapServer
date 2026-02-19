@@ -32,7 +32,7 @@ endif()
 
 if(NOT PHP_INCLUDE_PATH)
     # Explicitly find php-config executable
-    find_program(PHP_CONFIG_EXECUTABLE NAMES php-config php-config8.3 php-config8 php-config7)
+    find_program(PHP_CONFIG_EXECUTABLE NAMES php-config php-config8.5 php-config8.4 php-config8.3 php-config8 php-config7)
     
     if(PHP_CONFIG_EXECUTABLE)
         execute_process(COMMAND ${PHP_CONFIG_EXECUTABLE} --includes 
@@ -56,6 +56,8 @@ if(NOT PHP_INCLUDE_PATH)
         /opt/homebrew/include/php
         /usr/include/php/main
         /usr/local/include/php/main
+        /usr/include/php/8.5/main
+        /usr/include/php/8.4/main
         /usr/include/php/8.3/main
         /usr/include/php/8.2/main
         /usr/include/php/8.1/main

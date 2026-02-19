@@ -34,11 +34,18 @@ sudo apt-get -qq install php"${PHP_VERSION}"-cli php"${PHP_VERSION}"-dev php"${P
 # install build dependencies
 ci/ubuntu/setup.sh
 
+# Pin the requested PHP version (setup.sh installs all versions, highest becomes default)
+sudo update-alternatives --set php /usr/bin/php${PHP_VERSION}
+sudo update-alternatives --set php-config /usr/bin/php-config${PHP_VERSION}
+
 # build the project
 export CC="ccache gcc"
 export CXX="ccache g++"
 
-make cmakebuild_mapscript_php
+# Force CMake reconfiguration (stale build/ from host or previous run)
+rm -f build/Makefile build/CMakeCache.txt
+
+make cmakebuild_mapscript_php EXTRA_CMAKEFLAGS="-DPHP_CONFIG_EXECUTABLE=/usr/bin/php-config${PHP_VERSION}"
 
 echo "PHP includes"
 
