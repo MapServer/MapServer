@@ -35,7 +35,7 @@
 /****************************************************************************/
 
 /*
- * PDF nonseperable blend modes are implemented using the following functions
+ * PDF non-separable blend modes are implemented using the following functions
  * to operate in Hsl space, with Cmax, Cmid, Cmin referring to the max, mid
  * and min value of the red, green and blue components.
  *

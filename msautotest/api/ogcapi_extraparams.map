@@ -8,7 +8,7 @@
 
 # test with invalid parameter
 # RUN_PARMS: ogcapi_extraparams_invalid_parameter.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi" "QUERY_STRING=f=json&token=@@@@@&user_id=12345" > [RESULT_DEMIME]
-# test with missing paramters (defaults will be used)
+# test with missing parameters (defaults will be used)
 # RUN_PARMS: ogcapi_extraparams_no_parameters.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 
 # test with layer level parameters, and an empty token

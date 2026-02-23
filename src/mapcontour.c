@@ -244,7 +244,7 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect) {
     if (msProjectionsDiffer(&(map->projection), &(layer->projection))) {
 
       /* Deal with request in WebMercator, overlapping the anti-meridian,
-       * and raster in geographic coordinates within (approximatively)
+       * and raster in geographic coordinates within (approximately)
        * [-180,180] longitude range.
        */
       double map_cellsize_x_override = 0;
