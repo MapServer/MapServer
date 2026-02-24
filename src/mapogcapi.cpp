@@ -31,6 +31,7 @@
 #include "mapgml.h"
 #include "maptime.h"
 #include "mapogcfilter.h"
+#include "cql2json.h"
 #include "cql2text.h"
 
 #include "cpl_conv.h"
@@ -1326,6 +1327,7 @@ static int processConformanceRequest(mapObj *map, cgiRequestObj *request,
            "queryables-query-parameters",
            "http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/filter",
            "http://www.opengis.net/spec/cql2/1.0/conf/cql2-text",
+           "http://www.opengis.net/spec/cql2/1.0/conf/cql2-json",
            "http://www.opengis.net/spec/cql2/1.0/conf/basic-cql2",
            "http://www.opengis.net/spec/cql2/1.0/conf/"
            "advanced-comparison-operators",
@@ -1482,17 +1484,21 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
   const char *filterParam = getRequestParameter(request, "filter");
   const char *filterLang = getRequestParameter(request, "filter-lang");
   if (filterParam) {
-    if (filterLang && strcmp(filterLang, "cql2-text") != 0) {
-      msOGCAPIOutputError(OGCAPI_PARAM_ERROR,
-                          "Only filter-lang=cql2-text is handled");
+    if (filterLang && strcmp(filterLang, "cql2-text") != 0 &&
+        strcmp(filterLang, "cql2-json") != 0) {
+      msOGCAPIOutputError(
+          OGCAPI_PARAM_ERROR,
+          "Only filter-lang=cql2-text or filter-lang=cql2-json is handled");
       return MS_SUCCESS;
     }
 
     std::string osErrorMsg;
-    auto cql2 = CQL2TextParse(filterParam, osErrorMsg);
+    auto cql2 = (filterLang && strcmp(filterLang, "cql2-json") == 0)
+                    ? CQL2JSONParse(filterParam, osErrorMsg)
+                    : CQL2TextParse(filterParam, osErrorMsg);
     if (!cql2) {
       msOGCAPIOutputError(OGCAPI_PARAM_ERROR,
-                          "Cannot parse CQL2-text filter: " + osErrorMsg);
+                          "Cannot parse filter: " + osErrorMsg);
       return MS_SUCCESS;
     }
 

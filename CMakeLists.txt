@@ -345,7 +345,7 @@ src/mapgeomutil.cpp src/mapkmlrenderer.cpp src/fontcache.c src/textlayout.c src/
 src/mapogr.cpp src/mapcontour.c src/mapsmoothing.c src/mapv8.cpp ${REGEX_SOURCES} src/kerneldensity.c
 src/idw.c src/interpolation.c src/mapflatgeobuf.c src/mapcompositingfilter.c src/mapmvt.c src/mapiconv.c
 src/mapgraph.cpp src/mapserv-config.cpp src/maprasterlabel.cpp src/mapserv-index.cpp
-src/cql2.cpp src/cql2text.cpp src/cql2textparser.cpp)
+src/cql2.cpp src/cql2json.cpp src/cql2text.cpp src/cql2textparser.cpp)
 
 set(mapserver_HEADERS
 src/cgiutil.h src/dejavu-sans-condensed.h src/dxfcolor.h src/fontcache.h src/hittest.h src/mapagg.h
