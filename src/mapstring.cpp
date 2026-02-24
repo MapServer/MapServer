@@ -2515,7 +2515,7 @@ int msStringBufferAppend(msStringBuffer *sb, const char *pszAppendedString) {
   if (sb->length + nAppendLen >= sb->alloc_size) {
     size_t newAllocSize1 = sb->alloc_size + sb->alloc_size / 3;
     size_t newAllocSize2 = sb->length + nAppendLen + 1;
-    size_t newAllocSize = MAX(newAllocSize1, newAllocSize2);
+    size_t newAllocSize = std::max(newAllocSize1, newAllocSize2);
     void *newStr = realloc(sb->str, newAllocSize);
     if (newStr == NULL) {
       msSetError(MS_MEMERR, "Not enough memory", "msStringBufferAppend()");

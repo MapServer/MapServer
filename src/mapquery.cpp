@@ -2135,14 +2135,18 @@ int msQueryByPoint(mapObj *map) {
 
             searchSymbols.push_back(std::move(searchSymbol));
 
-            rect.minx = MIN(rect.minx,
-                            center_x + MIN(MIN(P1_X, P2_X), MIN(P3_X, P4_X)));
-            rect.miny = MIN(rect.miny,
-                            center_y + MIN(MIN(P1_Y, P2_Y), MIN(P3_Y, P4_Y)));
-            rect.maxx = MAX(rect.maxx,
-                            center_x + MAX(MAX(P1_X, P2_X), MAX(P3_X, P4_X)));
-            rect.maxy = MAX(rect.maxy,
-                            center_y + MAX(MAX(P1_Y, P2_Y), MAX(P3_Y, P4_Y)));
+            rect.minx =
+                std::min(rect.minx, center_x + std::min(std::min(P1_X, P2_X),
+                                                        std::min(P3_X, P4_X)));
+            rect.miny =
+                std::min(rect.miny, center_y + std::min(std::min(P1_Y, P2_Y),
+                                                        std::min(P3_Y, P4_Y)));
+            rect.maxx =
+                std::max(rect.maxx, center_x + std::max(std::max(P1_X, P2_X),
+                                                        std::max(P3_X, P4_X)));
+            rect.maxy =
+                std::max(rect.maxy, center_y + std::max(std::max(P1_Y, P2_Y),
+                                                        std::max(P3_Y, P4_Y)));
           }
         }
       };

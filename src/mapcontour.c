@@ -345,19 +345,21 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect) {
      * there is no point in interpolating the data for contours in this case.
      */
 
-    virtual_grid_step_x = (int)floor(map_cellsize_x / ABS(adfGeoTransform[1]));
+    virtual_grid_step_x =
+        (int)floor(map_cellsize_x / MS_ABS(adfGeoTransform[1]));
     if (virtual_grid_step_x < 1)
       virtual_grid_step_x =
           1; /* Do not interpolate data if grid sampling step < 1 */
 
-    virtual_grid_step_y = (int)floor(map_cellsize_y / ABS(adfGeoTransform[5]));
+    virtual_grid_step_y =
+        (int)floor(map_cellsize_y / MS_ABS(adfGeoTransform[5]));
     if (virtual_grid_step_y < 1)
       virtual_grid_step_y =
           1; /* Do not interpolate data if grid sampling step < 1 */
 
     /* target cellsize is a multiple of raw data cellsize based on grid step*/
-    dst_cellsize_x = ABS(adfGeoTransform[1]) * virtual_grid_step_x;
-    dst_cellsize_y = ABS(adfGeoTransform[5]) * virtual_grid_step_y;
+    dst_cellsize_x = MS_ABS(adfGeoTransform[1]) * virtual_grid_step_x;
+    dst_cellsize_y = MS_ABS(adfGeoTransform[5]) * virtual_grid_step_y;
 
     /* Compute overlap between source and target views */
 
