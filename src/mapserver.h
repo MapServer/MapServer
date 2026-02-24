@@ -73,6 +73,12 @@
 #define MS_UNLIKELY(x) (x)
 #endif
 
+/** Macro to compute the minimum of 2 values */
+#define MS_MIN(a, b) (((a) < (b)) ? (a) : (b))
+
+/** Macro to compute the maximum of 2 values */
+#define MS_MAX(a, b) (((a) > (b)) ? (a) : (b))
+
 /* definition of  ms_int32/ms_uint32 */
 #include <limits.h>
 #ifndef _WIN32
