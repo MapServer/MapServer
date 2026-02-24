@@ -2964,19 +2964,22 @@ int msMSSQL2008LayerGetItems(layerObj *layer) {
   if (layerinfo->conn->items) {
     msFreeCharArray(layerinfo->conn->items, layerinfo->conn->numitems);
   }
-  msFree(layerinfo->conn->itemtypes);
+  if (layerinfo->conn->itemtypes) {
+    msFree(layerinfo->conn->itemtypes);
+  }
 
   layerinfo->conn->numitems = layer->numitems;
   layerinfo->conn->items =
       msSmallMalloc(sizeof(char *) * (layer->numitems + 1));
   layerinfo->conn->itemtypes =
       msSmallMalloc(sizeof(SQLSMALLINT) * (layer->numitems + 1));
+
   for (int i = 0; i < layer->numitems; i++) {
     layerinfo->conn->items[i] = msStrdup(layer->items[i]);
     layerinfo->conn->itemtypes[i] = layerinfo->itemtypes[i];
   }
 
-  if (layer->debug) {
+  if (layer->debug && layerinfo->conn->cache_sql) {
     msDebug("msMSSQL2008LayerGetItems: cached %d items on connection "
             "for sql: %s\n",
             layerinfo->conn->numitems, layerinfo->conn->cache_sql);
