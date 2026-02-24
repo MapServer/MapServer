@@ -2979,11 +2979,6 @@ int msMSSQL2008LayerGetItems(layerObj *layer) {
     layerinfo->conn->itemtypes[i] = layerinfo->itemtypes[i];
   }
 
-  if (layer->debug && layerinfo->conn->cache_sql) {
-    msDebug("msMSSQL2008LayerGetItems: cached %d items on connection "
-            "for sql: %s\n",
-            layerinfo->conn->numitems, layerinfo->conn->cache_sql);
-  }
   return msMSSQL2008LayerInitItemInfo(layer);
 }
 
