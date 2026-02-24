@@ -39,6 +39,7 @@
 #include "mapows.h"
 #include "mapwcs.h"
 #include "mapgdal.h"
+#include <cmath>
 #include <float.h>
 #include "gdal.h"
 #include "cpl_port.h"
@@ -4641,14 +4642,16 @@ this request. Check wcs/ows_enable_request settings.",
           subsetInImageProj.maxy =
               MS_MIN(subsetInImageProj.maxy, layer->extent.maxy);
           {
-            double total = ABS(layer->extent.maxx - layer->extent.minx);
-            double part = ABS(subsetInImageProj.maxx - subsetInImageProj.minx);
+            double total = std::abs(layer->extent.maxx - layer->extent.minx);
+            double part =
+                std::abs(subsetInImageProj.maxx - subsetInImageProj.minx);
             widthFromComputationInImageCRS =
                 MS_NINT((part * map->width) / total);
           }
           {
-            double total = ABS(layer->extent.maxy - layer->extent.miny);
-            double part = ABS(subsetInImageProj.maxy - subsetInImageProj.miny);
+            double total = std::abs(layer->extent.maxy - layer->extent.miny);
+            double part =
+                std::abs(subsetInImageProj.maxy - subsetInImageProj.miny);
             heightFromComputationInImageCRS =
                 MS_NINT((part * map->height) / total);
           }
@@ -4721,10 +4724,10 @@ this request. Check wcs/ows_enable_request settings.",
   } else {
     if (widthFromComputationInImageCRS != 0) {
       params->width = widthFromComputationInImageCRS;
-    } else if (ABS(bbox.maxx - bbox.minx) !=
-               ABS(map->extent.maxx - map->extent.minx)) {
-      double total = ABS(map->extent.maxx - map->extent.minx),
-             part = ABS(bbox.maxx - bbox.minx);
+    } else if (std::abs(bbox.maxx - bbox.minx) !=
+               std::abs(map->extent.maxx - map->extent.minx)) {
+      double total = std::abs(map->extent.maxx - map->extent.minx),
+             part = std::abs(bbox.maxx - bbox.minx);
       params->width = MS_NINT((part * map->width) / total);
     } else {
       params->width = map->width;
@@ -4746,10 +4749,10 @@ this request. Check wcs/ows_enable_request settings.",
   } else {
     if (heightFromComputationInImageCRS != 0) {
       params->height = heightFromComputationInImageCRS;
-    } else if (ABS(bbox.maxy - bbox.miny) !=
-               ABS(map->extent.maxy - map->extent.miny)) {
-      double total = ABS(map->extent.maxy - map->extent.miny),
-             part = ABS(bbox.maxy - bbox.miny);
+    } else if (std::abs(bbox.maxy - bbox.miny) !=
+               std::abs(map->extent.maxy - map->extent.miny)) {
+      double total = std::abs(map->extent.maxy - map->extent.miny),
+             part = std::abs(bbox.maxy - bbox.miny);
       params->height = MS_NINT((part * map->height) / total);
     } else {
       params->height = map->height;

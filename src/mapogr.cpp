@@ -33,6 +33,8 @@
 #include "mapproject.h"
 #include "mapthread.h"
 #include "mapows.h"
+
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -2223,10 +2225,10 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
      * no _efficient_ way to do that with OGR.
      * ------------------------------------------------------------------ */
     if (psInfo->rect_is_defined) {
-      rect.minx = MAX(psInfo->rect.minx, rect.minx);
-      rect.miny = MAX(psInfo->rect.miny, rect.miny);
-      rect.maxx = MIN(psInfo->rect.maxx, rect.maxx);
-      rect.maxy = MIN(psInfo->rect.maxy, rect.maxy);
+      rect.minx = std::max(psInfo->rect.minx, rect.minx);
+      rect.miny = std::max(psInfo->rect.miny, rect.miny);
+      rect.maxx = std::min(psInfo->rect.maxx, rect.maxx);
+      rect.maxy = std::min(psInfo->rect.maxy, rect.maxy);
       bIsValidRect = true;
     }
     psInfo->rect = rect;
