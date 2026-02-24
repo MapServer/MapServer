@@ -260,7 +260,7 @@ typedef struct ms_MSSQL2008_layer_info_t {
   char *geom_column; /* name of the actual geometry column parsed from the
                         LAYER's DATA field */
   char *geom_column_type; /* the type of the geometry column */
-  char *geom_table; /* the table name or sub-select decalred in the LAYER's DATA
+  char *geom_table; /* the table name or sub-select declared in the LAYER's DATA
                        field */
   char *urid_name;  /* name of user-specified unique identifier or OID */
   char *
@@ -1537,7 +1537,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string,
 
   /* adding items to the select list */
   for (t = 0; t < layer->numitems; t++) {
-    int sqlType = layerinfo->itemtypes[t];
+    int sqlType = (layerinfo->itemtypes != NULL) ? layerinfo->itemtypes[t] : 0;
     int use256 = 0;
 
     /* Definitely small types: numeric, bit, date/time */
@@ -1552,6 +1552,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string,
     case SQL_REAL:
     case SQL_DOUBLE:
     case SQL_BIT:
+    case SQL_GUID:
     case SQL_TYPE_DATE:
     case SQL_TYPE_TIME:
     case SQL_TYPE_TIMESTAMP:
