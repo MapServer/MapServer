@@ -1593,6 +1593,8 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
       map->query.only_cache_result_count = MS_FALSE;
       map->query.maxfeatures = limit;
 
+      msOWSSetShapeCache(map, "AO");
+
       const char *offsetStr = getRequestParameter(request, "offset");
       if (offsetStr) {
         if (msStringToInt(offsetStr, &offset, 10) != MS_SUCCESS) {
@@ -1723,24 +1725,28 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
     const int geometry_precision = getGeometryPrecision(map, layer);
 
     for (int i = 0; i < layer->resultcache->numresults; i++) {
-      int status =
-          msLayerGetShape(layer, &shape, &(layer->resultcache->results[i]));
-      if (status != MS_SUCCESS) {
-        msGMLFreeItems(items);
-        msGMLFreeConstants(constants);
-        msOGCAPIOutputError(OGCAPI_SERVER_ERROR, "Error fetching feature.");
-        return MS_SUCCESS;
-      }
-
-      if (reprObjs.reprojector) {
-        status = msProjectShapeEx(reprObjs.reprojector, &shape);
+      if (layer->resultcache->results[i].shape) {
+        msCopyShape(layer->resultcache->results[i].shape, &shape);
+      } else {
+        int status =
+            msLayerGetShape(layer, &shape, &(layer->resultcache->results[i]));
         if (status != MS_SUCCESS) {
           msGMLFreeItems(items);
           msGMLFreeConstants(constants);
-          msFreeShape(&shape);
-          msOGCAPIOutputError(OGCAPI_SERVER_ERROR,
-                              "Error reprojecting feature.");
+          msOGCAPIOutputError(OGCAPI_SERVER_ERROR, "Error fetching feature.");
           return MS_SUCCESS;
+        }
+
+        if (reprObjs.reprojector) {
+          status = msProjectShapeEx(reprObjs.reprojector, &shape);
+          if (status != MS_SUCCESS) {
+            msGMLFreeItems(items);
+            msGMLFreeConstants(constants);
+            msFreeShape(&shape);
+            msOGCAPIOutputError(OGCAPI_SERVER_ERROR,
+                                "Error reprojecting feature.");
+            return MS_SUCCESS;
+          }
         }
       }
 

@@ -111,7 +111,7 @@ typedef struct {
 /* wmsParamsObj
  *
  * Used to preprocess WMS request parameters and combine layers that can
- * be comined in a GetMap request.
+ * be combined in a GetMap request.
  */
 typedef struct {
   char *onlineresource;
@@ -160,6 +160,9 @@ MS_DLL_EXPORT int
 msUpdateGMLFieldMetadata(layerObj *layer, const char *field_name,
                          const char *gml_type, const char *gml_width,
                          const char *gml_precision, const short nullable);
+
+MS_DLL_EXPORT void msOWSSetShapeCache(mapObj *map,
+                                      const char *pszMetadataNamespaces);
 
 void msOWSInitRequestObj(owsRequestObj *ows_request);
 void msOWSClearRequestObj(owsRequestObj *ows_request);
