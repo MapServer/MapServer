@@ -19,6 +19,13 @@
 # RUN_PARMS: point_symbol_identification_style_minscaledenom_5700.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_style_minscaledenom_5700&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=&QUERY_LAYERS=test_style_minscaledenom_5700&INFO_FORMAT=application%2Fvnd.ogc.gml&I=73&J=82"  > [RESULT_DEVERSION]
 # RUN_PARMS: point_symbol_identification_expression_false.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_expression_false&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES=&QUERY_LAYERS=test_expression_false&INFO_FORMAT=application%2Fvnd.ogc.gml&I=73&J=82"  > [RESULT_DEVERSION]
 
+# RUN_PARMS: point_symbol_identification_anchor.png [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetMap&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_anchor&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&FORMAT=png&WIDTH=200&HEIGHT=150&STYLES="  > [RESULT_DEMIME]
+# RUN_PARMS: point_symbol_identification_anchor_match.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_anchor&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&WIDTH=200&HEIGHT=150&STYLES=&QUERY_LAYERS=test_anchor&INFO_FORMAT=application%2Fvnd.ogc.gml&I=93&J=40"  > [RESULT_DEVERSION]
+# RUN_PARMS: point_symbol_identification_anchor_no_match1.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_anchor&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&WIDTH=200&HEIGHT=150&STYLES=&QUERY_LAYERS=test_anchor&INFO_FORMAT=application%2Fvnd.ogc.gml&I=75&J=25"  > [RESULT_DEVERSION]
+# RUN_PARMS: point_symbol_identification_anchor_no_match2.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_anchor&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&WIDTH=200&HEIGHT=150&STYLES=&QUERY_LAYERS=test_anchor&INFO_FORMAT=application%2Fvnd.ogc.gml&I=100&J=25"  > [RESULT_DEVERSION]
+# RUN_PARMS: point_symbol_identification_anchor_no_match3.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&REQUEST=GetFeatureInfo&SERVICE=WMS&VERSION=1.1.0&LAYERS=test_anchor&SRS=EPSG:3857&BBOX=1000,2000,1400,2300&WIDTH=200&HEIGHT=150&STYLES=&QUERY_LAYERS=test_anchor&INFO_FORMAT=application%2Fvnd.ogc.gml&I=88&J=53"  > [RESULT_DEVERSION]
+
+
 # RUN_PARMS: point_symbol_identification_mode_query_classauto.txt [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&mode=query&layer=test_classgroup&qlayer=test_rotation_30&imgxy=73+62&imgext=1000+2000+1400+2300&imgsize=200+150" > [RESULT_DEMIME]
 # RUN_PARMS: point_symbol_identification_mode_query_classgroup.txt [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&mode=query&layer=test_classgroup&qlayer=test_classgroup&imgxy=73+62&imgext=1000+2000+1400+2300&imgsize=200+150" > [RESULT_DEMIME]
 
@@ -280,6 +287,52 @@ LAYER
     STYLE
         ANGLE 30
         SYMBOL "Road_Works_inner_transparent"
+    END
+  END
+
+  FEATURE
+    POINTS
+        1200 2150
+    END
+  END
+END
+
+SYMBOL
+  NAME "Road_Works_inner_transparent_with_anchor"
+  TYPE svg
+  IMAGE "../misc/data/Road_Works_inner_transparent.svg"
+  ANCHORPOINT 0.5 1.0
+END
+
+LAYER
+  NAME "test_anchor"
+  TYPE point
+  STATUS OFF
+  TEMPLATE "ttt"
+
+  METADATA
+    "wms_title"       "test_anchor"
+    "wms_description" "test_anchor"
+    "wms_srs" "EPSG:3857"
+    "gml_include_items" "all"
+    "ows_enable_request" "*"
+  END
+
+  EXTENT 1000 2000 1400 2300
+
+  IDENTIFY
+      CLASSAUTO
+  END
+
+  PROJECTION
+    "init=epsg:3857"
+  END
+
+  CLASS
+    GROUP "test"
+    STYLE
+        SYMBOL "Road_Works_inner_transparent_with_anchor"
+        SIZE 60
     END
   END
 
