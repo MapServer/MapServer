@@ -1981,6 +1981,8 @@ int msQueryByPoint(mapObj *map) {
       int classindex = -1;
       styleObj *style = nullptr;
       imageObj *cachedImage = nullptr;
+      double center_x_in_map = 0;
+      double center_y_in_map = 0;
 
       SearchSymbol(mapObj *map) : m_map(map) {}
       ~SearchSymbol() {
@@ -2014,6 +2016,8 @@ int msQueryByPoint(mapObj *map) {
         classindex = other.classindex;
         std::swap(style, other.style);
         std::swap(cachedImage, other.cachedImage);
+        center_x_in_map = other.center_x_in_map;
+        center_y_in_map = other.center_y_in_map;
       }
       SearchSymbol &operator=(SearchSymbol &&other) {
         m_map = other.m_map;
@@ -2021,6 +2025,8 @@ int msQueryByPoint(mapObj *map) {
         classindex = other.classindex;
         std::swap(style, other.style);
         std::swap(cachedImage, other.cachedImage);
+        center_x_in_map = other.center_x_in_map;
+        center_y_in_map = other.center_y_in_map;
         return *this;
       }
     };
@@ -2066,16 +2072,21 @@ int msQueryByPoint(mapObj *map) {
             computeSymbolStyle(&s, style, symbol, style->scalefactor,
                                resolutionfactor);
 
+            double pos_offset_x = 0;
+            double pos_offset_y = 0;
+            if (msAdjustMarkerPos(map, style, symbol, &pos_offset_x,
+                                  &pos_offset_y, style->scalefactor,
+                                  s.rotation) != MS_SUCCESS) {
+              continue;
+            }
+
             double center_x =
                 MS_MAP2IMAGE_X(map->query.point.x, map->extent.minx, cellx);
             double center_y =
                 MS_MAP2IMAGE_Y(map->query.point.y, map->extent.maxy, celly);
 
-            if (msAdjustMarkerPos(map, style, symbol, &center_x, &center_y,
-                                  style->scalefactor,
-                                  s.rotation) != MS_SUCCESS) {
-              continue;
-            }
+            center_x -= pos_offset_x;
+            center_y -= pos_offset_y;
 
             center_x = MS_IMAGE2MAP_X(center_x, map->extent.minx, cellx);
             center_y = MS_IMAGE2MAP_Y(center_y, map->extent.maxy, celly);
@@ -2116,6 +2127,8 @@ int msQueryByPoint(mapObj *map) {
             SearchSymbol searchSymbol(map);
             searchSymbol.style = style;
             searchSymbol.classindex = classindex;
+            searchSymbol.center_x_in_map = center_x;
+            searchSymbol.center_y_in_map = center_y;
 
             lineObj line = {0, NULL};
             line.numpoints = 5;
@@ -2331,10 +2344,10 @@ int msQueryByPoint(mapObj *map) {
                 pointObj imCenter;
                 imCenter.x = searchSymbol.cachedImage->width / 2;
                 imCenter.y = searchSymbol.cachedImage->height / 2;
-                if (msDrawMarkerSymbol(map, searchSymbol.cachedImage, &imCenter,
-                                       searchSymbol.style,
-                                       searchSymbol.style->scalefactor) !=
-                    MS_SUCCESS) {
+                if (msDrawMarkerSymbolInternal(
+                        map, searchSymbol.cachedImage, &imCenter,
+                        searchSymbol.style, searchSymbol.style->scalefactor,
+                        /* adjustMarkerPos = */ false) != MS_SUCCESS) {
                   msSetError(MS_MISCERR, "Unable to draw symbol image.",
                              "msQueryByPoint()");
                   return (MS_FAILURE);
@@ -2351,10 +2364,12 @@ int msQueryByPoint(mapObj *map) {
 
                 const int test_x = static_cast<int>(std::round(
                     searchSymbol.cachedImage->width / 2 +
-                    (map->query.point.x - shape.line[0].point[0].x) / cellx));
+                    (searchSymbol.center_x_in_map - shape.line[0].point[0].x) /
+                        cellx));
                 const int test_y = static_cast<int>(std::round(
                     searchSymbol.cachedImage->height / 2 -
-                    (map->query.point.y - shape.line[0].point[0].y) / celly));
+                    (searchSymbol.center_y_in_map - shape.line[0].point[0].y) /
+                        celly));
 
                 // Check that the queried pixel hits a non-transparent pixel of
                 // the symbol
