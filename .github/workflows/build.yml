@@ -45,3 +45,4 @@ jobs:
         with:
           format: lcov
           file: mapserver.info
+          fail-on-error: false
