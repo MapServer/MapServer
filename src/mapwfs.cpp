@@ -3367,32 +3367,6 @@ static int msWFSApplySortBy(mapObj *map, wfsParamsObj *paramsObj, layerObj *lp,
   return MS_SUCCESS;
 }
 
-static void msWFSSetShapeCache(mapObj *map) {
-  const char *pszFeaturesCacheCount =
-      msOWSLookupMetadata(&(map->web.metadata), "F", "features_cache_count");
-  const char *pszFeaturesCacheSize =
-      msOWSLookupMetadata(&(map->web.metadata), "F", "features_cache_size");
-  if (pszFeaturesCacheCount) {
-    map->query.cache_shapes = MS_TRUE;
-    map->query.max_cached_shape_count = atoi(pszFeaturesCacheCount);
-    if (map->debug >= MS_DEBUGLEVEL_V) {
-      msDebug("Caching up to %d shapes\n", map->query.max_cached_shape_count);
-    }
-  }
-
-  if (pszFeaturesCacheSize) {
-    map->query.cache_shapes = MS_TRUE;
-    map->query.max_cached_shape_ram_amount = atoi(pszFeaturesCacheSize);
-    if (strstr(pszFeaturesCacheSize, "mb") ||
-        strstr(pszFeaturesCacheSize, "MB"))
-      map->query.max_cached_shape_ram_amount *= 1024 * 1024;
-    if (map->debug >= MS_DEBUGLEVEL_V) {
-      msDebug("Caching up to %d bytes of shapes\n",
-              map->query.max_cached_shape_ram_amount);
-    }
-  }
-}
-
 /*
 ** msWFSGetFeature()
 */
@@ -3901,7 +3875,7 @@ static int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj,
   if (iResultTypeHits == 1) {
     map->query.only_cache_result_count = MS_TRUE;
   } else {
-    msWFSSetShapeCache(map);
+    msOWSSetShapeCache(map, "FO");
   }
 
   status = msWFSRetrieveFeatures(
@@ -4382,7 +4356,7 @@ static int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj,
   if (iResultTypeHits == 1) {
     map->query.only_cache_result_count = MS_TRUE;
   } else {
-    msWFSSetShapeCache(map);
+    msOWSSetShapeCache(map, "FO");
   }
 
   status = msWFSRetrieveFeatures(
