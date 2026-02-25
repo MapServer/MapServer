@@ -1,0 +1,46 @@
+#
+# Test OGC API Features with the MSSQL driver plugin and caching
+#
+
+# RUN_PARMS: ogcapi_mssql_items.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/cities/items" "QUERY_STRING=f=json&limit=2" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_mssql_items_projected.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/cities/items" "QUERY_STRING=f=json&limit=2&crs=http://www.opengis.net/def/crs/EPSG/0/3857" > [RESULT_DEMIME]
+
+MAP
+  NAME 'ogcapi_mssql'
+  EXTENT -20026376.39 -20048966.10 20026376.39 20048966.10
+  UNITS METERS
+  
+  SIZE 300 300
+
+  WEB
+    METADATA
+      "oga_title"            "ogcapi_mssql"
+      "oga_onlineresource"   "http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi"
+      "oga_enable_request"   "OGCAPI"
+      "oga_srs"              "EPSG:3857 EPSG:4326"
+      "oga_features_cache_count" "1" # cache one feature
+    END
+  END
+
+  PROJECTION
+    "init=epsg:3857"
+  END
+
+  LAYER
+    NAME 'cities'
+    EXTENT -20026376.39 -20048966.10 20026376.39 20048966.10
+    PROJECTION # required
+      "init=epsg:3857"
+    END
+    INCLUDE 'include/mssql_connection.map'
+    TYPE POINT
+    TEMPLATE VOID
+    DATA "ogr_geometry from (select * from cities) as foo USING UNIQUE ogr_fid USING SRID=3857"
+    METADATA
+        "oga_featureid" "ogr_fid" # required
+        "gml_include_items" "all"
+        "gml_types" "auto"
+    END
+  END
+
+END
