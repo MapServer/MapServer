@@ -1617,12 +1617,12 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string,
       if (layer->maxfeatures >= 0) {
         msFree(tmp);
         tmp = msIntToString(layer->startindex + layer->maxfeatures);
-        paging_query = msStringConcatenate(paging_query, " and [rownum] < ");
+        paging_query = msStringConcatenate(paging_query, " and [rownum] <= ");
         paging_query = msStringConcatenate(paging_query, tmp);
       }
     } else {
       tmp = msIntToString(layer->maxfeatures);
-      paging_query = msStringConcatenate(paging_query, "< ");
+      paging_query = msStringConcatenate(paging_query, "<= ");
       paging_query = msStringConcatenate(paging_query, tmp);
     }
     msFree(tmp);
