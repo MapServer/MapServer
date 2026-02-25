@@ -45,6 +45,27 @@
 
 # RUN_PARMS: ogcapi_queryables.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/queryables" "QUERY_STRING=f=json" > [RESULT]
 # RUN_PARMS: ogcapi_queryables.html [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/queryables" "QUERY_STRING=f=html" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_queryables_error_collection.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/error/queryables" "QUERY_STRING=f=json" > [RESULT]
+# RUN_PARMS: ogcapi_queryables_error_unexpected_kvp.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/queryables" "QUERY_STRING=f=json&unexpected=true" > [RESULT]
+# RUN_PARMS: ogcapi_queryables_none.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties_no_queryables_and_sortables/queryables" "QUERY_STRING=f=json" > [RESULT]
+# RUN_PARMS: ogcapi_queryables_all.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties_all_queryables_and_sortables/queryables" "QUERY_STRING=f=json" > [RESULT]
+
+# RUN_PARMS: ogcapi_schema.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/schema" "QUERY_STRING=f=json" > [RESULT]
+# RUN_PARMS: ogcapi_schema.html [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/schema" "QUERY_STRING=f=html" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_schema_error_collection.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/error/schema" "QUERY_STRING=f=json" > [RESULT]
+# RUN_PARMS: ogcapi_schema_error_unexpected_kvp.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/schema" "QUERY_STRING=f=json&unexpected=true" > [RESULT]
+
+# RUN_PARMS: ogcapi_sortables.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/sortables" "QUERY_STRING=f=json" > [RESULT]
+# RUN_PARMS: ogcapi_sortables.html [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/sortables" "QUERY_STRING=f=html" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_sortables_error_collection.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/error/sortables" "QUERY_STRING=f=json" > [RESULT]
+# RUN_PARMS: ogcapi_sortables_error_unexpected_kvp.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/sortables" "QUERY_STRING=f=json&unexpected=true" > [RESULT]
+# RUN_PARMS: ogcapi_sortables_none.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties_no_queryables_and_sortables/sortables" "QUERY_STRING=f=json" > [RESULT]
+# RUN_PARMS: ogcapi_sortables_all.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties_all_queryables_and_sortables/sortables" "QUERY_STRING=f=json" > [RESULT]
+
+# RUN_PARMS: ogcapi_sorted.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&sortby=LASTMOD" > [RESULT]
+# RUN_PARMS: ogcapi_sorted_plus.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&sortby=%2BLASTMOD" > [RESULT]
+# RUN_PARMS: ogcapi_sorted_minus.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&sortby=-LASTMOD" > [RESULT]
+# RUN_PARMS: ogcapi_sorted_error.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&sortby=illegal" > [RESULT]
 
 # CQL2-text testing
 
@@ -170,7 +191,7 @@ MAP
       "oga_geometry_precision" "4"
     END
   END
-  
+
   LAYER
     NAME "mn_counties"
     DATA "data/mn_counties"
@@ -197,6 +218,75 @@ MAP
       "gml_LASTMOD_type" "DateTime"
       "oga_featureid" "coun"
       "oga_queryable_items" "CTY_NAME,AREA,CTYONLY_,LASTMOD"
+      "oga_sortable_items" "LASTMOD"
+    END
+    VALIDATION
+      "coun" "^[0-9]{1,2}$" # 1 or 2-digit number
+    END
+    PROJECTION "+init=epsg:32615" END
+    TEMPLATE VOID
+  END
+
+  LAYER
+    NAME "mn_counties_no_queryables_and_sortables"
+    DATA "data/mn_counties"
+    TYPE POLYGON
+    STATUS OFF
+    METADATA
+      "oga_keywords" "boundary,Minnesota,counties" # falls back to wfs_keywordlist
+      "oga_description" "This is the standard Minnesota State County Boundary dataset."
+      "oga_title" "State of Minnesota County Boundaries"
+      "oga_srs" "EPSG:32615 EPSG:4326" # storageCrs is first in the list
+
+      "oga_links" "link1"
+      "oga_link1_href" "https://gisdata.mn.gov/dataset/bdry-counties-in-minnesota"
+      "oga_link1_title" "Layer in Minnesota Geocommons"
+
+      "gml_include_items" "CTY_NAME,AREA,PERIMETER,CTY_ABBR,CTYONLY_,LASTMOD" # also works with oga prefix
+      "gml_AREA_alias" "Area"
+      "gml_AREA_type" "Real"
+      "gml_perimeter_alias" "Perimiter"
+      "gml_perimeter_type" "Real"
+      "gml_CTY_NAME_alias" "Name"
+      "gml_CTY_ABBR_alias" "Code"
+      "gml_CTYONLY__type" "Integer"
+      "gml_LASTMOD_type" "DateTime"
+      "oga_featureid" "coun"
+    END
+    VALIDATION
+      "coun" "^[0-9]{1,2}$" # 1 or 2-digit number
+    END
+    PROJECTION "+init=epsg:32615" END
+    TEMPLATE VOID
+  END
+
+  LAYER
+    NAME "mn_counties_all_queryables_and_sortables"
+    DATA "data/mn_counties"
+    TYPE POLYGON
+    STATUS OFF
+    METADATA
+      "oga_keywords" "boundary,Minnesota,counties" # falls back to wfs_keywordlist
+      "oga_description" "This is the standard Minnesota State County Boundary dataset."
+      "oga_title" "State of Minnesota County Boundaries"
+      "oga_srs" "EPSG:32615 EPSG:4326" # storageCrs is first in the list
+
+      "oga_links" "link1"
+      "oga_link1_href" "https://gisdata.mn.gov/dataset/bdry-counties-in-minnesota"
+      "oga_link1_title" "Layer in Minnesota Geocommons"
+
+      "gml_include_items" "CTY_NAME,AREA,PERIMETER,CTY_ABBR,CTYONLY_,LASTMOD" # also works with oga prefix
+      "gml_AREA_alias" "Area"
+      "gml_AREA_type" "Real"
+      "gml_perimeter_alias" "Perimiter"
+      "gml_perimeter_type" "Real"
+      "gml_CTY_NAME_alias" "Name"
+      "gml_CTY_ABBR_alias" "Code"
+      "gml_CTYONLY__type" "Integer"
+      "gml_LASTMOD_type" "DateTime"
+      "oga_featureid" "coun"
+      "oga_queryable_items" "all"
+      "oga_sortable_items" "all"
     END
     VALIDATION
       "coun" "^[0-9]{1,2}$" # 1 or 2-digit number
