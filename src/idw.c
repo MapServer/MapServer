@@ -69,7 +69,7 @@ void msIdwProcessing(layerObj *layer,
   if (interpParamsProcessing) {
     interpParams->radius = atof(interpParamsProcessing);
   } else {
-    interpParams->radius = MAX(layer->map->width, layer->map->height);
+    interpParams->radius = MS_MAX(layer->map->width, layer->map->height);
   }
 
   interpParamsProcessing =
