@@ -1616,13 +1616,19 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string,
       paging_query = msStringConcatenate(paging_query, tmp);
       if (layer->maxfeatures >= 0) {
         msFree(tmp);
-        tmp = msIntToString(layer->startindex + layer->maxfeatures);
-        paging_query = msStringConcatenate(paging_query, " and [rownum] < ");
+        // startindex already has 1 added to it, so we need to subtract 1 here
+        // to get the correct last rownum value
+        // WFS requests add an additional +1 (extrafeature) to check if there
+        // are more features beyond the requested page
+        // the additional feature is removed from the response in
+        // msWFSRetrieveFeatures
+        tmp = msIntToString(layer->startindex + layer->maxfeatures - 1);
+        paging_query = msStringConcatenate(paging_query, " and [rownum] <= ");
         paging_query = msStringConcatenate(paging_query, tmp);
       }
     } else {
       tmp = msIntToString(layer->maxfeatures);
-      paging_query = msStringConcatenate(paging_query, "< ");
+      paging_query = msStringConcatenate(paging_query, "<= ");
       paging_query = msStringConcatenate(paging_query, tmp);
     }
     msFree(tmp);

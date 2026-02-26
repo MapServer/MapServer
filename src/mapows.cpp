@@ -1346,6 +1346,32 @@ int msUpdateGMLFieldMetadata(layerObj *layer, const char *field_name,
   return MS_TRUE;
 }
 
+void msOWSSetShapeCache(mapObj *map, const char *pszMetadataNamespaces) {
+  const char *pszFeaturesCacheCount = msOWSLookupMetadata(
+      &(map->web.metadata), pszMetadataNamespaces, "features_cache_count");
+  const char *pszFeaturesCacheSize = msOWSLookupMetadata(
+      &(map->web.metadata), pszMetadataNamespaces, "features_cache_size");
+  if (pszFeaturesCacheCount) {
+    map->query.cache_shapes = MS_TRUE;
+    map->query.max_cached_shape_count = atoi(pszFeaturesCacheCount);
+    if (map->debug >= MS_DEBUGLEVEL_V) {
+      msDebug("Caching up to %d shapes\n", map->query.max_cached_shape_count);
+    }
+  }
+
+  if (pszFeaturesCacheSize) {
+    map->query.cache_shapes = MS_TRUE;
+    map->query.max_cached_shape_ram_amount = atoi(pszFeaturesCacheSize);
+    if (strstr(pszFeaturesCacheSize, "mb") ||
+        strstr(pszFeaturesCacheSize, "MB"))
+      map->query.max_cached_shape_ram_amount *= 1024 * 1024;
+    if (map->debug >= MS_DEBUGLEVEL_V) {
+      msDebug("Caching up to %d bytes of shapes\n",
+              map->query.max_cached_shape_ram_amount);
+    }
+  }
+}
+
 #if defined(USE_WMS_SVR) || defined(USE_WFS_SVR) || defined(USE_WCS_SVR) ||    \
     defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
 
