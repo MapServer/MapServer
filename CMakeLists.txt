@@ -1049,6 +1049,9 @@ set(USE_GENERIC_MS_NINT 1)
 add_definitions(-D_XKEYCHECK_H=1)
 endif(WIN32)
 
+# Defines M_PI in particular
+add_definitions(-D_USE_MATH_DEFINES)
+
 
 #INSTALL(FILES mapserver-api.h ${PROJECT_BINARY_DIR}/mapserver-version.h DESTINATION include)
 if(USE_ORACLE_PLUGIN)
