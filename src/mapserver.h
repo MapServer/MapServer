@@ -3354,6 +3354,12 @@ MS_DLL_EXPORT int msValueToRange(styleObj *style, double fieldVal,
 MS_DLL_EXPORT int WARN_UNUSED msDrawMarkerSymbol(mapObj *map, imageObj *image,
                                                  pointObj *p, styleObj *style,
                                                  double scalefactor);
+
+int WARN_UNUSED msDrawMarkerSymbolInternal(mapObj *map, imageObj *image,
+                                           pointObj *p, styleObj *style,
+                                           double scalefactor,
+                                           bool adjustMarkerPos);
+
 MS_DLL_EXPORT int WARN_UNUSED msDrawLineSymbol(mapObj *map, imageObj *image,
                                                shapeObj *p, styleObj *style,
                                                double scalefactor);
