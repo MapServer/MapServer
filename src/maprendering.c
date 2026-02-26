@@ -899,6 +899,13 @@ int msDrawShadeSymbol(mapObj *map, imageObj *image, shapeObj *p,
 
 int msDrawMarkerSymbol(mapObj *map, imageObj *image, pointObj *p,
                        styleObj *style, double scalefactor) {
+  return msDrawMarkerSymbolInternal(map, image, p, style, scalefactor,
+                                    /* adjustMarkerPos =*/true);
+}
+
+int msDrawMarkerSymbolInternal(mapObj *map, imageObj *image, pointObj *p,
+                               styleObj *style, double scalefactor,
+                               bool adjustMarkerPos) {
   int ret = MS_SUCCESS;
   if (!p)
     return MS_SUCCESS;
@@ -937,7 +944,8 @@ int msDrawMarkerSymbol(mapObj *map, imageObj *image, pointObj *p,
       p_x = p->x;
       p_y = p->y;
 
-      if (MS_UNLIKELY(MS_FAILURE == msAdjustMarkerPos(map, style, symbol, &p_x,
+      if (adjustMarkerPos &&
+          MS_UNLIKELY(MS_FAILURE == msAdjustMarkerPos(map, style, symbol, &p_x,
                                                       &p_y, scalefactor,
                                                       s.rotation))) {
         return MS_FAILURE;
