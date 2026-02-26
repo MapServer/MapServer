@@ -54,9 +54,6 @@
 **
 */
 
-/* required for MSVC */
-#define _USE_MATH_DEFINES
-
 #include <assert.h>
 #include <string.h>
 #include <math.h>
