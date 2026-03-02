@@ -246,6 +246,12 @@ typedef struct msODBCconn_t {
   SQLHDBC hdbc;            /* ODBC HDBC */
   SQLHSTMT hstmt;          /* ODBC HSTMNT */
   char errorMessage[1024]; /* Last error message if any */
+
+  /* cached column info using sql+connection as a key */
+  char *cache_sql; /* the SELECT top 0 sql this cache is valid for */
+  char **items;
+  SQLSMALLINT *itemtypes;
+  int numitems;
 } msODBCconn;
 
 typedef struct ms_MSSQL2008_layer_info_t {
@@ -254,7 +260,7 @@ typedef struct ms_MSSQL2008_layer_info_t {
   char *geom_column; /* name of the actual geometry column parsed from the
                         LAYER's DATA field */
   char *geom_column_type; /* the type of the geometry column */
-  char *geom_table; /* the table name or sub-select decalred in the LAYER's DATA
+  char *geom_table; /* the table name or sub-select declared in the LAYER's DATA
                        field */
   char *urid_name;  /* name of user-specified unique identifier or OID */
   char *
@@ -717,10 +723,21 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name,
 /* Close connection and handles */
 static void msMSSQL2008CloseConnection(void *conn_handle) {
   msODBCconn *conn = (msODBCconn *)conn_handle;
-
   if (!conn) {
     return;
   }
+
+  /* free item cache */
+  msFree(conn->cache_sql);
+  conn->cache_sql = NULL;
+
+  if (conn->items) {
+    msFreeCharArray(conn->items, conn->numitems);
+    conn->items = NULL;
+  }
+  msFree(conn->itemtypes);
+  conn->itemtypes = NULL;
+  conn->numitems = 0;
 
   if (conn->hstmt) {
     SQLFreeHandle(SQL_HANDLE_STMT, conn->hstmt);
@@ -732,7 +749,6 @@ static void msMSSQL2008CloseConnection(void *conn_handle) {
   if (conn->henv) {
     SQLFreeHandle(SQL_HANDLE_ENV, conn->henv);
   }
-
   msFree(conn);
 }
 
@@ -1521,10 +1537,39 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string,
 
   /* adding items to the select list */
   for (t = 0; t < layer->numitems; t++) {
+    int sqlType = (layerinfo->itemtypes != NULL) ? layerinfo->itemtypes[t] : 0;
+    int use256 = 0;
+
+    /* Definitely small types: numeric, bit, date/time */
+    switch (sqlType) {
+    case SQL_INTEGER:
+    case SQL_SMALLINT:
+    case SQL_TINYINT:
+    case SQL_BIGINT:
+    case SQL_DECIMAL:
+    case SQL_NUMERIC:
+    case SQL_FLOAT:
+    case SQL_REAL:
+    case SQL_DOUBLE:
+    case SQL_BIT:
+    case SQL_GUID:
+    case SQL_TYPE_DATE:
+    case SQL_TYPE_TIME:
+    case SQL_TYPE_TIMESTAMP:
+      use256 = 1;
+      break;
+      /* Everything else is potentially large, use MAX */
+    }
 #if defined(_WIN32) && defined(USE_ICONV)
-    query = msStringConcatenate(query, "convert(nvarchar(max), [");
+    if (use256)
+      query = msStringConcatenate(query, "convert(nvarchar(256), [");
+    else
+      query = msStringConcatenate(query, "convert(nvarchar(max), [");
 #else
-    query = msStringConcatenate(query, "convert(varchar(max), [");
+    if (use256)
+      query = msStringConcatenate(query, "convert(varchar(256), [");
+    else
+      query = msStringConcatenate(query, "convert(varchar(max), [");
 #endif
     query = msStringConcatenate(query, layer->items[t]);
     query = msStringConcatenate(query, "]) '");
@@ -2842,12 +2887,31 @@ int msMSSQL2008LayerGetItems(layerObj *layer) {
 
   snprintf(sql, sqlSize, "SELECT top 0 * FROM %s", layerinfo->geom_table);
 
+  /* check if this exact sql is cached on the connection */
+  if (layerinfo->conn->numitems > 0 && layerinfo->conn->cache_sql != NULL &&
+      strcmp(layerinfo->conn->cache_sql, sql) == 0) {
+    if (layer->debug) {
+      msDebug("msMSSQL2008LayerGetItems: connection cache hit for sql: %s\n",
+              sql);
+    }
+    msFree(sql);
+
+    layer->numitems = layerinfo->conn->numitems;
+    layer->items = msSmallMalloc(sizeof(char *) * (layer->numitems + 1));
+    layerinfo->itemtypes =
+        msSmallMalloc(sizeof(SQLSMALLINT) * (layer->numitems + 1));
+    for (int i = 0; i < layer->numitems; i++) {
+      layer->items[i] = msStrdup(layerinfo->conn->items[i]);
+      layerinfo->itemtypes[i] = layerinfo->conn->itemtypes[i];
+    }
+    return msMSSQL2008LayerInitItemInfo(layer);
+  }
+
+  /* cache miss - execute the query */
   if (!executeSQL(layerinfo->conn, sql)) {
     msFree(sql);
     return MS_FAILURE;
   }
-
-  msFree(sql);
 
   SQLNumResultCols(layerinfo->conn->hstmt, &cols);
 
@@ -2889,12 +2953,36 @@ int msMSSQL2008LayerGetItems(layerObj *layer) {
   }
 
   if (!found_geom) {
+    msFree(sql);
     msSetError(MS_QUERYERR,
                "msMSSQL2008LayerGetItems: tried to find the geometry column in "
                "the results from the database, but couldn't find it.  Is it "
                "miss-capitialized? '%s'",
                "msMSSQL2008LayerGetItems()", layerinfo->geom_column);
     return MS_FAILURE;
+  }
+
+  /* populate connection cache */
+  msFree(layerinfo->conn->cache_sql);
+  layerinfo->conn->cache_sql =
+      sql; /* transfer ownership, so don't msFree sql */
+
+  if (layerinfo->conn->items) {
+    msFreeCharArray(layerinfo->conn->items, layerinfo->conn->numitems);
+  }
+  if (layerinfo->conn->itemtypes) {
+    msFree(layerinfo->conn->itemtypes);
+  }
+
+  layerinfo->conn->numitems = layer->numitems;
+  layerinfo->conn->items =
+      msSmallMalloc(sizeof(char *) * (layer->numitems + 1));
+  layerinfo->conn->itemtypes =
+      msSmallMalloc(sizeof(SQLSMALLINT) * (layer->numitems + 1));
+
+  for (int i = 0; i < layer->numitems; i++) {
+    layerinfo->conn->items[i] = msStrdup(layer->items[i]);
+    layerinfo->conn->itemtypes[i] = layerinfo->itemtypes[i];
   }
 
   return msMSSQL2008LayerInitItemInfo(layer);
