@@ -42,6 +42,20 @@ MAP
     TEMPLATE VOID
   END
 
+  # fallback_to_map_extent can be overidden at the
+  # LAYER level, so in this case it will be calculated from source
+  LAYER
+    NAME "mn_major_rivers2"
+    DATA "data/mn_major_rivers"
+    TYPE LINE
+    STATUS OFF
+    METADATA
+        "oga_description" "mn_major_rivers2"
+        "oga_fallback_to_map_extent" "false"
+    END
+    TEMPLATE VOID
+  END
+
   # LAYER EXTENT will be used when available
   LAYER
     NAME "mn_population_centers"

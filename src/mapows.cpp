@@ -2786,11 +2786,15 @@ int msOWSGetLayerExtent(mapObj *map, layerObj *lp, const char *namespaces,
     return MS_SUCCESS;
   }
 
-  // check if we can use the MAP EXTENT rather than calculating
-  // a LAYER extent by querying its datasource using msLayerGetExtent
-
-  const char *pszUseMapExtent = msOWSLookupMetadata(
-      &(map->web.metadata), namespaces, "fallback_to_map_extent");
+  // Check if we can use the MAP EXTENT rather than calculating
+  // a LAYER extent by querying its datasource using msLayerGetExtent.
+  // First check the LAYER metadata, then the MAP metadata
+  const char *pszUseMapExtent = msOWSLookupMetadata(&(lp->metadata), namespaces,
+                                                    "fallback_to_map_extent");
+  if (!pszUseMapExtent) {
+    pszUseMapExtent = msOWSLookupMetadata(&(map->web.metadata), namespaces,
+                                          "fallback_to_map_extent");
+  }
 
   if (pszUseMapExtent && CSLTestBoolean(pszUseMapExtent) &&
       MS_VALID_EXTENT(map->extent)) {
