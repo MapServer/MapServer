@@ -483,11 +483,18 @@ static FilterEncodingNode *FLTGetTopBBOX(FilterEncodingNode *psNode) {
 /*  they should not issue a spatial filter.                             */
 /************************************************************************/
 
-int FLTLayerSetInvalidRectIfSupported(layerObj *lp, rectObj *rect,
+int FLTLayerSetInvalidRectIfSupported(mapObj *map, layerObj *lp, rectObj *rect,
                                       const char *metadata_namespaces) {
+  // Check LAYER metadata first, then fall back to MAP WEB metadata
   const char *pszUseDefaultExtent =
       msOWSLookupMetadata(&(lp->metadata), metadata_namespaces,
                           "use_default_extent_for_getfeature");
+  if (!pszUseDefaultExtent) {
+    pszUseDefaultExtent =
+        msOWSLookupMetadata(&(map->web.metadata), metadata_namespaces,
+                            "use_default_extent_for_getfeature");
+  }
+
   if (pszUseDefaultExtent && !CSLTestBoolean(pszUseDefaultExtent) &&
       (lp->connectiontype == MS_OGR || lp->connectiontype == MS_POSTGIS ||
        ((lp->connectiontype == MS_PLUGIN) &&
@@ -515,8 +522,10 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
     FilterEncodingNode *psTopBBOX;
     rectObj rect = map->extent;
 
-    FLTLayerSetInvalidRectIfSupported(lp, &rect, "OF");
-
+    // if this is a WMS request do not remove any BBOXes
+    if (msOWSLookupMetadata(&(lp->metadata), "G", "wmsfilter_flag") == NULL) {
+      FLTLayerSetInvalidRectIfSupported(map, lp, &rect, "OF");
+    }
     psTopBBOX = FLTGetTopBBOX(psNode);
     if (psTopBBOX) {
       int can_remove_expression = MS_TRUE;
