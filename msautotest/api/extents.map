@@ -1,0 +1,73 @@
+# RUN_PARMS: extents_collections.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections" "QUERY_STRING=f=json" > [RESULT_DEMIME]
+
+MAP
+  EXTENT 190012.242200 4816648.737800 762254.477900 5472427.737000
+  SIZE 800 800
+  PROJECTION "+init=epsg:26915" END
+  UNITS METERS
+
+  WEB
+    METADATA
+      "oga_enable_request" "OGCAPI"
+      "oga_title"          "OGC API Extent Test"
+      "oga_onlineresource" "http://localhost/cgi-bin/mapserv/extents/ogcapi"
+      "oga_fallback_to_map_extent" "true"
+    END
+  END
+
+  # layer with no extent and a PROJECTION different from the MAP
+  # will use the (reprojected) MAP projection for its extent
+  LAYER
+    NAME "mn_counties"
+    DATA "data/mn_counties"
+    TYPE POLYGON
+    STATUS OFF
+    METADATA
+        "oga_description" "mn_counties"
+    END
+    PROJECTION "+init=epsg:32615" END
+    TEMPLATE VOID
+  END
+
+  # layer with no extent and no PROJECTION
+  # will use the MAP projection for its extent
+  LAYER
+    NAME "mn_major_rivers"
+    DATA "data/mn_major_rivers"
+    TYPE LINE
+    STATUS OFF
+    METADATA
+        "oga_description" "mn_major_rivers"
+    END
+    TEMPLATE VOID
+  END
+
+  # fallback_to_map_extent can be overidden at the
+  # LAYER level, so in this case it will be calculated from source
+  LAYER
+    NAME "mn_major_rivers2"
+    DATA "data/mn_major_rivers"
+    TYPE LINE
+    STATUS OFF
+    METADATA
+        "oga_description" "mn_major_rivers2"
+        "oga_fallback_to_map_extent" "false"
+    END
+    TEMPLATE VOID
+  END
+
+  # LAYER EXTENT will be used when available
+  LAYER
+    NAME "mn_population_centers"
+    EXTENT 190832.625000 4816672.500000 747463.375000 5468044.853100
+    DATA "data/mn_population_centers"
+    TYPE POINT
+    STATUS OFF
+    METADATA
+        "oga_description" "mn_population_centers"
+    END
+    PROJECTION "+init=epsg:26915" END
+    TEMPLATE VOID
+  END
+
+END
