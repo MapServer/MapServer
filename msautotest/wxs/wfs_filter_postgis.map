@@ -187,6 +187,7 @@ WEB
     "wfs_srs"		   "EPSG:4326 EPSG:4269"
     "ows_schemas_location" "http://ogc.dmsolutions.ca"
     "ows_enable_request" "*" 
+    "wfs_use_default_extent_for_getfeature" "false"
   END
 END
 
@@ -209,6 +210,7 @@ LAYER
     "wfs_title"         "province"
     "wfs_description"   "province"
     "gml_include_items" "all"
+    "wfs_use_default_extent_for_getfeature" "true"
   END
   TYPE POLYGON
   STATUS ON
@@ -236,6 +238,7 @@ LAYER
     "wfs_title"         "popplace"
     "wfs_description"   "Cities"
     "gml_include_items" "all"
+    "wfs_use_default_extent_for_getfeature" "true"
    END
   TYPE POINT
   STATUS ON
@@ -277,6 +280,7 @@ LAYER
     "wfs_title"         "province_with_filter_item"
     "wfs_description"   "province_with_filter_item"
     "gml_include_items" "all"
+    "wfs_use_default_extent_for_getfeature" "true"
   END
   TYPE POLYGON
   STATUS ON
