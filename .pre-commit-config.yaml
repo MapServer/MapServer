@@ -28,5 +28,7 @@ repos:
                 src/mapparser.c |
                 src/mapparser.h |
                 src/dejavu-sans-condensed.h |
+                src/cql2textparser.cpp|
+                src/cql2textparser.hpp|
                 src/uthash.h
               )

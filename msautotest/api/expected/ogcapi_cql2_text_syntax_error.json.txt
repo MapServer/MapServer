@@ -1,0 +1,4 @@
+Content-Type: application/json
+Status: 400
+
+{"code":"InvalidParameterValue","description":"Cannot parse filter: CQL2Text Expression Parsing Error: syntax error, unexpected end of string. Occurred around :\nArea=\n     ^"}

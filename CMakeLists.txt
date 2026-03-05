@@ -344,7 +344,8 @@ src/mapgeomtransform.c src/mapogroutput.cpp src/mapwfslayer.c src/mapagg.cpp src
 src/mapgeomutil.cpp src/mapkmlrenderer.cpp src/fontcache.c src/textlayout.c src/maputfgrid.cpp
 src/mapogr.cpp src/mapcontour.c src/mapsmoothing.c src/mapv8.cpp ${REGEX_SOURCES} src/kerneldensity.c
 src/idw.c src/interpolation.c src/mapflatgeobuf.c src/mapcompositingfilter.c src/mapmvt.c src/mapiconv.c
-src/mapgraph.cpp src/mapserv-config.cpp src/maprasterlabel.cpp src/mapserv-index.cpp)
+src/mapgraph.cpp src/mapserv-config.cpp src/maprasterlabel.cpp src/mapserv-index.cpp
+src/cql2.cpp src/cql2json.cpp src/cql2text.cpp src/cql2textparser.cpp)
 
 set(mapserver_HEADERS
 src/cgiutil.h src/dejavu-sans-condensed.h src/dxfcolor.h src/fontcache.h src/hittest.h src/mapagg.h
@@ -1035,6 +1036,38 @@ message(STATUS "")
 message(STATUS "PROJECT_BINARY_DIR is set to ${PROJECT_BINARY_DIR}")
 message(STATUS "Will install files to ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "Will install libraries to ${INSTALL_LIB_DIR}")
+
+###########################################################
+# Targets to refresh cql2textparser.cpp
+###########################################################
+
+# Those targets need to be run manually each time cql2textparser.y
+# is modified.
+# We could of course run them automatically, but that would make building
+# harder.
+
+# This target checks that cql2textparser.y md5sum has not changed
+# If it has, then it should be updated and the generate_cql2text_parser target
+# should be manually run
+add_custom_target(check_cql2text_parser_md5 ALL
+                  COMMAND ${CMAKE_COMMAND}
+                      "-DIN_FILE=cql2textparser.y"
+                      "-DTARGET=generate_cql2text_parser"
+                      "-DEXPECTED_MD5SUM=5772933b81f74a3a9e25b85b94221764"
+                      "-DFILENAME_CMAKE=${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
+                      -P "${PROJECT_SOURCE_DIR}/src/check_md5sum.cmake"
+                  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src"
+                  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/cql2textparser.y"
+                  VERBATIM)
+
+find_package(BISON)
+add_custom_target(generate_cql2text_parser
+                  COMMAND ${CMAKE_COMMAND}
+                      "-DBISON_FOUND=${BISON_FOUND}"
+                      "-DBISON_EXECUTABLE=${BISON_EXECUTABLE}"
+                      -P "${CMAKE_CURRENT_SOURCE_DIR}/src/generate_cql2text_parser.cmake"
+                  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src"
+                  VERBATIM)
 
 
 include_directories("${PROJECT_BINARY_DIR}")

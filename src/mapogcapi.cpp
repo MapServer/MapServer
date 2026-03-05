@@ -31,6 +31,8 @@
 #include "mapgml.h"
 #include "maptime.h"
 #include "mapogcfilter.h"
+#include "cql2json.h"
+#include "cql2text.h"
 
 #include "cpl_conv.h"
 
@@ -262,6 +264,14 @@ static const char *getItemAliasOrName(const layerObj *layer, const char *item) {
   return item;
 }
 
+static const char *getGeometryName(const layerObj *layer) {
+  const char *geometryName =
+      msOWSLookupMetadata(&(layer->metadata), "A", "geometry_name");
+  if (!geometryName)
+    geometryName = "geom";
+  return geometryName;
+}
+
 /** Return the list of queryable items */
 static std::vector<std::string> msOOGCAPIGetLayerQueryables(
     layerObj *layer, const std::set<std::string> &reservedParams, bool &error) {
@@ -391,8 +401,8 @@ static std::string getStorageCrs(layerObj *layer) {
 }
 
 /*
-** Returns the bbox in output CRS (CRS84 by default, or "crs" request parameter
-*when specified)
+** Returns the bbox in output CRS (CRS84 by default, or "bbox-crs" request
+*parameter when specified)
 */
 static bool getBbox(mapObj *map, layerObj *layer, cgiRequestObj *request,
                     rectObj *bbox, projectionObj *outputProj) {
@@ -1315,6 +1325,20 @@ static int processConformanceRequest(mapObj *map, cgiRequestObj *request,
            "http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/queryables",
            "http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/"
            "queryables-query-parameters",
+           "http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/filter",
+           "http://www.opengis.net/spec/cql2/1.0/conf/cql2-text",
+           "http://www.opengis.net/spec/cql2/1.0/conf/cql2-json",
+           "http://www.opengis.net/spec/cql2/1.0/conf/basic-cql2",
+           "http://www.opengis.net/spec/cql2/1.0/conf/"
+           "advanced-comparison-operators",
+           "http://www.opengis.net/spec/cql2/1.0/conf/"
+           "case-insensitive-comparison",
+           "http://www.opengis.net/spec/cql2/1.0/conf/basic-spatial-functions",
+           "http://www.opengis.net/spec/cql2/1.0/conf/"
+           "basic-spatial-functions-plus",
+           "http://www.opengis.net/spec/cql2/1.0/conf/spatial-functions",
+           "http://www.opengis.net/spec/cql2/1.0/conf/property-property",
+           "http://www.opengis.net/spec/cql2/1.0/conf/arithmetic",
            "http://www.opengis.net/spec/ogcapi-features-5/1.0/conf/queryables",
        }}};
 
@@ -1402,6 +1426,9 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
   allowedParameters.insert("limit");
   allowedParameters.insert("offset");
   allowedParameters.insert("crs");
+  allowedParameters.insert("filter");
+  allowedParameters.insert("filter-lang");
+  allowedParameters.insert("filter-crs");
 
   bool error = false;
   const std::vector<std::string> queryableItems =
@@ -1417,6 +1444,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
     return MS_SUCCESS;
   }
 
+  // Simple filtering like "field_name=value"
   std::string filter;
   std::string query_kvp;
   if (!queryableItems.empty()) {
@@ -1451,6 +1479,89 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
         msFree(encoded);
       }
     }
+  }
+
+  const char *filterParam = getRequestParameter(request, "filter");
+  const char *filterLang = getRequestParameter(request, "filter-lang");
+  if (filterParam) {
+    if (filterLang && strcmp(filterLang, "cql2-text") != 0 &&
+        strcmp(filterLang, "cql2-json") != 0) {
+      msOGCAPIOutputError(
+          OGCAPI_PARAM_ERROR,
+          "Only filter-lang=cql2-text or filter-lang=cql2-json is handled");
+      return MS_SUCCESS;
+    }
+
+    std::string osErrorMsg;
+    auto cql2 = (filterLang && strcmp(filterLang, "cql2-json") == 0)
+                    ? CQL2JSONParse(filterParam, osErrorMsg)
+                    : CQL2TextParse(filterParam, osErrorMsg);
+    if (!cql2) {
+      msOGCAPIOutputError(OGCAPI_PARAM_ERROR,
+                          "Cannot parse filter: " + osErrorMsg);
+      return MS_SUCCESS;
+    }
+
+    std::string filterCrs = "EPSG:4326";
+    bool axisInverted =
+        false; // because above EPSG:4326 is meant to be OGC:CRS84 actually
+    const char *filterCrsParam = getRequestParameter(request, "filter-crs");
+    if (filterCrsParam) {
+      bool isExpectedCrs = false;
+      for (const auto &crsItem : getCrsList(map, layer)) {
+        if (filterCrsParam == crsItem.get<std::string>()) {
+          isExpectedCrs = true;
+          break;
+        }
+      }
+      if (!isExpectedCrs) {
+        msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Bad value for filter-crs.");
+        return MS_SUCCESS;
+      }
+      if (std::string(filterCrsParam) != CRS84_URL) {
+        if (std::string(filterCrsParam).find(EPSG_PREFIX_URL) == 0) {
+          const char *code = filterCrsParam + strlen(EPSG_PREFIX_URL);
+          filterCrs = std::string("EPSG:") + code;
+          axisInverted = msIsAxisInverted(atoi(code));
+        }
+      }
+    }
+
+    const char *geometryName = getGeometryName(layer);
+    const std::string filterFromCQL =
+        cql2->ToMapServerFilter(layer, queryableItems, geometryName, filterCrs,
+                                axisInverted, osErrorMsg);
+    if (!osErrorMsg.empty()) {
+      msOGCAPIOutputError(
+          OGCAPI_PARAM_ERROR,
+          "Cannot translate CQL2 filter to MapServer expression: " +
+              osErrorMsg);
+      return MS_SUCCESS;
+    }
+    if (filter.empty())
+      filter = filterFromCQL;
+    else {
+      filter = "(" + filter + ") AND (" + filterFromCQL + ")";
+    }
+
+    query_kvp += "&filter=";
+    char *encoded = msEncodeUrl(filterParam);
+    query_kvp += encoded;
+    msFree(encoded);
+    if (filterLang) {
+      query_kvp += "&filter-lang=";
+      query_kvp += filterLang;
+    }
+    if (filterCrsParam) {
+      query_kvp += "&filter-crs=";
+      encoded = msEncodeUrl(filterCrsParam);
+      query_kvp += encoded;
+      msFree(encoded);
+    }
+  }
+
+  if (!filter.empty()) {
+    msDebug("filter = %s\n", filter.c_str());
   }
 
   struct ReprojectionObjects {
@@ -1843,7 +1954,7 @@ getQueryableTypeAndFormat(const layerObj *layer, const std::string &item) {
                                  strcasecmp(pszType, "Long") == 0))
     type = "integer";
   else if (pszType != NULL && (strcasecmp(pszType, "Real") == 0))
-    type = "numeric";
+    type = "number";
   else if (pszType != NULL && (strcasecmp(pszType, "Boolean") == 0))
     type = "boolean";
 
@@ -1893,20 +2004,25 @@ static int processCollectionQueryablesRequest(mapObj *map,
       {"type", "object"},
       {"title", getCollectionTitle(layer)},
       {"description", getCollectionDescription(layer)},
-      {"properties",
-       {
-#ifdef to_enable_once_we_support_geometry_requests
-           {"shape",
-            {
-                {"title", "Geometry"},
-                {"description", "The geometry of the collection."},
-                {"x-ogc-role", "primary-geometry"},
-                {"format", "geometry-any"},
-            }},
-#endif
-       }},
+      {"properties", {}},
       {"additionalProperties", false},
   };
+
+  const char *geometryName = getGeometryName(layer);
+  if (geometryName[0]) {
+    const char *geometryFormat =
+        msOWSLookupMetadata(&(layer->metadata), "A", "geometry_format");
+    if (!geometryFormat)
+      geometryFormat = "geometry-any";
+
+    json j = {
+        {"title", geometryName},
+        {"description", "The geometry of the collection."},
+        {"x-ogc-role", "primary-geometry"},
+        {"format", geometryFormat},
+    };
+    response["properties"][geometryName] = j;
+  }
 
   for (const std::string &item : queryableItems) {
     json j;
@@ -2089,6 +2205,9 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
   const std::string oapif_part2_yaml_url = oapif_schema_base_url +
                                            "/ogcapi/features/part2/1.0/openapi/"
                                            "ogcapi-features-2.yaml";
+  const std::string oapif_part3_yaml_url = oapif_schema_base_url +
+                                           "/ogcapi/features/part3/1.0/openapi/"
+                                           "ogcapi-features-3.yaml";
 
   json paths;
 
@@ -2218,6 +2337,12 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
              {{"$ref", oapif_part2_yaml_url + "#/components/parameters/crs"}},
              {{"$ref", "#/components/parameters/offset"}},
              {{"$ref", "#/components/parameters/vendorSpecificParameters"}},
+             {{"$ref",
+               oapif_part3_yaml_url + "#/components/parameters/filter"}},
+             {{"$ref",
+               oapif_part3_yaml_url + "#/components/parameters/filter-lang"}},
+             {{"$ref",
+               oapif_part3_yaml_url + "#/components/parameters/filter-crs"}},
          }},
         {"responses",
          {{"200",
@@ -2256,6 +2381,9 @@ static int processApiRequest(mapObj *map, cgiRequestObj *request,
     reservedParams.insert("limit");
     reservedParams.insert("offset");
     reservedParams.insert("crs");
+    reservedParams.insert("filter");
+    reservedParams.insert("filter-lang");
+    reservedParams.insert("filter-crs");
     const std::vector<std::string> queryableItems =
         msOOGCAPIGetLayerQueryables(layer, reservedParams, error);
     for (const auto &item : queryableItems) {
