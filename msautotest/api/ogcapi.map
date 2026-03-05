@@ -78,6 +78,8 @@
 # RUN_PARMS: ogcapi_cql2_text_not_a_queryable.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=unknown=0" > [RESULT]
 # RUN_PARMS: ogcapi_cql2_text_timestamp.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=LASTMOD=TIMESTAMP('2003-01-01T01:10:00Z')" > [RESULT]
 # RUN_PARMS: ogcapi_cql2_text_double_constant.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=Area=8167237870.91888" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_true_or_true.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&Name=Rice&filter=true or true&limit=1" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_true_equal_true.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&Name=Rice&filter=true=true&limit=1" > [RESULT]
 
 # RUN_PARMS: ogcapi_cql2_text_and_query_param_filter.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&Name=Rice&filter=true" > [RESULT]
 # RUN_PARMS: ogcapi_cql2_text_and_query_param_filter2.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&Name=Rice&filter=false" > [RESULT]

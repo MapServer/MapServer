@@ -66,21 +66,20 @@ extern int cql2textdebug;
     CQL2_TOK_DIV = 267,            /* "DIV"  */
     CQL2_TOK_IS = 268,             /* "IS"  */
     CQL2_TOK_NULL = 269,           /* "NULL"  */
-    CQL2_TOK_TRUE = 270,           /* "true"  */
-    CQL2_TOK_FALSE = 271,          /* "false"  */
-    CQL2_TOK_CASEI = 272,          /* "CASEI"  */
-    CQL2_TOK_S_INTERSECTS = 273,   /* "S_INTERSECTS"  */
-    CQL2_TOK_S_EQUALS = 274,       /* "S_EQUALS"  */
-    CQL2_TOK_S_DISJOINT = 275,     /* "S_DISJOINT"  */
-    CQL2_TOK_S_TOUCHES = 276,      /* "S_TOUCHES"  */
-    CQL2_TOK_S_WITHIN = 277,       /* "S_WITHIN"  */
-    CQL2_TOK_S_OVERLAPS = 278,     /* "S_OVERLAPS"  */
-    CQL2_TOK_S_CROSSES = 279,      /* "S_CROSSES"  */
-    CQL2_TOK_S_CONTAINS = 280,     /* "S_CONTAINS"  */
-    CQL2_TOK_BETWEEN = 281,        /* CQL2_TOK_BETWEEN  */
-    CQL2_TOK_IN = 282,             /* CQL2_TOK_IN  */
-    CQL2_TOK_LIKE = 283,           /* CQL2_TOK_LIKE  */
-    CQL2_TOK_UMINUS = 284          /* CQL2_TOK_UMINUS  */
+    CQL2_TOK_BOOLEAN_LITERAL = 270, /* "true/false"  */
+    CQL2_TOK_CASEI = 271,          /* "CASEI"  */
+    CQL2_TOK_S_INTERSECTS = 272,   /* "S_INTERSECTS"  */
+    CQL2_TOK_S_EQUALS = 273,       /* "S_EQUALS"  */
+    CQL2_TOK_S_DISJOINT = 274,     /* "S_DISJOINT"  */
+    CQL2_TOK_S_TOUCHES = 275,      /* "S_TOUCHES"  */
+    CQL2_TOK_S_WITHIN = 276,       /* "S_WITHIN"  */
+    CQL2_TOK_S_OVERLAPS = 277,     /* "S_OVERLAPS"  */
+    CQL2_TOK_S_CROSSES = 278,      /* "S_CROSSES"  */
+    CQL2_TOK_S_CONTAINS = 279,     /* "S_CONTAINS"  */
+    CQL2_TOK_BETWEEN = 280,        /* CQL2_TOK_BETWEEN  */
+    CQL2_TOK_IN = 281,             /* CQL2_TOK_IN  */
+    CQL2_TOK_LIKE = 282,           /* CQL2_TOK_LIKE  */
+    CQL2_TOK_UMINUS = 283          /* CQL2_TOK_UMINUS  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif

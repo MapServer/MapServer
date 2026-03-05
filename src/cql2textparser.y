@@ -52,8 +52,7 @@
 %token CQL2_TOK_IS                  "IS"
 %token CQL2_TOK_NULL                "NULL"
 
-%token CQL2_TOK_TRUE                "true"
-%token CQL2_TOK_FALSE               "false"
+%token CQL2_TOK_BOOLEAN_LITERAL     "true/false"
 
 %token CQL2_TOK_CASEI               "CASEI"
 
@@ -77,9 +76,9 @@
 %left CQL2_TOK_UMINUS
 
 /* Any grammar rule that does $$ = must be listed afterwards */
-/* as well as CQL2_TOK_INTEGER_NUMBER CQL2_TOK_DOUBLE_NUMBER CQL2_TOK_STRING CQL2_TOK_IDENTIFIER that are allocated by cql2textlex(), and identifier */
-%destructor { delete $$; } CQL2_TOK_INTEGER_NUMBER CQL2_TOK_DOUBLE_NUMBER CQL2_TOK_STRING CQL2_TOK_IDENTIFIER CQL2_TOK_WKT
-%destructor { delete $$; } boolean_expr value_expr value_expr_list
+/* as well as CQL2_TOK_INTEGER_NUMBER CQL2_TOK_DOUBLE_NUMBER CQL2_TOK_STRING CQL2_TOK_IDENTIFIER CQL2_TOK_BOOLEAN_LITERAL that are allocated by cql2textlex(), and identifier */
+%destructor { delete $$; } CQL2_TOK_INTEGER_NUMBER CQL2_TOK_DOUBLE_NUMBER CQL2_TOK_STRING CQL2_TOK_IDENTIFIER CQL2_TOK_WKT CQL2_TOK_BOOLEAN_LITERAL
+%destructor { delete $$; } boolean_expr value_expr_or_boolean_literal value_expr value_expr_list
 
 %%
 
@@ -125,7 +124,7 @@ boolean_expr:
             }
         }
 
-    | value_expr '=' value_expr
+    | value_expr_or_boolean_literal '=' value_expr_or_boolean_literal
         {
             $$ = new cql2_expr_node( CQL2_EQ );
             $$->PushSubExpression( $1 );
@@ -151,7 +150,20 @@ boolean_expr:
             }
         }
 
-    | value_expr '<' '>' value_expr
+    | value_expr '<' '>' value_expr_or_boolean_literal
+        {
+            $$ = new cql2_expr_node( CQL2_NE );
+            $$->PushSubExpression( $1 );
+            $$->PushSubExpression( $4 );
+            if( $$->HasReachedMaxDepth() )
+            {
+                yyerror (context, "Maximum expression depth reached");
+                delete $$;
+                YYERROR;
+            }
+        }
+
+    | CQL2_TOK_BOOLEAN_LITERAL '<' '>' value_expr_or_boolean_literal
         {
             $$ = new cql2_expr_node( CQL2_NE );
             $$->PushSubExpression( $1 );
@@ -486,14 +498,9 @@ boolean_expr:
             $$ = $2;
         }
 
-    | CQL2_TOK_TRUE
+    | CQL2_TOK_BOOLEAN_LITERAL
         {
-            $$ = new cql2_expr_node( true );
-        }
-
-    | CQL2_TOK_FALSE
-        {
-            $$ = new cql2_expr_node( false );
+            $$ = $1;
         }
 
 value_expr_list:
@@ -521,6 +528,14 @@ value_expr_list:
             }
         }
 
+value_expr_or_boolean_literal:
+
+    value_expr
+
+    | CQL2_TOK_BOOLEAN_LITERAL
+        {
+            $$ = $1;
+        }
 
 value_expr:
     CQL2_TOK_INTEGER_NUMBER

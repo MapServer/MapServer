@@ -195,11 +195,13 @@ int cql2textlex(cql2_expr_node **ppNode, cql2text_parse_context *context) {
 
     context->pszNext = pszNext;
 
-    if (osToken == "true")
-      nReturn = CQL2_TOK_TRUE;
-    else if (osToken == "false")
-      nReturn = CQL2_TOK_FALSE;
-    else if (EQUAL(osToken.c_str(), "OR"))
+    if (osToken == "true") {
+      *ppNode = new cql2_expr_node(true);
+      nReturn = CQL2_TOK_BOOLEAN_LITERAL;
+    } else if (osToken == "false") {
+      *ppNode = new cql2_expr_node(false);
+      nReturn = CQL2_TOK_BOOLEAN_LITERAL;
+    } else if (EQUAL(osToken.c_str(), "OR"))
       nReturn = CQL2_TOK_OR;
     else if (EQUAL(osToken.c_str(), "AND"))
       nReturn = CQL2_TOK_AND;

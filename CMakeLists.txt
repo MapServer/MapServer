@@ -1054,7 +1054,7 @@ add_custom_target(check_cql2text_parser_md5 ALL
                   COMMAND ${CMAKE_COMMAND}
                       "-DIN_FILE=cql2textparser.y"
                       "-DTARGET=generate_cql2text_parser"
-                      "-DEXPECTED_MD5SUM=d5deb2cb184d90c69e923f10204e3f99"
+                      "-DEXPECTED_MD5SUM=5772933b81f74a3a9e25b85b94221764"
                       "-DFILENAME_CMAKE=${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
                       -P "${PROJECT_SOURCE_DIR}/src/check_md5sum.cmake"
                   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src"
