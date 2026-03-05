@@ -48,6 +48,8 @@
 
 #include <map>
 
+#define OGC_CRS_PREFIX "http://www.opengis.net/def/crs/"
+
 /*
 ** msOWSInitRequestObj() initializes an owsRequestObj; i.e: sets
 ** all internal pointers to NULL.
@@ -1135,24 +1137,45 @@ void msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata,
     return;
   } else if (proj && proj->numargs > 0 &&
              (value = strstr(proj->args[0], "init=epsg:")) != NULL) {
+    /* Legacy PROJ 4 init= syntax, retained for backwards compatibility */
     *epsgCode = static_cast<char *>(msSmallMalloc(
         (strlen("EPSG:") + strlen(value + 10) + 1) * sizeof(char)));
-    sprintf(*epsgCode, "EPSG:%s", value + 10);
+    snprintf(*epsgCode, strlen("EPSG:") + strlen(value + 10) + 1, "EPSG:%s",
+             value + 10);
     return;
   } else if (proj && proj->numargs > 0 &&
              (value = strstr(proj->args[0], "init=crs:")) != NULL) {
+    /* Legacy PROJ 4 init= syntax, retained for backwards compatibility */
     *epsgCode = static_cast<char *>(
         msSmallMalloc((strlen("CRS:") + strlen(value + 9) + 1) * sizeof(char)));
-    sprintf(*epsgCode, "CRS:%s", value + 9);
+    snprintf(*epsgCode, strlen("CRS:") + strlen(value + 9) + 1, "CRS:%s",
+             value + 9);
     return;
   } else if (proj && proj->numargs > 0 &&
              (strncasecmp(proj->args[0], "AUTO:", 5) == 0 ||
               strncasecmp(proj->args[0], "AUTO2:", 6) == 0)) {
     *epsgCode = msStrdup(proj->args[0]);
     return;
+  } else if (proj && proj->numargs > 0) {
+    /* Handle generic AUTHORITY:CODE pattern e.g. ESRI:54052, EPSG:4326 */
+    const char *arg = proj->args[0];
+    const char *sep = strchr(arg, ':');
+    if (sep != NULL) {
+      char auth[64];
+      size_t authlen = sep - arg;
+      if (authlen < sizeof(auth)) {
+        strlcpy(auth, arg, authlen + 1);
+        /* Uppercase the authority for consistency */
+        for (size_t j = 0; j < authlen; j++)
+          auth[j] = toupper(auth[j]);
+        *epsgCode = static_cast<char *>(
+            msSmallMalloc((authlen + strlen(sep) + 1) * sizeof(char)));
+        snprintf(*epsgCode, authlen + strlen(sep) + 1, "%s:%s", auth, sep + 1);
+        return;
+      }
+    }
   }
 }
-
 /*
 ** msOWSProjectToWGS84()
 **
@@ -3042,12 +3065,15 @@ char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata,
 /*
 ** msOWSGetProjURI()
 **
-** Fetch an OGC URI for this layer or map.  Similar to msOWSGetEPSGProj()
-** but returns the result in the form
-*"http://www.opengis.net/def/crs/EPSG/0/27700".
-** The returned buffer is dynamically allocated, and must be freed by the
+** Fetch OGC CRS URIs for this layer or map. Similar to msOWSGetEPSGProj()
+** but returns URIs in the form:
+**
+**   http://www.opengis.net/def/crs/{AUTHORITY}/0/{CODE}
+**
+** The returned buffer is dynamically allocated and must be freed by the
 ** caller.
 */
+
 char *msOWSGetProjURI(projectionObj *proj, hashTableObj *metadata,
                       const char *namespaces, int bReturnOnlyFirstOne) {
   char *result;
@@ -3056,38 +3082,53 @@ char *msOWSGetProjURI(projectionObj *proj, hashTableObj *metadata,
   char *oldStyle = NULL;
 
   msOWSGetEPSGProj(proj, metadata, namespaces, bReturnOnlyFirstOne, &oldStyle);
-
-  if (oldStyle == NULL || !EQUALN(oldStyle, "EPSG:", 5)) {
-    msFree(oldStyle); // avoid leak
+  if (oldStyle == NULL)
     return NULL;
-  }
 
   result = msStrdup("");
-
   tokens = msStringSplit(oldStyle, ' ', &numtokens);
   msFree(oldStyle);
-  for (i = 0; tokens != NULL && i < numtokens; i++) {
-    char urn[100];
 
-    if (strncmp(tokens[i], "EPSG:", 5) == 0)
-      snprintf(urn, sizeof(urn), "http://www.opengis.net/def/crs/EPSG/0/%s",
-               tokens[i] + 5);
-    else if (strcasecmp(tokens[i], "imageCRS") == 0)
+  for (i = 0; tokens != NULL && i < numtokens; i++) {
+    char urn[256];
+    char *sep;
+
+    urn[0] = '\0';
+    sep = strchr(tokens[i], ':');
+
+    /* Special case for imageCRS */
+    if (strcasecmp(tokens[i], "imageCRS") == 0) {
       snprintf(urn, sizeof(urn),
                "http://www.opengis.net/def/crs/OGC/0/imageCRS");
-    else if (strncmp(tokens[i], "http://www.opengis.net/def/crs/", 16) == 0)
-      snprintf(urn, sizeof(urn), "%s", tokens[i]);
-    else
-      strlcpy(urn, "", sizeof(urn));
+    }
+    /* Already a full CRS URI */
+    else if (strncmp(tokens[i], OGC_CRS_PREFIX, strlen(OGC_CRS_PREFIX)) == 0) {
+      strlcpy(urn, tokens[i], sizeof(urn));
+    }
+    /* Handle generic AUTHORITY:CODE pattern e.g. EPSG:4326, ESRI:54052 */
+    else if (sep != NULL) {
+      char auth[64];
+      const char *code;
+      size_t authlen;
+
+      authlen = sep - tokens[i];
+      if (authlen >= sizeof(auth)) {
+        msDebug("msOWSGetProjURI(): Authority too long in SRS '%s', ignored.\n",
+                tokens[i]);
+        continue;
+      }
+      strlcpy(auth, tokens[i], authlen + 1);
+      code = sep + 1;
+      snprintf(urn, sizeof(urn), "%s%s/0/%s", OGC_CRS_PREFIX, auth, code);
+    }
 
     if (strlen(urn) > 0) {
       result = (char *)msSmallRealloc(result, strlen(result) + strlen(urn) + 2);
-
       if (strlen(result) > 0)
         strcat(result, " ");
       strcat(result, urn);
     } else {
-      msDebug("msOWSGetProjURI(): Failed to process SRS '%s', ignored.",
+      msDebug("msOWSGetProjURI(): Failed to process SRS '%s', ignored.\n",
               tokens[i]);
     }
   }
@@ -3097,10 +3138,10 @@ char *msOWSGetProjURI(projectionObj *proj, hashTableObj *metadata,
   if (strlen(result) == 0) {
     msFree(result);
     return NULL;
-  } else
-    return result;
-}
+  }
 
+  return result;
+}
 /*
 ** msOWSGetDimensionInfo()
 **

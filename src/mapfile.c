@@ -1472,26 +1472,30 @@ int msLoadProjectionCodeString(projectionObj *p, const char *value) {
     return -1;
   }
 
+#if PROJ_VERSION_MAJOR >= 6
+  /* PROJ 6+ supports AUTHORITY:CODE directly without init= prefix.
+  ** This handles EPSG:4326, ESRI:54052, IAU:2015:30100 etc. */
+  p->args = (char **)msSmallMalloc(sizeof(char *));
+  p->args[0] = msStrdup(value);
+  p->numargs = 1;
+  return 0;
+#else
+  /* Legacy PROJ 4 path - only works for EPSG via init=epsg:code */
+  int num_params = 0;
   char **papszList = msStringSplit(value, ':', &(num_params));
-
   if (num_params != 2) {
     msFreeCharArray(papszList, num_params);
     return -1;
   }
-
   const size_t buffer_size = 5 + strlen(value) + 1;
   char *init_string = (char *)msSmallMalloc(buffer_size);
-
-  /* translate into PROJ format. */
   snprintf(init_string, buffer_size, "init=%s:%s", papszList[0], papszList[1]);
-
   p->args = (char **)msSmallMalloc(sizeof(char *));
   p->args[0] = init_string;
   p->numargs = 1;
-
   msFreeCharArray(papszList, num_params);
-
   return 0;
+#endif
 }
 
 int msLoadProjectionString(projectionObj *p, const char *value) {
