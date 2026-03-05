@@ -279,7 +279,13 @@ static const char *getGeometryName(const layerObj *layer) {
 static const char *getGeometryFormat(const layerObj *layer) {
   const char *geometryFormat =
       msOWSLookupMetadata(&(layer->metadata), "A", "geometry_format");
-  if (!geometryFormat)
+  if (layer->type == MS_LAYER_POINT)
+    geometryFormat = "geometry-point-or-multipoint";
+  else if (layer->type == MS_LAYER_LINE)
+    geometryFormat = "geometry-linestring-or-multilinestring";
+  else if (layer->type == MS_LAYER_POLYGON)
+    geometryFormat = "geometry-polygon-or-multipolygon";
+  else if (!geometryFormat)
     geometryFormat = "geometry-any";
   return geometryFormat;
 }
