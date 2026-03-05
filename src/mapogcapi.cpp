@@ -2167,6 +2167,8 @@ static int processCollectionQueryablesRequest(mapObj *map,
     response["properties"][geometryName] = j;
   }
 
+  const char *featureIdItem =
+      msOWSLookupMetadata(&(layer->metadata), "AGFO", "featureid");
   for (const std::string &item : queryableItems) {
     json j;
     const auto name = getItemAliasOrName(layer, item);
@@ -2175,6 +2177,8 @@ static int processCollectionQueryablesRequest(mapObj *map,
     j["type"] = type;
     if (format)
       j["format"] = format;
+    if (featureIdItem && featureIdItem == item)
+      j["x-ogc-role"] = "id";
     response["properties"][name] = j;
   }
 
@@ -2189,6 +2193,7 @@ static int processCollectionQueryablesRequest(mapObj *map,
 
 namespace {
 struct Returnable {
+  std::string item;
   std::string user_name;
   std::string type;
   std::string format;
@@ -2216,6 +2221,7 @@ static std::vector<Returnable> msOOGCAPIGetLayerReturnables(layerObj *layer,
 
   for (int i = 0; i < items->numitems; ++i) {
     Returnable returnable;
+    returnable.item = items->items[i].name;
     returnable.user_name =
         items->items[i].alias ? items->items[i].alias : items->items[i].name;
     const auto [type, format] =
@@ -2307,12 +2313,16 @@ static int processCollectionSchemaRequest(mapObj *map,
     response["properties"][geometryName] = j;
   }
 
+  const char *featureIdItem =
+      msOWSLookupMetadata(&(layer->metadata), "AGFO", "featureid");
   for (const auto &item : returnableItems) {
     json j;
     j["description"] = "Returnable item '" + item.user_name + "'";
     j["type"] = item.type;
     if (!item.format.empty())
       j["format"] = item.format;
+    if (featureIdItem && featureIdItem == item.item)
+      j["x-ogc-role"] = "id";
     response["properties"][item.user_name] = j;
   }
 
@@ -2378,6 +2388,8 @@ static int processCollectionSortablesRequest(mapObj *map,
       {"additionalProperties", false},
   };
 
+  const char *featureIdItem =
+      msOWSLookupMetadata(&(layer->metadata), "AGFO", "featureid");
   for (const std::string &item : sortableItems) {
     json j;
     const auto name = getItemAliasOrName(layer, item);
@@ -2386,6 +2398,8 @@ static int processCollectionSortablesRequest(mapObj *map,
     j["type"] = type;
     if (format)
       j["format"] = format;
+    if (featureIdItem && featureIdItem == item)
+      j["x-ogc-role"] = "id";
     response["properties"][name] = j;
   }
 
