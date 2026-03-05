@@ -57,7 +57,7 @@
 #define MSUVRASTER_LAT "lat"
 #define MSUVRASTER_LATINDEX -107
 
-typedef struct {
+struct uvRasterLayerInfo {
 
   /* query cache results */
   int query_results = 0;
@@ -85,7 +85,7 @@ typedef struct {
 
   std::string timestring{};
   std::string timefield{};
-} uvRasterLayerInfo;
+};
 
 static uvRasterLayerInfo *getLayerInfo(layerObj *layer) {
   return static_cast<uvRasterLayerInfo *>(layer->layerinfo);
