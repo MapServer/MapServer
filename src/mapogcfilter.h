@@ -167,6 +167,8 @@ int FLTLayerSetInvalidRectIfSupported(layerObj *lp, rectObj *rect,
 
 #ifdef __cplusplus
 }
+std::string msGetLikePatternAsRegex(const FEPropertyIsLike *propIsLike,
+                                    const char *pszValue);
 
 std::string FLTGetBinaryComparisonCommonExpression(layerObj *lp,
                                                    const char *pszPropertyName,
