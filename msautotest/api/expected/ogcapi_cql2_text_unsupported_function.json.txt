@@ -1,0 +1,4 @@
+Content-Type: application/json
+Status: 400
+
+{"code":"InvalidParameterValue","description":"Cannot translate CQL2 filter to MapServer expression: Unhandled function foo"}

@@ -1,0 +1,4 @@
+Content-Type: application/json
+Status: 400
+
+{"code":"InvalidParameterValue","description":"Only filter-lang=cql2-text or filter-lang=cql2-json is handled"}
