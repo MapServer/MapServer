@@ -94,24 +94,26 @@
     <Name>TEST</Name>
     <Title>Example Map</Title>
     <Abstract>TEST</Abstract>
-<!-- WARNING: Mandatory mapfile parameter '(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wms_srs metadata' was missing in this context. -->
-    <CRS></CRS>
+    <CRS>EPSG:4326</CRS>
     <EX_GeographicBoundingBox>
         <westBoundLongitude>-180.000000</westBoundLongitude>
         <eastBoundLongitude>180.000000</eastBoundLongitude>
         <southBoundLatitude>-90.000000</southBoundLatitude>
         <northBoundLatitude>90.000000</northBoundLatitude>
     </EX_GeographicBoundingBox>
+    <BoundingBox CRS="EPSG:4326"
+                minx="-90.000000" miny="-180.000000" maxx="90.000000" maxy="180.000000" />
     <Layer queryable="1" opaque="0" cascaded="0">
       <Name>ne_110m_land</Name>
       <Title>ne_110m_land</Title>
-<!-- WARNING: Mandatory mapfile parameter '(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wms_srs metadata' was missing in this context. -->
       <EX_GeographicBoundingBox>
           <westBoundLongitude>-180.000000</westBoundLongitude>
           <eastBoundLongitude>180.000000</eastBoundLongitude>
           <southBoundLatitude>-90.000000</southBoundLatitude>
           <northBoundLatitude>83.645130</northBoundLatitude>
       </EX_GeographicBoundingBox>
+      <BoundingBox CRS="EPSG:4326"
+                  minx="-90.000000" miny="-180.000000" maxx="83.645130" maxy="180.000000" />
       <MetadataURL type="TC211">
         <Format>text/xml</Format>
         <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://maps.example.com/mapserver/?map=onlineresource.map&amp;request=GetMetadata&amp;layer=ne_110m_land"/>

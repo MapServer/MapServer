@@ -226,7 +226,7 @@
     <FeatureType>
       <Name>ms:ne_110m_land</Name>
       <Title>ne_110m_land</Title>
-      <!--WARNING: Mandatory mapfile parameter: (at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs/ows_srs metadata was missing in this context.-->
+      <DefaultCRS>urn:ogc:def:crs:EPSG::4326</DefaultCRS>
       <OutputFormats>
         <Format>application/gml+xml; version=3.2</Format>
         <Format>text/xml; subtype=gml/3.2.1</Format>
