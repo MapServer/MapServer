@@ -1120,58 +1120,60 @@ void msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata,
   const char *value;
   *epsgCode = NULL;
 
-  /* metadata value should already be in format "EPSG:n" or "AUTO:..." */
+  /* metadata value should already be in format "AUTHORITY:CODE" or "AUTO:..."
+   */
   if (metadata &&
       ((value = msOWSLookupMetadata(metadata, namespaces, "srs")) != NULL)) {
-    const char *space_ptr;
-    if (!bReturnOnlyFirstOne || (space_ptr = strchr(value, ' ')) == NULL) {
+    const char *space_ptr = strchr(value, ' ');
+    if (!bReturnOnlyFirstOne || space_ptr == NULL) {
       *epsgCode = msStrdup(value);
-      return;
+    } else {
+      /* caller requested only first projection code, copy up to first space */
+      *epsgCode = static_cast<char *>(
+          msSmallMalloc((space_ptr - value + 1) * sizeof(char)));
+      strlcpy(*epsgCode, value, space_ptr - value + 1);
     }
+    return;
+  }
 
-    *epsgCode = static_cast<char *>(
-        msSmallMalloc((space_ptr - value + 1) * sizeof(char)));
-    /* caller requested only first projection code, copy up to the first space
-     * character*/
-    strlcpy(*epsgCode, value, space_ptr - value + 1);
-    return;
-  } else if (proj && proj->numargs > 0 &&
-             (value = strstr(proj->args[0], "init=epsg:")) != NULL) {
-    /* Legacy PROJ 4 init= syntax, retained for backwards compatibility */
-    *epsgCode = static_cast<char *>(msSmallMalloc(
-        (strlen("EPSG:") + strlen(value + 10) + 1) * sizeof(char)));
-    snprintf(*epsgCode, strlen("EPSG:") + strlen(value + 10) + 1, "EPSG:%s",
-             value + 10);
-    return;
-  } else if (proj && proj->numargs > 0 &&
-             (value = strstr(proj->args[0], "init=crs:")) != NULL) {
-    /* Legacy PROJ 4 init= syntax, retained for backwards compatibility */
-    *epsgCode = static_cast<char *>(
-        msSmallMalloc((strlen("CRS:") + strlen(value + 9) + 1) * sizeof(char)));
-    snprintf(*epsgCode, strlen("CRS:") + strlen(value + 9) + 1, "CRS:%s",
-             value + 9);
-    return;
-  } else if (proj && proj->numargs > 0 &&
-             (strncasecmp(proj->args[0], "AUTO:", 5) == 0 ||
-              strncasecmp(proj->args[0], "AUTO2:", 6) == 0)) {
-    *epsgCode = msStrdup(proj->args[0]);
-    return;
-  } else if (proj && proj->numargs > 0) {
-    /* Handle generic AUTHORITY:CODE pattern e.g. ESRI:54052, EPSG:4326 */
+  if (proj && proj->numargs > 0) {
     const char *arg = proj->args[0];
-    const char *sep = strchr(arg, ':');
-    if (sep != NULL) {
-      char auth[64];
-      size_t authlen = sep - arg;
-      if (authlen < sizeof(auth)) {
-        strlcpy(auth, arg, authlen + 1);
-        /* Uppercase the authority for consistency */
-        for (size_t j = 0; j < authlen; j++)
-          auth[j] = toupper(auth[j]);
-        *epsgCode = static_cast<char *>(
-            msSmallMalloc((authlen + strlen(sep) + 1) * sizeof(char)));
-        snprintf(*epsgCode, authlen + strlen(sep) + 1, "%s:%s", auth, sep + 1);
-        return;
+
+    if ((value = strstr(arg, "init=epsg:")) != NULL) {
+      /* Legacy PROJ 4 init= syntax, retained for backwards compatibility */
+      *epsgCode = static_cast<char *>(msSmallMalloc(
+          (strlen("EPSG:") + strlen(value + 10) + 1) * sizeof(char)));
+      snprintf(*epsgCode, strlen("EPSG:") + strlen(value + 10) + 1, "EPSG:%s",
+               value + 10);
+    } else if ((value = strstr(arg, "init=crs:")) != NULL) {
+      /* Legacy PROJ 4 init= syntax, retained for backwards compatibility */
+      *epsgCode = static_cast<char *>(msSmallMalloc(
+          (strlen("CRS:") + strlen(value + 9) + 1) * sizeof(char)));
+      snprintf(*epsgCode, strlen("CRS:") + strlen(value + 9) + 1, "CRS:%s",
+               value + 9);
+    } else if (strncasecmp(arg, "AUTO:", 5) == 0 ||
+               strncasecmp(arg, "AUTO2:", 6) == 0) {
+      *epsgCode = msStrdup(arg);
+    } else if (strncasecmp(arg, "init=", 5) == 0) {
+      /* Custom init= file path e.g. "init=./data/epsg2:42304" -
+      ** not a standard authority code, return NULL */
+      return;
+    } else {
+      /* Handle generic AUTHORITY:CODE pattern e.g. ESRI:54030, IAU:2015:30100
+       */
+      const char *sep = strchr(arg, ':');
+      if (sep != NULL) {
+        char auth[64];
+        size_t authlen = sep - arg;
+        if (authlen < sizeof(auth)) {
+          strlcpy(auth, arg, authlen + 1);
+          for (size_t j = 0; auth[j]; j++)
+            auth[j] = (char)toupper((unsigned char)auth[j]);
+          *epsgCode = static_cast<char *>(
+              msSmallMalloc((authlen + strlen(sep) + 1) * sizeof(char)));
+          snprintf(*epsgCode, authlen + strlen(sep) + 1, "%s:%s", auth,
+                   sep + 1);
+        }
       }
     }
   }
