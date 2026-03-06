@@ -350,7 +350,12 @@ static int msWFSLocateSRSInList(const char *pszList, const char *srs) {
       return MS_FALSE;
     code = sep + 1;
   }
-  /* Simple AUTHORITY:CODE e.g. EPSG:4326, ESRI:54030 */
+  /* Legacy URN format: urn:EPSG:geographicCRS:CODE */
+  else if (strncasecmp(srs, "urn:EPSG:geographicCRS:", 23) == 0) {
+    strlcpy(authority, "EPSG", sizeof(authority));
+    code = srs + 23;
+  }
+  /* Simple AUTHORITY:CODE e.g. EPSG:4326, ESRI:54030, IAU:2015:30100 */
   else {
     const char *sep = strchr(srs, ':');
     if (sep == NULL)
