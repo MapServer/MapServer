@@ -1481,7 +1481,6 @@ int msLoadProjectionCodeString(projectionObj *p, const char *value) {
   return 0;
 #else
   /* Legacy PROJ 4 path - only works for EPSG via init=epsg:code */
-  int num_params = 0;
   char **papszList = msStringSplit(value, ':', &(num_params));
   if (num_params != 2) {
     msFreeCharArray(papszList, num_params);
