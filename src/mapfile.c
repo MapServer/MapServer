@@ -1458,9 +1458,7 @@ int msLoadProjectionStringEPSG(projectionObj *p, const char *value) {
   return msLoadProjectionString(p, value);
 }
 
-int msLoadProjectionCodeString(projectionObj *p, const char *value) {
-
-  int num_params = 0;
+static int msLoadProjectionCodeString(projectionObj *p, const char *value) {
 
   // exit if init= is already at the start of the string e.g. from
   // msOGRSpatialRef2ProjectionObj
@@ -1482,6 +1480,7 @@ int msLoadProjectionCodeString(projectionObj *p, const char *value) {
 #else
   /* Legacy PROJ 4 path - only works for EPSG via init=epsg:code */
   char **papszList = msStringSplit(value, ':', &(num_params));
+  int num_params = 0;
 
   if (num_params != 2) {
     msFreeCharArray(papszList, num_params);
