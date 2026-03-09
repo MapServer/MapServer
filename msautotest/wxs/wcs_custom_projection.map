@@ -1,0 +1,55 @@
+#
+# Test WCS with non-EPSG projections
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WCS
+
+# RUN_PARMS: wcs_custom_projection_capabilities100.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCapabilities" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_custom_projection_capabilities111.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.1.1&REQUEST=GetCapabilities" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_custom_projection_capabilities201.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCapabilities" > [RESULT_DEMIME]
+
+# RUN_PARMS: wcs_custom_projection_describe100.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=DescribeCoverage&COVERAGE=test" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_custom_projection_describe111.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.1.1&REQUEST=DescribeCoverage&IDENTIFIER=test" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_custom_projection_describe201.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=DescribeCoverage&COVERAGEID=test" > [RESULT_DEMIME]
+
+# RUN_PARMS: wcs_custom_projection_coverage100.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&COVERAGE=test&BBOX=-3276599.0027238373,8498088.094072288,-3258457.2498260457,8507095.190921152&CRS=ESRI:53009&WIDTH=512&HEIGHT=254&RESPONSE_CRS=ESRI:53009&FORMAT=png" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_custom_projection_coverage111.dat [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.1.1&REQUEST=GetCoverage&IDENTIFIER=test&BOUNDINGBOX=-3276599.0027238373,8498088.094072288,-3258457.2498260457,8507095.190921152,urn:ogc:def:crs:ESRI::53009&&WIDTH=512&HEIGHT=254&OUTPUTCRS=urn:ogc:def:crs:ESRI::53009&FORMAT=png" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_custom_projection_coverage201.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=test&SUBSETTINGCRS=urn:ogc:def:crs:ESRI::53009&SUBSET=x(-3276599.0027238373,-3258457.2498260457)&SUBSET=y(8498088.094072288,8507095.190921152)&SCALESIZE=x(512),y(254)&OUTPUTCRS=urn:ogc:def:crs:ESRI::53009&FORMAT=image/png" > [RESULT_DEMIME]
+
+MAP
+
+NAME WCS_CUSTOM_PROJECTION
+SIZE 400 400
+EXTENT -11137750 8151000 -11037500 8195750
+
+PROJECTION
+    "esri:54052"
+END
+
+WEB
+  METADATA
+   "wcs_label" "WCS Projection Demo"
+   "ows_enable_request" "*"
+   "wcs_onlineresource"   "http://localhost/path/to/wcs_custom_projection?"
+   "ows_srs" "ESRI:54052 EPSG:4326 ESRI:53009"
+   "wcs_formats" "GTiff PNG"
+  END
+END
+
+LAYER
+  NAME test
+  TYPE raster
+  # EXTENT is required for a WCS 2.0.1 request
+  EXTENT -11137750 8151000 -11037500 8195750
+  DATA data/tileSG-000-019_3-3.tif
+  METADATA
+    "ows_srs" "ESRI:54052 EPSG:4326 ESRI:53009"
+    "wcs_label" "test/soil"
+    "wcs_rangeset_name"   "Range 1"  ### required to support DescribeCoverage request
+    "wcs_rangeset_label"  "My Label"
+  END
+  PROJECTION
+    "esri:54052"
+  END
+END
+
+END
