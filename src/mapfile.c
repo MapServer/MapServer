@@ -1468,7 +1468,7 @@ int msLoadProjectionString(projectionObj *p, const char *value) {
   ** init= prefix. Anything not in this list (e.g. custom init files
   ** like epsg2, nad27) will use the init= prefix instead. */
   static const char *const validAuthorities[] = {
-      "EPSG", "ESRI", "IAU", "CRS", "OGC", "AUTO", "AUTO2", "IGNF", NULL};
+      "EPSG", "ESRI", "IAU_2015", "IGNF", "NKG", "OGC", NULL};
 
   if (value[0] == '+') {
     /* Handle new style definitions e.g. "+proj=utm +zone=11 +ellps=WGS84" */
