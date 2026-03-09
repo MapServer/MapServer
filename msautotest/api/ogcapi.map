@@ -45,6 +45,59 @@
 # RUN_PARMS: ogcapi_queryables.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/queryables" "QUERY_STRING=f=json" > [RESULT]
 # RUN_PARMS: ogcapi_queryables.html [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/queryables" "QUERY_STRING=f=html" > [RESULT_DEMIME]
 
+# CQL2-text testing
+
+# RUN_PARMS: ogcapi_cql2_text_equal.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=Name='Rice'" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_quoted_identifier.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=%22Name%22='Rice'" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_iequal.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=CASEI(Name)=CASEI('rice')" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_like_wildcard.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=Name LIKE 'R%25e'" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_like_no_match.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=Name LIKE 'rice'" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_casei_like.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=casei(Name) LIKE CASEI('rice')" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_not_casei_not_like.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=NOT casei(Name) NOT LIKE CASEI('rice')" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_like_single_char.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=Name LIKE 'Ri_e'" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_not_not_like.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=NOT Name NOT LIKE 'Rice'" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_not_equal.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=Name<>'Rice'" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_not_not_iequal.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=NOT CASEI(Name) <> CASEI('rice')" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_lt.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=CTYONLY_<3" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_le.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=CTYONLY_<=3" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_gt.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=CTYONLY_>117" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_ge.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=CTYONLY_>=117" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_not.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=NOT Name<>'Rice'" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_and_true.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=Name='Rice' AND 1=1" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_four_and.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=Name='Rice' AND 1=1 AND 1=1 AND 1=1" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_and_false.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=Name='Rice' AND 1=0" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_or_true.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=Name='Rice' OR 1=1" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_or_false.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=0=1 OR 1=0" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_in_json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=CTYONLY_ IN (3, 5)" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_not_not_in_json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=NOT CTYONLY_ NOT IN (3, 5)" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_between_json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=CTYONLY_ BETWEEN 3 AND 5" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_not_not_between_json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=NOT CTYONLY_ NOT BETWEEN 3 AND 5" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_is_null_not_supported.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=Name IS NULL" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_is_not_null_not_supported.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=Name IS NOT NULL" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_not_a_queryable.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=unknown=0" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_timestamp.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=LASTMOD=TIMESTAMP('2003-01-01T01:10:00Z')" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_double_constant.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=Area=8167237870.91888" > [RESULT]
+
+# RUN_PARMS: ogcapi_cql2_text_and_query_param_filter.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&Name=Rice&filter=true" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_and_query_param_filter2.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&Name=Rice&filter=false" > [RESULT]
+
+# RUN_PARMS: ogcapi_cql2_text_add.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=CTYONLY_=1%2B3" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_subtract.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=CTYONLY_=5-1" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_multiply.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=CTYONLY_=2*2" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_div.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=CTYONLY_=12/3" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_div2.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=CTYONLY_=12 div 3" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_mod.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=CTYONLY_=9%255" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_unary_minus.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=CTYONLY_=-(-4)" > [RESULT]
+
+# RUN_PARMS: ogcapi_cql2_text_s_intersects_bbox.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=s_intersects(geom,bbox(-180,-90,0,90))&limit=1" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_s_intersects_point.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=s_intersects(geom,point(-94.4297 48.642))&limit=1" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_filter_crs.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=s_intersects(geom,point(48.642 -94.4297))&filter-crs=http://www.opengis.net/def/crs/EPSG/0/4326&limit=1" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_filter_crs_invalid.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=s_intersects(geom,point(48.642 -94.4297))&filter-crs=invalid&limit=1" > [RESULT]
+
+# RUN_PARMS: ogcapi_cql2_text_syntax_error.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=Area=" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_unsupported_function.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=1=foo('bar')" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_filter_lang_invalid.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=1=1&filter-lang=invalid&limit=1" > [RESULT]
+
 MAP
   EXTENT 190012.242200 4816648.737800 762254.477900 5472427.737000
   SIZE 800 800
@@ -105,7 +158,7 @@ MAP
       "gml_CTYONLY__type" "Integer"
       "gml_LASTMOD_type" "DateTime"
       "oga_featureid" "coun"
-      "oga_queryable_items" "CTY_NAME,CTYONLY_,LASTMOD"
+      "oga_queryable_items" "CTY_NAME,AREA,CTYONLY_,LASTMOD"
     END
     VALIDATION
       "coun" "^[0-9]{1,2}$" # 1 or 2-digit number

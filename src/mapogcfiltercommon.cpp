@@ -48,44 +48,19 @@ static std::string FLTEscapePropertyName(const char *pszStr,
   return ret;
 }
 
-static std::string
-FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode) {
+std::string msGetLikePatternAsRegex(const FEPropertyIsLike *propIsLike,
+                                    const char *pszValue) {
   /* From
    * http://pubs.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap09.html#tag_09_04
    */
   /* also add double quote because we are within a string */
   const char *pszRegexSpecialCharsAndDoubleQuote = "\\^${[().*+?|\"";
 
-  if (!psFilterNode || !psFilterNode->pOther || !psFilterNode->psLeftNode ||
-      !psFilterNode->psRightNode || !psFilterNode->psRightNode->pszValue)
-    return std::string();
-
-  const FEPropertyIsLike *propIsLike =
-      (const FEPropertyIsLike *)psFilterNode->pOther;
   const char *pszWild = propIsLike->pszWildCard;
   const char *pszSingle = propIsLike->pszSingleChar;
   const char *pszEscape = propIsLike->pszEscapeChar;
-  const bool bCaseInsensitive = propIsLike->bCaseInsensitive != 0;
 
-  if (!pszWild || strlen(pszWild) == 0 || !pszSingle ||
-      strlen(pszSingle) == 0 || !pszEscape || strlen(pszEscape) == 0)
-    return std::string();
-
-  /* -------------------------------------------------------------------- */
-  /*      Use operand with regular expressions.                           */
-  /* -------------------------------------------------------------------- */
-  std::string expr("(\"[");
-
-  /* attribute */
-  expr += FLTEscapePropertyName(psFilterNode->psLeftNode->pszValue, '"');
-
-  /* #3521 */
-  if (bCaseInsensitive)
-    expr += "]\" ~* \"";
-  else
-    expr += "]\" ~ \"";
-
-  const char *pszValue = psFilterNode->psRightNode->pszValue;
+  std::string expr;
   const size_t nLength = strlen(pszValue);
 
   if (nLength > 0) {
@@ -141,6 +116,44 @@ FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode) {
   if (nLength > 0) {
     expr += '$';
   }
+  return expr;
+}
+
+static std::string
+FLTGetIsLikeComparisonCommonExpression(const FilterEncodingNode *psFilterNode) {
+
+  if (!psFilterNode || !psFilterNode->pOther || !psFilterNode->psLeftNode ||
+      !psFilterNode->psRightNode || !psFilterNode->psRightNode->pszValue)
+    return std::string();
+
+  const FEPropertyIsLike *propIsLike =
+      (const FEPropertyIsLike *)psFilterNode->pOther;
+  const char *pszWild = propIsLike->pszWildCard;
+  const char *pszSingle = propIsLike->pszSingleChar;
+  const char *pszEscape = propIsLike->pszEscapeChar;
+  const bool bCaseInsensitive = propIsLike->bCaseInsensitive != 0;
+
+  if (!pszWild || strlen(pszWild) == 0 || !pszSingle ||
+      strlen(pszSingle) == 0 || !pszEscape || strlen(pszEscape) == 0)
+    return std::string();
+
+  /* -------------------------------------------------------------------- */
+  /*      Use operand with regular expressions.                           */
+  /* -------------------------------------------------------------------- */
+  std::string expr("(\"[");
+
+  /* attribute */
+  expr += FLTEscapePropertyName(psFilterNode->psLeftNode->pszValue, '"');
+
+  /* #3521 */
+  if (bCaseInsensitive)
+    expr += "]\" ~* \"";
+  else
+    expr += "]\" ~ \"";
+
+  expr +=
+      msGetLikePatternAsRegex(propIsLike, psFilterNode->psRightNode->pszValue);
+
   expr += "\")";
   return expr;
 }
