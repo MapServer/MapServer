@@ -1521,6 +1521,31 @@ int msLoadProjectionString(projectionObj *p, const char *value) {
                  MS_FALSE) == 0) {
     /* We assume always long/lat ordering, as that is what GeoServer does... */
   } else if (msLoadProjectionStringCRSLike(p, value, "CRS:") == 0) {
+  } else if (strncasecmp(value, "urn:ogc:def:crs:", 16) == 0) {
+    /* Generic URN handler for any authority e.g. urn:ogc:def:crs:ESRI::53009
+    ** Format is urn:ogc:def:crs:AUTHORITY:version:CODE where version may
+    ** be empty */
+    const char *p_auth = value + 16;
+    const char *sep = strchr(p_auth, ':');
+    if (sep != NULL) {
+      char auth[64] = {0};
+      size_t authlen = sep - p_auth;
+      if (authlen < sizeof(auth)) {
+        strlcpy(auth, p_auth, authlen + 1);
+        /* skip version field - may be empty e.g. ESRI::53009 or
+        ** have a value e.g. EPSG:6.18:4326 */
+        const char *p_code = sep + 1;
+        sep = strchr(p_code, ':');
+        if (sep != NULL)
+          p_code = sep + 1; /* skip version, point to code */
+        if (*p_code != '\0') {
+          /* Assemble as AUTHORITY:CODE and recurse */
+          char authcode[128] = {0};
+          snprintf(authcode, sizeof(authcode), "%s:%s", auth, p_code);
+          return msLoadProjectionString(p, authcode);
+        }
+      }
+    }
   } else if (strchr(value, ':') != NULL &&
              strncasecmp(value, "init=", 5) != 0) {
     /* Handle AUTHORITY:CODE pattern e.g. ESRI:54030, IAU:2015:30100,
