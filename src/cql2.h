@@ -86,6 +86,7 @@ struct cql2_expr_node {
   cql2_expr_node(double v) : m_field_type(CQL2_DOUBLE), m_dfVal(v) {}
   cql2_expr_node(const std::string &v)
       : m_field_type(CQL2_STRING), m_osVal(v) {}
+  cql2_expr_node(const char *v) : m_field_type(CQL2_STRING), m_osVal(v) {}
   ~cql2_expr_node();
 
   cql2_op m_op = CQL2_NONE;

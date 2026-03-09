@@ -345,7 +345,7 @@ src/mapgeomutil.cpp src/mapkmlrenderer.cpp src/fontcache.c src/textlayout.c src/
 src/mapogr.cpp src/mapcontour.c src/mapsmoothing.c src/mapv8.cpp ${REGEX_SOURCES} src/kerneldensity.c
 src/idw.c src/interpolation.c src/mapflatgeobuf.c src/mapcompositingfilter.c src/mapmvt.c src/mapiconv.c
 src/mapgraph.cpp src/mapserv-config.cpp src/maprasterlabel.cpp src/mapserv-index.cpp
-src/cql2.cpp src/cql2text.cpp src/cql2textparser.cpp)
+src/cql2.cpp src/cql2json.cpp src/cql2text.cpp src/cql2textparser.cpp)
 
 set(mapserver_HEADERS
 src/cgiutil.h src/dejavu-sans-condensed.h src/dxfcolor.h src/fontcache.h src/hittest.h src/mapagg.h
@@ -1053,7 +1053,7 @@ add_custom_target(check_cql2text_parser_md5 ALL
                   COMMAND ${CMAKE_COMMAND}
                       "-DIN_FILE=cql2textparser.y"
                       "-DTARGET=generate_cql2text_parser"
-                      "-DEXPECTED_MD5SUM=d5deb2cb184d90c69e923f10204e3f99"
+                      "-DEXPECTED_MD5SUM=5772933b81f74a3a9e25b85b94221764"
                       "-DFILENAME_CMAKE=${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
                       -P "${PROJECT_SOURCE_DIR}/src/check_md5sum.cmake"
                   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src"
