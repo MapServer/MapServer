@@ -156,6 +156,7 @@
       <SupportedCRS>urn:ogc:def:crs:ESRI::54052</SupportedCRS>
       <SupportedCRS>urn:ogc:def:crs:EPSG::4326</SupportedCRS>
       <SupportedCRS>urn:ogc:def:crs:ESRI::53009</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:epsg2::42304</SupportedCRS>
       <SupportedFormat>image/tiff</SupportedFormat>
       <Identifier>test</Identifier>
     </CoverageSummary>

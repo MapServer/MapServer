@@ -51,6 +51,7 @@
       <requestResponseCRSs>ESRI:54052</requestResponseCRSs>
       <requestResponseCRSs>EPSG:4326</requestResponseCRSs>
       <requestResponseCRSs>ESRI:53009</requestResponseCRSs>
+      <requestResponseCRSs>epsg2:42304</requestResponseCRSs>
       <nativeCRSs>ESRI:54052</nativeCRSs>
     </supportedCRSs>
     <supportedFormats>
