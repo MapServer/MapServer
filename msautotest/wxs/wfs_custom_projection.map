@@ -9,7 +9,7 @@
 
 
 # wfs 1.0 does not have an srsname parameter and we cannot override the output projection
-# RUN_PARMS: wfs_custom_projection_getfeature100.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=cities&OUTPUTFORMAT=geojson" >  > [RESULT_DEMIME]
+# RUN_PARMS: wfs_custom_projection_getfeature100.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=cities&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
 
 # RUN_PARMS: wfs_custom_projection_getfeature110_53009.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&SRSNAME=ESRI:53009&REQUEST=GetFeature&TYPENAME=cities&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
 # RUN_PARMS: wfs_custom_projection_getfeature110_42304.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&SRSNAME=epsg2:42304&REQUEST=GetFeature&TYPENAME=cities&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
