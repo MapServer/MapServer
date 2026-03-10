@@ -38,8 +38,6 @@ END
 LAYER
   NAME test
   TYPE raster
-  # EXTENT is required for a WCS 2.0.1 request
-  EXTENT -11137750 8151000 -11037500 8195750
   DATA data/tileSG-000-019_3-3.tif
   METADATA
     "ows_srs" "ESRI:54052 EPSG:4326 ESRI:53009"
