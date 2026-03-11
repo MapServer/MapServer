@@ -2492,7 +2492,7 @@ this request. Check wcs/ows_enable_request settings.",
                    0 ||
                strchr(crs_to_use, ':') != NULL) {
       /* Handles URNs, OGC URIs, and any AUTHORITY:CODE pattern
-      ** e.g. EPSG:4326, ESRI:54052, CRS:84, IAU:2015:30100 */
+      ** e.g. EPSG:4326, ESRI:54052, CRS:84, IAU_2015:30100 */
       if (msLoadProjectionString(&(map->projection), (char *)crs_to_use) != 0) {
         msSetError(MS_WCSERR, "Unsupported or unknown CRS '%s'.",
                    "msWCSGetCoverage()", crs_to_use);

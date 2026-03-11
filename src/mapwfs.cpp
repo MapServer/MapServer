@@ -355,7 +355,7 @@ static int msWFSLocateSRSInList(const char *pszList, const char *srs) {
     strlcpy(authority, "EPSG", sizeof(authority));
     code = srs + 23;
   }
-  /* Simple AUTHORITY:CODE e.g. EPSG:4326, ESRI:54030, IAU:2015:30100 */
+  /* Simple AUTHORITY:CODE e.g. EPSG:4326, ESRI:54030, IAU_2015:30100 */
   else {
     const char *sep = strchr(srs, ':');
     if (sep == NULL)

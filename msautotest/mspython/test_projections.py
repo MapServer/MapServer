@@ -76,6 +76,7 @@ PROJECTION_CASES = [
     ("urn:EPSG:geographicCRS:4326", "+init=epsg:4326 +epsgaxis=ne"),
     ("urn:ogc:def:crs:EPSG::3857", "+init=epsg:3857"),
     ("IAU_2015:30100", "+IAU_2015:30100"),
+    ("IGNF:ATIGBONNE.BOURD", "+IGNF:ATIGBONNE.BOURD"),
     pytest.param(
         "urn:x-ogc:def:crs:OGC:1.3:CRS84",
         None,
@@ -101,7 +102,7 @@ PROJECTION_CASES = [
     pytest.param(
         "IAU:2015:30100",
         "+IAU:2015:30100",
-        marks=pytest.mark.xfail(reason="IAU authority not yet supported"),
+        marks=pytest.mark.xfail(reason="IAU:2015 is handled as IAU_2015"),
     ),
 ]
 

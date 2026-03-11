@@ -1159,7 +1159,7 @@ void msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata,
       ** not a standard authority code, return NULL */
       return;
     } else {
-      /* Handle generic AUTHORITY:CODE pattern e.g. ESRI:54030, IAU:2015:30100
+      /* Handle generic AUTHORITY:CODE pattern e.g. ESRI:54030, IAU_2015:30100
        */
       const char *sep = strchr(arg, ':');
       if (sep != NULL) {
