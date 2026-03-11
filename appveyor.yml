@@ -96,7 +96,8 @@ before_test:
   - set PIP_NO_PYTHON_VERSION_WARNING=1
   - "./mssql/create_mssql_db.bat"
   # copy custom projection to the PROJ_DATA folder
-  - copy .\wxs\data\epsg2 %PROJ_DATA%
+  - echo %PROJ_DATA%
+  - copy .\wxs\data\epsg2 "%PROJ_DATA%"
   - "%Python_ROOT_DIR%/python -m pip install --no-warn-script-location -U -r requirements.txt"
   - "%Python_ROOT_DIR%/python -m pip install --no-index --find-links=file:///%BUILD_FOLDER%/build/src/mapscript/python/Release/dist mapscript"
 
