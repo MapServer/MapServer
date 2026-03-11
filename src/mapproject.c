@@ -2378,7 +2378,7 @@ char *msGetProjectionString(projectionObj *proj) {
     /*      If this is a single authority:code arg (e.g. ESRI:53009,        */
     /*      EPSG:3857) return it without a '+' prefix.                      */
     /* -------------------------------------------------------------------- */
-    if (proj->numargs == 1 && proj->args[0] &&
+    if (proj->numargs == 1 && proj->args && proj->args[0] &&
         strchr(proj->args[0], ':') != NULL && proj->args[0][0] != '+' &&
         strncasecmp(proj->args[0], "init=", 5) != 0) {
       return msStrdup(proj->args[0]);
@@ -2388,7 +2388,7 @@ char *msGetProjectionString(projectionObj *proj) {
     /*      Alloc buffer large enough to hold the whole projection defn     */
     /* -------------------------------------------------------------------- */
     for (int i = 0; i < proj->numargs; i++) {
-      if (proj->args[i])
+      if (proj->args && proj->args[i])
         nLen += (strlen(proj->args[i]) + 3); /* +3 for " +" prefix and safety */
     }
 
@@ -2399,7 +2399,7 @@ char *msGetProjectionString(projectionObj *proj) {
     /*      Plug each arg into the string with a '+' prefix                 */
     /* -------------------------------------------------------------------- */
     for (int i = 0; i < proj->numargs; i++) {
-      if (!proj->args[i] || strlen(proj->args[i]) == 0)
+      if (!proj->args || !proj->args[i] || strlen(proj->args[i]) == 0)
         continue;
       if (pszProjString[0] == '\0') {
         /* no space at beginning of line */

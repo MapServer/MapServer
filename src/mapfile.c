@@ -1567,14 +1567,12 @@ int msLoadProjectionString(projectionObj *p, const char *value) {
         }
       }
     }
-#if PROJ_VERSION_MAJOR >= 6
     if (knownAuthority) {
       /* PROJ 6+ handles known authorities directly */
       p->args = (char **)msSmallMalloc(sizeof(char *));
       p->args[0] = msStrdup(value);
       p->numargs = 1;
     } else {
-#endif
       /* Prepend init= for file-based or legacy PROJ 4 references */
       const size_t buffer_size = strlen("init=") + strlen(value) + 1;
       char *init_string = (char *)msSmallMalloc(buffer_size);
@@ -1582,9 +1580,7 @@ int msLoadProjectionString(projectionObj *p, const char *value) {
       p->args = (char **)msSmallMalloc(sizeof(char *));
       p->args[0] = init_string;
       p->numargs = 1;
-#if PROJ_VERSION_MAJOR >= 6
     }
-#endif
   } else {
     /* Handle old style comma delimited e.g. "proj=utm,zone=11,ellps=WGS84" */
     p->args = msStringSplit(value, ',', &p->numargs);

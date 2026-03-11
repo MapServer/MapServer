@@ -66,6 +66,8 @@ PROJECTION_CASES = [
     ("AUTO2:42005,1,0,90", "AUTO2:42005,1,0,90"),
     # ensure the epsg2 file with the custom projection is in the PROJ_DATA folder
     ("init=epsg2:42304", "+init=epsg2:42304"),
+    # custom projections should have init= appended to load from a file
+    ("epsg2:42304", "+init=epsg2:42304"),
     ("http://www.opengis.net/def/crs/EPSG/0/4326", "+init=epsg:4326 +epsgaxis=ne"),
     ("http://www.opengis.net/def/crs/EPSG/0/32615", "+init=epsg:32615"),
     ("http://www.opengis.net/gml/srs/epsg.xml#4326", "+init=epsg:4326"),
