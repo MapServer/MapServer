@@ -2250,7 +2250,7 @@ static int msWFSRunBasicGetFeature(mapObj *map, layerObj *lp,
   map->query.rect = map->extent;
   map->query.layer = lp->index;
 
-  if (FLTLayerSetInvalidRectIfSupported(lp, &(map->query.rect), "FO")) {
+  if (FLTLayerSetInvalidRectIfSupported(map, lp, &(map->query.rect), "FO")) {
     /* do nothing */
   } else if (msOWSGetLayerExtent(map, lp, "FO", &ext) == MS_SUCCESS) {
     char *pszMapSRS = NULL;

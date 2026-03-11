@@ -477,7 +477,7 @@ static bool getBbox(mapObj *map, layerObj *layer, cgiRequestObj *request,
   const char *bboxParam = getRequestParameter(request, "bbox");
   if (!bboxParam || strlen(bboxParam) == 0) { // missing or empty extent
     rectObj rect;
-    if (FLTLayerSetInvalidRectIfSupported(layer, &rect, "AO")) {
+    if (FLTLayerSetInvalidRectIfSupported(map, layer, &rect, "AO")) {
       bbox->minx = rect.minx;
       bbox->miny = rect.miny;
       bbox->maxx = rect.maxx;
