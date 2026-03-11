@@ -603,7 +603,7 @@ int msLayerGetItems(layerObj *layer) {
   /* At the end of switch case (default -> break; -> return MS_FAILURE),
    * was following TODO ITEM:
    */
-  /* TO DO! Need to add any joined itemd on to the core layer items, one long
+  /* TO DO! Need to add any joined items on to the core layer items, one long
    * list!  */
   itemNames = msLayerGetProcessingKey(layer, "ITEMS");
   if (itemNames) {
