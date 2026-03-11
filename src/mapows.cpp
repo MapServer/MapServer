@@ -31,6 +31,7 @@
 #include "maptime.h"
 #include "maptemplate.h"
 #include "mapows.h"
+#include "cpl_string.h"
 
 #if defined(USE_LIBXML2)
 #include "maplibxml2.h"
@@ -2749,22 +2750,22 @@ void msOWSPrintContactInfo(FILE *stream, const char *tabspace, int nVersion,
 
 /*
 ** msOWSGetLayerExtent()
+** Try to establish layer extent using the following order of priority:
+** 1. layer "*_extent" metadata
+** 2. layer->extent if valid
+** 3. map->extent if valid and the fallback_to_map_extent metadata item is set
+** 4. msLayerGetExtent() to read extent from the layer
 **
-** Try to establish layer extent, first looking for "ows_extent" metadata, and
-** if not found then call msLayerGetExtent() which will lookup the
-** layer->extent member, and if not found will open layer to read extent.
+** Returns MS_FAILURE if none of the above return a valid extent.
 **
 */
 int msOWSGetLayerExtent(mapObj *map, layerObj *lp, const char *namespaces,
                         rectObj *ext) {
-  (void)map;
   const char *value;
-
   if ((value = msOWSLookupMetadata(&(lp->metadata), namespaces, "extent")) !=
       NULL) {
     char **tokens;
     int n;
-
     tokens = msStringSplit(value, ' ', &n);
     if (tokens == NULL || n != 4) {
       msSetError(MS_WMSERR, "Wrong number of arguments for EXTENT metadata.",
@@ -2778,8 +2779,41 @@ int msOWSGetLayerExtent(mapObj *map, layerObj *lp, const char *namespaces,
 
     msFreeCharArray(tokens, n);
     return MS_SUCCESS;
-  } else {
-    return msLayerGetExtent(lp, ext);
+  }
+
+  if (MS_VALID_EXTENT(lp->extent)) {
+    *ext = lp->extent;
+    return MS_SUCCESS;
+  }
+
+  // Check if we can use the MAP EXTENT rather than calculating
+  // a LAYER extent by querying its datasource using msLayerGetExtent.
+  // First check the LAYER metadata, then the MAP metadata
+  const char *pszUseMapExtent = msOWSLookupMetadata(&(lp->metadata), namespaces,
+                                                    "fallback_to_map_extent");
+  if (!pszUseMapExtent) {
+    pszUseMapExtent = msOWSLookupMetadata(&(map->web.metadata), namespaces,
+                                          "fallback_to_map_extent");
+  }
+
+  if (pszUseMapExtent && CSLTestBoolean(pszUseMapExtent) &&
+      MS_VALID_EXTENT(map->extent)) {
+
+    if (msProjectionsDiffer(&(lp->projection), &(map->projection)) == MS_TRUE) {
+      rectObj projectedExt = map->extent;
+      if (msProjectRect(&(map->projection), &(lp->projection), &projectedExt) ==
+          MS_SUCCESS) {
+        *ext = projectedExt;
+        return MS_SUCCESS;
+      }
+    } else {
+      *ext = map->extent;
+      return MS_SUCCESS;
+    }
+  }
+
+  if (msLayerGetExtent(lp, ext) == MS_SUCCESS) {
+    return MS_SUCCESS;
   }
 
   return MS_FAILURE;
