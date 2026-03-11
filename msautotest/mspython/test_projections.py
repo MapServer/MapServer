@@ -61,22 +61,22 @@ PROJECTION_CASES = [
     ("EPSG:4326", "+init=epsg:4326"),
     ("EPSG:2157", "+init=epsg:2157"),
     ("urn:ogc:def:crs:OGC:1.3:CRS84", "+init=epsg:4326"),
-    ("ESRI:53009", "+ESRI:53009"),
-    ("AUTO:42001,9001,2.35,48.85", "+AUTO:42001,9001,2.35,48.85"),
-    ("AUTO2:42005,1,0,90", "+AUTO2:42005,1,0,90"),
+    ("ESRI:53009", "ESRI:53009"),
+    ("AUTO:42001,9001,2.35,48.85", "AUTO:42001,9001,2.35,48.85"),
+    ("AUTO2:42005,1,0,90", "AUTO2:42005,1,0,90"),
     # ensure the epsg2 file with the custom projection is in the PROJ_DATA folder
     ("init=epsg2:42304", "+init=epsg2:42304"),
     ("http://www.opengis.net/def/crs/EPSG/0/4326", "+init=epsg:4326 +epsgaxis=ne"),
     ("http://www.opengis.net/def/crs/EPSG/0/32615", "+init=epsg:32615"),
     ("http://www.opengis.net/gml/srs/epsg.xml#4326", "+init=epsg:4326"),
-    ("urn:ogc:def:crs:ESRI::53009", "+ESRI:53009"),
+    ("urn:ogc:def:crs:ESRI::53009", "ESRI:53009"),
     ("urn:ogc:def:crs:EPSG::4326", "+init=epsg:4326 +epsgaxis=ne"),
     ("urn:ogc:def:crs:OGC:1.3:CRS84", "+init=epsg:4326"),
     ("urn:x-ogc:def:crs:EPSG::3857", "+init=epsg:3857"),
     ("urn:EPSG:geographicCRS:4326", "+init=epsg:4326 +epsgaxis=ne"),
     ("urn:ogc:def:crs:EPSG::3857", "+init=epsg:3857"),
-    ("IAU_2015:30100", "+IAU_2015:30100"),
-    ("IGNF:ATIGBONNE.BOURD", "+IGNF:ATIGBONNE.BOURD"),
+    ("IAU_2015:30100", "IAU_2015:30100"),
+    ("IGNF:ATIGBONNE.BOURD", "IGNF:ATIGBONNE.BOURD"),
     pytest.param(
         "urn:x-ogc:def:crs:OGC:1.3:CRS84",
         None,
@@ -101,7 +101,7 @@ PROJECTION_CASES = [
     # IAU_2015 is used by PROJ rather than IAU:2015
     pytest.param(
         "IAU:2015:30100",
-        "+IAU:2015:30100",
+        "IAU:2015:30100",
         marks=pytest.mark.xfail(reason="IAU:2015 is handled as IAU_2015"),
     ),
 ]
@@ -111,4 +111,9 @@ PROJECTION_CASES = [
 def test_projection_string(input_str, expected):
     layer = make_layer()
     layer.setProjection(input_str)
-    assert layer.getProjection() == expected
+    proj_string = layer.getProjection()
+    assert proj_string == expected
+
+    layer2 = make_layer()
+    layer2.setProjection(proj_string)
+    assert layer2.getProjection() == expected

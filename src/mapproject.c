@@ -2084,7 +2084,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect) {
    */
   else {
     int apply_over = MS_TRUE;
-#if PROJ_VERSION_MAJOR >= 6 && PROJ_VERSION_MAJOR < 9
+#if PROJ_VERSION_MAJOR < 9
     // Workaround PROJ [6,9[ bug (fixed per
     // https://github.com/OSGeo/PROJ/pull/3055) that prevents datum shifts from
     // being applied when +over is added to +init=epsg:XXXX This is far from
@@ -2171,7 +2171,7 @@ static int msProjectionsDifferInternal(projectionObj *proj1,
   if (proj1->numargs != proj2->numargs)
     return MS_TRUE;
 
-  /* This test should be more rigerous. */
+  /* This test should be more rigorous. */
   if (proj1->gt.need_geotransform || proj2->gt.need_geotransform)
     return MS_TRUE;
 
@@ -2373,15 +2373,26 @@ char *msGetProjectionString(projectionObj *proj) {
   int nLen = 0;
 
   if (proj) {
+
+    /* -------------------------------------------------------------------- */
+    /*      If this is a single authority:code arg (e.g. ESRI:53009,        */
+    /*      EPSG:3857) return it without a '+' prefix.                      */
+    /* -------------------------------------------------------------------- */
+    if (proj->numargs == 1 && proj->args[0] &&
+        strchr(proj->args[0], ':') != NULL && proj->args[0][0] != '+' &&
+        strncasecmp(proj->args[0], "init=", 5) != 0) {
+      return msStrdup(proj->args[0]);
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Alloc buffer large enough to hold the whole projection defn     */
     /* -------------------------------------------------------------------- */
     for (int i = 0; i < proj->numargs; i++) {
       if (proj->args[i])
-        nLen += (strlen(proj->args[i]) + 2);
+        nLen += (strlen(proj->args[i]) + 3); /* +3 for " +" prefix and safety */
     }
 
-    pszProjString = (char *)malloc(sizeof(char) * nLen + 1);
+    pszProjString = (char *)msSmallMalloc(sizeof(char) * nLen + 1);
     pszProjString[0] = '\0';
 
     /* -------------------------------------------------------------------- */
