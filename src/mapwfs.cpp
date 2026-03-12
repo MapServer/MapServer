@@ -304,11 +304,10 @@ static void msWFSPrintRequestCap(const char *request, const char *script_url,
 ** (http://www.opengis.net/def/crs/EPSG/0/4326) format.
 */
 static int msWFSLocateSRSInList(const char *pszList, const char *srs) {
-  int nTokens = 0, i = 0;
+  int nTokens = 0;
   char **tokens = NULL;
   int bFound = MS_FALSE;
-  const char *code = NULL;
-  char authority[64];
+  std::string authority, code;
 
   if (!pszList || !srs)
     return MS_FALSE;
@@ -320,11 +319,7 @@ static int msWFSLocateSRSInList(const char *pszList, const char *srs) {
     const char *sep = strchr(p, ':');
     if (sep == NULL)
       return MS_FALSE;
-    /* extract authority */
-    size_t authlen = sep - p;
-    if (authlen >= sizeof(authority))
-      return MS_FALSE;
-    strlcpy(authority, p, authlen + 1);
+    authority = std::string(p, sep - p);
     /* skip version field (may be empty) */
     p = sep + 1;
     sep = strchr(p, ':');
@@ -338,11 +333,7 @@ static int msWFSLocateSRSInList(const char *pszList, const char *srs) {
     const char *sep = strchr(p, '/');
     if (sep == NULL)
       return MS_FALSE;
-    /* extract authority */
-    size_t authlen = sep - p;
-    if (authlen >= sizeof(authority))
-      return MS_FALSE;
-    strlcpy(authority, p, authlen + 1);
+    authority = std::string(p, sep - p);
     /* skip version field */
     p = sep + 1;
     sep = strchr(p, '/');
@@ -352,7 +343,7 @@ static int msWFSLocateSRSInList(const char *pszList, const char *srs) {
   }
   /* Legacy URN format: urn:EPSG:geographicCRS:CODE */
   else if (strncasecmp(srs, "urn:EPSG:geographicCRS:", 23) == 0) {
-    strlcpy(authority, "EPSG", sizeof(authority));
+    authority = "EPSG";
     code = srs + 23;
   }
   /* Simple AUTHORITY:CODE e.g. EPSG:4326, ESRI:54030, IAU_2015:30100 */
@@ -360,37 +351,23 @@ static int msWFSLocateSRSInList(const char *pszList, const char *srs) {
     const char *sep = strchr(srs, ':');
     if (sep == NULL)
       return MS_FALSE;
-    size_t authlen = sep - srs;
-    if (authlen >= sizeof(authority))
-      return MS_FALSE;
-    strlcpy(authority, srs, authlen + 1);
+    authority = std::string(srs, sep - srs);
     code = sep + 1;
   }
 
-  if (code == NULL || *code == '\0')
+  if (code.empty())
     return MS_FALSE;
-
-  /* Uppercase authority for consistent comparison */
-  for (size_t j = 0; authority[j]; j++)
-    authority[j] = (char)toupper((unsigned char)authority[j]);
 
   tokens = msStringSplit(pszList, ' ', &nTokens);
   if (tokens) {
-    for (i = 0; i < nTokens; i++) {
-      /* Uppercase the token authority for comparison */
-      char token_auth[64];
+    for (int i = 0; i < nTokens; i++) {
       const char *token_sep = strchr(tokens[i], ':');
       if (token_sep == NULL)
         continue;
-      size_t token_authlen = token_sep - tokens[i];
-      if (token_authlen >= sizeof(token_auth))
-        continue;
-      strlcpy(token_auth, tokens[i], token_authlen + 1);
-      for (size_t j = 0; token_auth[j]; j++)
-        token_auth[j] = (char)toupper((unsigned char)token_auth[j]);
+      std::string token_auth(tokens[i], token_sep - tokens[i]);
       /* Compare authority case-insensitively and code exactly */
-      if (strcasecmp(token_auth, authority) == 0 &&
-          strcmp(token_sep + 1, code) == 0) {
+      if (strcasecmp(token_auth.c_str(), authority.c_str()) == 0 &&
+          code == (token_sep + 1)) {
         bFound = MS_TRUE;
         break;
       }
