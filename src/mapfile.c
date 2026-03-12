@@ -1458,55 +1458,20 @@ int msLoadProjectionStringEPSG(projectionObj *p, const char *value) {
   return msLoadProjectionString(p, value);
 }
 
-int msLoadProjectionCodeString(projectionObj *p, const char *value) {
-
-  int num_params = 0;
-
-  // exit if init= is already at the start of the string e.g. from
-  // msOGRSpatialRef2ProjectionObj
-  if (strncasecmp(value, "init=", 5) == 0) {
-    return -1;
-  }
-
-  if (!strchr(value, ':')) {
-    return -1;
-  }
-
-  char **papszList = msStringSplit(value, ':', &(num_params));
-
-  if (num_params != 2) {
-    msFreeCharArray(papszList, num_params);
-    return -1;
-  }
-
-  const size_t buffer_size = 5 + strlen(value) + 1;
-  char *init_string = (char *)msSmallMalloc(buffer_size);
-
-  /* translate into PROJ format. */
-  snprintf(init_string, buffer_size, "init=%s:%s", papszList[0], papszList[1]);
-
-  p->args = (char **)msSmallMalloc(sizeof(char *));
-  p->args[0] = init_string;
-  p->numargs = 1;
-
-  msFreeCharArray(papszList, num_params);
-
-  return 0;
-}
-
 int msLoadProjectionString(projectionObj *p, const char *value) {
   assert(p);
   p->gt.need_geotransform = MS_FALSE;
 
   msFreeProjectionExceptContext(p);
 
-  /*
-   * Handle new style definitions, the same as they would be given to
-   * the proj program.
-   * eg.
-   *    "+proj=utm +zone=11 +ellps=WGS84"
-   */
+  /* Known OGC/ISO authorities that PROJ 6+ supports directly without
+  ** init= prefix. Anything not in this list (e.g. custom init files
+  ** like epsg2, nad27) will use the init= prefix instead. */
+  static const char *const validAuthorities[] = {
+      "EPSG", "ESRI", "IAU_2015", "IGNF", "NKG", "OGC", NULL};
+
   if (value[0] == '+') {
+    /* Handle new style definitions e.g. "+proj=utm +zone=11 +ellps=WGS84" */
     char *trimmed;
     int i, i_out = 0;
 
@@ -1522,7 +1487,7 @@ int msLoadProjectionString(projectionObj *p, const char *value) {
   } else if (strncasecmp(value, "AUTO:", 5) == 0 ||
              strncasecmp(value, "AUTO2:", 6) == 0) {
     /* WMS/WFS AUTO projection: "AUTO:proj_id,units_id,lon0,lat0" */
-    /* WMS 1.3.0 projection: "AUTO2:auto_crs_id,factor,lon0,lat0"*/
+    /* WMS 1.3.0 projection: "AUTO2:auto_crs_id,factor,lon0,lat0" */
     /* Keep the projection defn into a single token for writeProjection() */
     /* to work fine. */
     p->args = (char **)msSmallMalloc(sizeof(char *));
@@ -1556,13 +1521,68 @@ int msLoadProjectionString(projectionObj *p, const char *value) {
                  MS_FALSE) == 0) {
     /* We assume always long/lat ordering, as that is what GeoServer does... */
   } else if (msLoadProjectionStringCRSLike(p, value, "CRS:") == 0) {
-  } else if (msLoadProjectionCodeString(p, value) == 0) {
-    /* allow strings in the form AUTH:XXXX */
-  }
-  /*
-   * Handle old style comma delimited.  eg. "proj=utm,zone=11,ellps=WGS84".
-   */
-  else {
+  } else if (strncasecmp(value, "urn:ogc:def:crs:", 16) == 0) {
+    /* Generic URN handler for any authority e.g. urn:ogc:def:crs:ESRI::53009
+    ** Format is urn:ogc:def:crs:AUTHORITY:version:CODE where version may
+    ** be empty */
+    const char *p_auth = value + 16;
+    const char *sep = strchr(p_auth, ':');
+    if (sep != NULL) {
+      char auth[64] = {0};
+      size_t authlen = sep - p_auth;
+      if (authlen < sizeof(auth)) {
+        strlcpy(auth, p_auth, authlen + 1);
+        /* skip version field - may be empty e.g. ESRI::53009 or
+        ** have a value e.g. EPSG:6.18:4326 */
+        const char *p_code = sep + 1;
+        sep = strchr(p_code, ':');
+        if (sep != NULL)
+          p_code = sep + 1; /* skip version, point to code */
+        if (*p_code != '\0') {
+          /* Assemble as AUTHORITY:CODE and recurse */
+          char authcode[128] = {0};
+          snprintf(authcode, sizeof(authcode), "%s:%s", auth, p_code);
+          return msLoadProjectionString(p, authcode);
+        }
+      }
+    }
+  } else if (strchr(value, ':') != NULL &&
+             strncasecmp(value, "init=", 5) != 0) {
+    /* Handle AUTHORITY:CODE pattern e.g. ESRI:54030, IAU:2015:30100,
+    ** epsg2:42304. Check if authority is in the known list - if so pass
+    ** directly to PROJ 6+, otherwise prepend init= for file-based
+    ** references and legacy PROJ 4. */
+    const char *sep = strchr(value, ':');
+    char authUpper[64] = {0};
+    size_t authlen = sep - value;
+    bool knownAuthority = false;
+    if (authlen < sizeof(authUpper)) {
+      strlcpy(authUpper, value, authlen + 1);
+      for (size_t i = 0; authUpper[i]; i++)
+        authUpper[i] = (char)toupper((unsigned char)authUpper[i]);
+      for (int i = 0; validAuthorities[i] != NULL; i++) {
+        if (strcmp(authUpper, validAuthorities[i]) == 0) {
+          knownAuthority = true;
+          break;
+        }
+      }
+    }
+    if (knownAuthority) {
+      /* PROJ 6+ handles known authorities directly */
+      p->args = (char **)msSmallMalloc(sizeof(char *));
+      p->args[0] = msStrdup(value);
+      p->numargs = 1;
+    } else {
+      /* Prepend init= for file-based or legacy PROJ 4 references */
+      const size_t buffer_size = strlen("init=") + strlen(value) + 1;
+      char *init_string = (char *)msSmallMalloc(buffer_size);
+      snprintf(init_string, buffer_size, "init=%s", value);
+      p->args = (char **)msSmallMalloc(sizeof(char *));
+      p->args[0] = init_string;
+      p->numargs = 1;
+    }
+  } else {
+    /* Handle old style comma delimited e.g. "proj=utm,zone=11,ellps=WGS84" */
     p->args = msStringSplit(value, ',', &p->numargs);
   }
 

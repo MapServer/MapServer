@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <wfs:WFS_Capabilities xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:wfs="http://www.opengis.net/wfs/2.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:fes="http://www.opengis.net/fes/2.0" xmlns:ms="http://mapserver.gis.umn.edu/mapserver" xmlns="http://www.opengis.net/wfs/2.0" version="2.0.0" xsi:schemaLocation="http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd">
   <ows:ServiceIdentification>
-    <ows:Title>Example Map</ows:Title>
+    <ows:Title/>
+    <!--WARNING: Optional metadata "ows_title" missing for ows:Title-->
     <ows:Abstract/>
     <!--WARNING: Optional metadata "ows_abstract" was missing for ows:Abstract-->
     <!--WARNING: Optional metadata "ows_keywordlist" was missing for ows:KeywordList-->
@@ -58,8 +59,8 @@
     <ows:Operation name="GetCapabilities">
       <ows:DCP>
         <ows:HTTP>
-          <ows:Get xlink:type="simple" xlink:href="https://maps.example.com/mapserver/onlineresource/?"/>
-          <ows:Post xlink:type="simple" xlink:href="https://maps.example.com/mapserver/onlineresource/?"/>
+          <ows:Get xlink:type="simple" xlink:href="http://localhost/path/to/wfs_custom_projection?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://localhost/path/to/wfs_custom_projection?"/>
         </ows:HTTP>
       </ows:DCP>
       <ows:Parameter name="AcceptVersions">
@@ -87,8 +88,8 @@
     <ows:Operation name="DescribeFeatureType">
       <ows:DCP>
         <ows:HTTP>
-          <ows:Get xlink:type="simple" xlink:href="https://maps.example.com/mapserver/onlineresource/?"/>
-          <ows:Post xlink:type="simple" xlink:href="https://maps.example.com/mapserver/onlineresource/?"/>
+          <ows:Get xlink:type="simple" xlink:href="http://localhost/path/to/wfs_custom_projection?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://localhost/path/to/wfs_custom_projection?"/>
         </ows:HTTP>
       </ows:DCP>
       <ows:Parameter name="outputFormat">
@@ -103,8 +104,8 @@
     <ows:Operation name="GetFeature">
       <ows:DCP>
         <ows:HTTP>
-          <ows:Get xlink:type="simple" xlink:href="https://maps.example.com/mapserver/onlineresource/?"/>
-          <ows:Post xlink:type="simple" xlink:href="https://maps.example.com/mapserver/onlineresource/?"/>
+          <ows:Get xlink:type="simple" xlink:href="http://localhost/path/to/wfs_custom_projection?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://localhost/path/to/wfs_custom_projection?"/>
         </ows:HTTP>
       </ows:DCP>
       <ows:Parameter name="outputFormat">
@@ -113,14 +114,15 @@
           <ows:Value>text/xml; subtype=gml/3.2.1</ows:Value>
           <ows:Value>text/xml; subtype=gml/3.1.1</ows:Value>
           <ows:Value>text/xml; subtype=gml/2.1.2</ows:Value>
+          <ows:Value>application/json; subtype=geojson; charset=utf-8</ows:Value>
         </ows:AllowedValues>
       </ows:Parameter>
     </ows:Operation>
     <ows:Operation name="GetPropertyValue">
       <ows:DCP>
         <ows:HTTP>
-          <ows:Get xlink:type="simple" xlink:href="https://maps.example.com/mapserver/onlineresource/?"/>
-          <ows:Post xlink:type="simple" xlink:href="https://maps.example.com/mapserver/onlineresource/?"/>
+          <ows:Get xlink:type="simple" xlink:href="http://localhost/path/to/wfs_custom_projection?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://localhost/path/to/wfs_custom_projection?"/>
         </ows:HTTP>
       </ows:DCP>
       <ows:Parameter name="outputFormat">
@@ -135,16 +137,16 @@
     <ows:Operation name="ListStoredQueries">
       <ows:DCP>
         <ows:HTTP>
-          <ows:Get xlink:type="simple" xlink:href="https://maps.example.com/mapserver/onlineresource/?"/>
-          <ows:Post xlink:type="simple" xlink:href="https://maps.example.com/mapserver/onlineresource/?"/>
+          <ows:Get xlink:type="simple" xlink:href="http://localhost/path/to/wfs_custom_projection?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://localhost/path/to/wfs_custom_projection?"/>
         </ows:HTTP>
       </ows:DCP>
     </ows:Operation>
     <ows:Operation name="DescribeStoredQueries">
       <ows:DCP>
         <ows:HTTP>
-          <ows:Get xlink:type="simple" xlink:href="https://maps.example.com/mapserver/onlineresource/?"/>
-          <ows:Post xlink:type="simple" xlink:href="https://maps.example.com/mapserver/onlineresource/?"/>
+          <ows:Get xlink:type="simple" xlink:href="http://localhost/path/to/wfs_custom_projection?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://localhost/path/to/wfs_custom_projection?"/>
         </ows:HTTP>
       </ows:DCP>
     </ows:Operation>
@@ -215,6 +217,10 @@
       <ows:NoValues/>
       <ows:DefaultValue>FALSE</ows:DefaultValue>
     </ows:Constraint>
+    <ows:Constraint name="CountDefault">
+      <ows:NoValues/>
+      <ows:DefaultValue>1</ows:DefaultValue>
+    </ows:Constraint>
     <ows:Constraint name="QueryExpressions">
       <ows:AllowedValues>
         <ows:Value>wfs:Query</ows:Value>
@@ -224,20 +230,25 @@
   </ows:OperationsMetadata>
   <FeatureTypeList>
     <FeatureType>
-      <Name>ms:ne_110m_land</Name>
-      <Title>ne_110m_land</Title>
-      <DefaultCRS>urn:ogc:def:crs:EPSG::4326</DefaultCRS>
+      <Name>ms:cities</Name>
+      <Title>cities</Title>
+      <DefaultCRS>urn:ogc:def:crs:EPSG::3857</DefaultCRS>
+      <OtherCRS>urn:ogc:def:crs:EPSG::4326</OtherCRS>
+      <OtherCRS>urn:ogc:def:crs:ESRI::54030</OtherCRS>
+      <OtherCRS>urn:ogc:def:crs:ESRI::53009</OtherCRS>
+      <OtherCRS>urn:ogc:def:crs:epsg2::42304</OtherCRS>
       <OutputFormats>
         <Format>application/gml+xml; version=3.2</Format>
         <Format>text/xml; subtype=gml/3.2.1</Format>
         <Format>text/xml; subtype=gml/3.1.1</Format>
         <Format>text/xml; subtype=gml/2.1.2</Format>
+        <Format>application/json; subtype=geojson; charset=utf-8</Format>
       </OutputFormats>
       <ows:WGS84BoundingBox dimensions="2">
-        <ows:LowerCorner>-180.000000 -90.000000</ows:LowerCorner>
-        <ows:UpperCorner>180.000000 83.645130</ows:UpperCorner>
+        <ows:LowerCorner>-163.954953 -37.818086</ows:LowerCorner>
+        <ows:UpperCorner>180.000000 60.163804</ows:UpperCorner>
       </ows:WGS84BoundingBox>
-      <MetadataURL xlink:href="https://maps.example.com/mapserver/onlineresource/?request=GetMetadata&amp;layer=ne_110m_land"/>
+      <MetadataURL xlink:href="http://localhost/path/to/wfs_custom_projection?request=GetMetadata&amp;layer=cities"/>
     </FeatureType>
   </FeatureTypeList>
   <fes:Filter_Capabilities>
