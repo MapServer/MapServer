@@ -5,3 +5,17 @@ renderers/result
 wxs/result
 mspython/result
 sld/result
+
+# Test results and artifacts
+*_results.xml
+*_results_no_kml.xml
+mapserver.conf
+misc/OpenLayersTest*.png
+
+# PHP test artifacts
+php/.phpunit.cache/
+php/.phpunit.result.cache
+php/phpunit-*.phar
+php/php_test_*.log
+php/coverage.info
+php/maps/sample.conf
