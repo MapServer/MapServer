@@ -70,11 +70,11 @@ cql2_expr_node::cql2_expr_node(cql2_op op)
   case CQL2_MULTIPLY:
   case CQL2_DIV:
   case CQL2_MOD:
+  case CQL2_ARGUMENT_LIST:
+  case CQL2_CUSTOM_FUNC:
     break;
 
   case CQL2_NONE:
-  case CQL2_ARGUMENT_LIST:
-  case CQL2_CUSTOM_FUNC:
     assert(false);
     break;
   }
