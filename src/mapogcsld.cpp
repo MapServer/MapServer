@@ -2894,7 +2894,7 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
         } else if (strcasecmp(psNode->pszValue, "Threshold") == 0) {
           papszThresholds[nThresholds] = psNode->psChild->pszValue;
           nThresholds++;
-          if (nValues == nMaxThreshold) {
+          if (nThresholds == nMaxThreshold) {
             nMaxThreshold += 100;
             papszThresholds = (char **)msSmallRealloc(
                 papszThresholds, sizeof(char *) * nMaxThreshold);
