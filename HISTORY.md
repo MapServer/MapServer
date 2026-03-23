@@ -13,6 +13,15 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.6.1 release (2026-03-23)
+--------------------------
+
+- security: fix potential heap buffer overflow (#7461)
+
+- No longer depend on GDAL's cpl_port.h MIN/MAX/ABS macros (#7438)
+
+see detailed changelog for other fixes
+
 8.6.0 release (2025-12-03)
 --------------------------
 
