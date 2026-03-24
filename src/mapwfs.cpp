@@ -295,54 +295,86 @@ static void msWFSPrintRequestCap(const char *request, const char *script_url,
 
 /* msWFSLocateSRSInList()
 **
-** Utility function to check if a space separated list contains  the one passed
-*in argument.
-**  The list comes normally from ows_srs metadata, and is expected to use the
-*simple EPSG notation
-** (EPSG:4326 ESPG:42304 ...). The srs comes from the query string and can
-*either
-** be of simple EPSG format or using gc:def:crs:EPSG:xxx format
+** Utility function to check if a space separated list contains the one passed
+** in argument.
+** The list comes normally from ows_srs metadata, and can contain any
+** AUTHORITY:CODE notation (EPSG:4326, ESRI:54030 etc).
+** The srs comes from the query string and can be in simple AUTHORITY:CODE
+** format, OGC URN (urn:ogc:def:crs:EPSG::4326) or OGC URI
+** (http://www.opengis.net/def/crs/EPSG/0/4326) format.
 */
-int msWFSLocateSRSInList(const char *pszList, const char *srs) {
-  int nTokens, i;
+static int msWFSLocateSRSInList(const char *pszList, const char *srs) {
+  int nTokens = 0;
   char **tokens = NULL;
   int bFound = MS_FALSE;
-  char epsg_string[100];
-  const char *code;
+  std::string authority, code;
 
   if (!pszList || !srs)
     return MS_FALSE;
 
-  if (strncasecmp(srs, "EPSG:", 5) == 0)
-    code = srs + 5;
-  else if (strncasecmp(srs, "urn:ogc:def:crs:EPSG:", 21) == 0) {
-    if (srs[21] == ':')
-      code = srs + 21;
-    else
-      code = srs + 20;
-
-    while (*code != ':' && *code != '\0')
-      code++;
-    if (*code == ':')
-      code++;
-  } else if (strncasecmp(srs, "urn:EPSG:geographicCRS:", 23) == 0)
+  /* OGC URN: urn:ogc:def:crs:AUTHORITY::CODE or
+   * urn:ogc:def:crs:AUTHORITY:version:CODE */
+  if (strncasecmp(srs, "urn:ogc:def:crs:", 16) == 0) {
+    const char *p = srs + 16;
+    const char *sep = strchr(p, ':');
+    if (sep == NULL)
+      return MS_FALSE;
+    authority = std::string(p, sep - p);
+    /* skip version field (may be empty) */
+    p = sep + 1;
+    sep = strchr(p, ':');
+    if (sep == NULL)
+      return MS_FALSE;
+    code = sep + 1;
+  }
+  /* OGC URI: http://www.opengis.net/def/crs/AUTHORITY/version/CODE */
+  else if (strncasecmp(srs, "http://www.opengis.net/def/crs/", 31) == 0) {
+    const char *p = srs + 31;
+    const char *sep = strchr(p, '/');
+    if (sep == NULL)
+      return MS_FALSE;
+    authority = std::string(p, sep - p);
+    /* skip version field */
+    p = sep + 1;
+    sep = strchr(p, '/');
+    if (sep == NULL)
+      return MS_FALSE;
+    code = sep + 1;
+  }
+  /* Legacy URN format: urn:EPSG:geographicCRS:CODE */
+  else if (strncasecmp(srs, "urn:EPSG:geographicCRS:", 23) == 0) {
+    authority = "EPSG";
     code = srs + 23;
-  else
+  }
+  /* Simple AUTHORITY:CODE e.g. EPSG:4326, ESRI:54030, IAU_2015:30100 */
+  else {
+    const char *sep = strchr(srs, ':');
+    if (sep == NULL)
+      return MS_FALSE;
+    authority = std::string(srs, sep - srs);
+    code = sep + 1;
+  }
+
+  if (code.empty())
     return MS_FALSE;
 
-  snprintf(epsg_string, sizeof(epsg_string), "EPSG:%s", code);
-
   tokens = msStringSplit(pszList, ' ', &nTokens);
-  if (tokens && nTokens > 0) {
-    for (i = 0; i < nTokens; i++) {
-      if (strcasecmp(tokens[i], epsg_string) == 0) {
+  if (tokens) {
+    for (int i = 0; i < nTokens; i++) {
+      const char *token_sep = strchr(tokens[i], ':');
+      if (token_sep == NULL)
+        continue;
+      std::string token_auth(tokens[i], token_sep - tokens[i]);
+      /* Compare authority case-insensitively and code exactly */
+      if (strcasecmp(token_auth.c_str(), authority.c_str()) == 0 &&
+          code == (token_sep + 1)) {
         bFound = MS_TRUE;
         break;
       }
     }
   }
-  msFreeCharArray(tokens, nTokens);
 
+  msFreeCharArray(tokens, nTokens);
   return bFound;
 }
 
@@ -2652,7 +2684,7 @@ this request. Check wfs/ows_enable_request settings.",
         msInitProjection(&sProjTmp);
         msProjectionInheritContextFrom(&sProjTmp, &(map->projection));
         /*do the axis order for now. It is unclear if the bbox are expected
-          ro respect the axis order defined in the projectsion #3296*/
+          to respect the axis order defined in the projection #3296*/
 
         if (nWFSVersion >= OWS_1_1_0) {
           if ((status = msLoadProjectionStringEPSG(&sProjTmp, sBBoxSrs)) == 0) {
