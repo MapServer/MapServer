@@ -2216,8 +2216,8 @@ int msOracleSpatialLayerWhichShapes(layerObj *layer, rectObj rect,
     strcpy(srid, "-1");
 
   /* main query as subquery so that ROWNUM for paging is outside of ORDER BY */
-  query_str = msStringConcatenate(query_str, 
-    "SELECT btmp.*, ROWNUM FROM (SELECT ");
+  query_str = 
+    msStringConcatenate(query_str, "SELECT btmp.*, ROWNUM FROM (SELECT ");
   numitemsinselect = layer->numitems;
   /* allocate enough space for items */
   if (layer->numitems >= 0) {
