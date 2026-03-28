@@ -284,7 +284,7 @@ int main(int argc, char *argv[]) {
           goto end_request;
         }
       }
-      if (ms_index_dir != NULL &&
+      if (ms_index_dir != NULL && mapserv->request->path_info != NULL &&
           strcmp(mapserv->request->path_info, "/") == 0) {
         // return the landing page
         msCGIDispatchIndexRequest(mapserv, config);
