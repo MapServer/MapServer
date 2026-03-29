@@ -24,7 +24,7 @@ apt-get install -y --allow-unauthenticated \
     libgdal-dev libproj-dev libxml2-dev libexempi-dev lcov lftp postgis \
     libharfbuzz-dev gdal-bin ccache curl \
     postgresql-server-dev-16 postgresql-16-postgis-3 postgresql-16-postgis-3-scripts \
-    swig wget git
+    swig wget git jq
 
 # Build MapServer
 cd "${WORK_DIR}"
@@ -53,13 +53,31 @@ tar xzf cov-analysis-linux64.tar.gz --strip 1 -C cov-analysis-linux64
 # Build with cov-build
 export PATH=`pwd`/cov-analysis-linux64/bin:$PATH
 cov-build --dir cov-int make
+tar czf cov-int.tgz cov-int
 
-# Submit to Coverity Scan
-curl --silent \
-    --form project=mapserver%2Fmapserver \
-    --form token="$TOKEN" \
-    --form email=steve.lime@state.mn.us \
-    --form file=@mapserver.tgz \
-    --form version=main \
-    --form description="$(git rev-parse --abbrev-ref HEAD) $(git rev-parse --short HEAD)" \
-    https://scan.coverity.com/builds?project=mapserver%2Fmapserver
+## Below from https://scan.coverity.com/projects/mapserver-mapserver/builds/new
+
+# Initialize a build. Fetch a cloud upload url.
+curl -X POST \
+  -d version=main \
+  -d description="$(git rev-parse --abbrev-ref HEAD) $(git rev-parse --short HEAD)" \
+  -d token="$TOKEN" \
+  -d email=steve.lime@state.mn.us \
+  -d file_name="cov-int.tgz" \
+  https://scan.coverity.com/projects/1409/builds/init \
+  | tee response
+
+# Store response data to use in later stages.
+upload_url=$(jq -r '.url' response)
+build_id=$(jq -r '.build_id' response)
+
+# Upload the tarball to the Cloud.
+curl -X PUT \
+  --header 'Content-Type: application/json' \
+  --upload-file cov-int.tgz \
+  $upload_url
+
+#  Trigger the build on Scan.
+curl -X PUT \
+  -d token="$TOKEN" \
+  https://scan.coverity.com/projects/1409/builds/$build_id/enqueue
