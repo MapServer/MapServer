@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -eu  # Exit on error and treat unset variables as errors
 
 # Ensure TOKEN is set
