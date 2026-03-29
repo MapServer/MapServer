@@ -28,6 +28,8 @@ apt-get install -y --allow-unauthenticated \
 
 # Build MapServer
 cd "${WORK_DIR}"
+git config --global --add safe.directory "${WORK_DIR}"
+
 mkdir build
 touch src/maplexer.l
 touch src/mapparser.y
