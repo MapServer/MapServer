@@ -7,6 +7,10 @@ if [ -z "${TOKEN:-}" ]; then
     exit 1
 fi
 
+# first install necessary packages
+apt-get update -y
+apt-get install software-properties-common
+
 # Install libraries
 add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 apt-get update -y
