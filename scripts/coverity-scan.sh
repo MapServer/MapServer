@@ -24,7 +24,7 @@ apt-get install -y --allow-unauthenticated \
     libgdal-dev libproj-dev libxml2-dev libexempi-dev lcov lftp postgis \
     libharfbuzz-dev gdal-bin ccache curl \
     postgresql-server-dev-16 postgresql-16-postgis-3 postgresql-16-postgis-3-scripts \
-    swig wget
+    swig wget git
 
 # Build MapServer
 cd "${WORK_DIR}"
