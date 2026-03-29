@@ -9,7 +9,7 @@ fi
 
 # first install necessary packages
 apt-get update -y
-apt-get install software-properties-common
+apt-get install --allow-unauthenticated software-properties-common
 
 # Install libraries
 add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
