@@ -2132,13 +2132,13 @@ int msSetup() {
   msThreadInit();
 #endif
 
-  if(gdal_destroyed) {
+  if (gdal_destroyed) {
     msAcquireLock(TLOCK_GDAL);
     GDALAllRegister();
     gdal_destroyed = 0;
     msReleaseLock(TLOCK_GDAL);
   }
-  
+
   /* Use PROJ_DATA/PROJ_LIB env vars if set */
   msProjDataInitFromEnv();
 
