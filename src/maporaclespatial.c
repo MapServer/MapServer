@@ -4334,7 +4334,7 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter,
         native_string = msStringConcatenate(native_string, snippet);
         if (ieq == MS_TRUE) {
           native_string = msStringConcatenate(native_string, "$");
-		  ieq = MS_FALSE;
+          ieq = MS_FALSE;
         }
         native_string = msStringConcatenate(native_string, "'");
         msFree(snippet);
