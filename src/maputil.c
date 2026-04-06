@@ -62,6 +62,8 @@ extern char *msyystring_buffer;
 extern int msyylex_destroy(void);
 extern int yyparse(parseObj *);
 
+int gdal_destroyed = 0;
+
 int msScaleInBounds(double scale, double minscale, double maxscale) {
   if (scale > 0) {
     if (maxscale != -1 && scale >= maxscale)
@@ -2130,6 +2132,13 @@ int msSetup() {
   msThreadInit();
 #endif
 
+  if (gdal_destroyed) {
+    msAcquireLock(TLOCK_GDAL);
+    GDALAllRegister();
+    gdal_destroyed = 0;
+    msReleaseLock(TLOCK_GDAL);
+  }
+
   /* Use PROJ_DATA/PROJ_LIB env vars if set */
   msProjDataInitFromEnv();
 
@@ -2176,6 +2185,7 @@ void msCleanup() {
   msAcquireLock(TLOCK_GDAL);
   /* Cleanup some GDAL global resources in particular */
   GDALDestroy();
+  gdal_destroyed = 1;
   msReleaseLock(TLOCK_GDAL);
 
   msSetPROJ_DATA(NULL, NULL);
