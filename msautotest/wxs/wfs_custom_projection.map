@@ -1,0 +1,62 @@
+#
+# Test WFS with non-EPSG projections
+#
+# REQUIRES: INPUT=GDAL SUPPORTS=WFS
+
+# RUN_PARMS: wfs_custom_projection_capabilities100.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetCapabilities" > [RESULT_DEMIME]
+# RUN_PARMS: wfs_custom_projection_capabilities110.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetCapabilities" > [RESULT_DEMIME]
+# RUN_PARMS: wfs_custom_projection_capabilities200.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetCapabilities" > [RESULT_DEMIME]
+
+
+# wfs 1.0 does not have an srsname parameter and we cannot override the output projection
+# RUN_PARMS: wfs_custom_projection_getfeature100.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=cities&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
+
+# RUN_PARMS: wfs_custom_projection_getfeature110_53009.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&SRSNAME=ESRI:53009&REQUEST=GetFeature&TYPENAME=cities&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
+# RUN_PARMS: wfs_custom_projection_getfeature110_42304.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&SRSNAME=epsg2:42304&REQUEST=GetFeature&TYPENAME=cities&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
+
+# RUN_PARMS: wfs_custom_projection_getfeature200_53009.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&SRSNAME=ESRI:53009&REQUEST=GetFeature&TYPENAMES=cities&OUTPUTFORMAT=geojson"  > [RESULT_DEMIME]
+# RUN_PARMS: wfs_custom_projection_getfeature200_42304.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&SRSNAME=epsg2:42304&REQUEST=GetFeature&TYPENAMES=cities&OUTPUTFORMAT=geojson" > [RESULT_DEMIME]
+
+MAP
+    NAME "cities"
+    EXTENT -20037508.34 -20048966.1 20037508.34 20048966.1
+    PROJECTION
+        "epsg:3857"
+    END
+
+    WEB
+      METADATA
+       "wfs_enable_request" "*"
+       "wfs_srs" "EPSG:3857 EPSG:4326 ESRI:54030 ESRI:53009 epsg2:42304"
+       "wfs_onlineresource"   "http://localhost/path/to/wfs_custom_projection?"
+       "wfs_getfeature_formatlist" "geojson"
+       "wfs_maxfeatures" "1"
+      END
+    END
+
+    OUTPUTFORMAT
+        NAME "geojson"
+        DRIVER "OGR/GEOJSON"
+        MIMETYPE "application/json; subtype=geojson; charset=utf-8"
+        FORMATOPTION "FORM=SIMPLE"
+        FORMATOPTION "STORAGE=memory"
+        FORMATOPTION "LCO:NATIVE_MEDIA_TYPE=application/vnd.geo+json"
+        FORMATOPTION "USE_FEATUREID=true"
+        FORMATOPTION "LCO:COORDINATE_PRECISION=3"
+    END
+
+    LAYER
+        NAME "cities"
+        TYPE POINT
+        PROJECTION
+            "esri:53009"
+        END
+        STATUS OFF
+        METADATA
+            "gml_include_items" "all"
+        END
+        CONNECTIONTYPE OGR
+        CONNECTION "./data/worldcity_53009.geojson"
+    END
+
+END

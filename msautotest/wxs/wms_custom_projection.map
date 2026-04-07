@@ -59,6 +59,7 @@ LAYER
   METADATA
     "wms_title"       "road"
     # add in an additional custom code
+    # ensure the epsg2 file with the custom projection is in the PROJ_DATA folder
     "wms_srs" "epsg2:42304 epsg2:3978"
     "gml_include_items" "all"
   END

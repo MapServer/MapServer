@@ -2478,24 +2478,32 @@ this request. Check wcs/ows_enable_request settings.",
   if (params->response_crs || params->crs) {
     int iUnits;
     const char *crs_to_use = params->response_crs;
-
     if (crs_to_use == NULL)
       crs_to_use = params->crs;
 
-    if (strncasecmp(crs_to_use, "EPSG:", 5) == 0 ||
-        strncasecmp(crs_to_use, "urn:ogc:def:crs:", 16) == 0) {
-      if (msLoadProjectionString(&(map->projection), (char *)crs_to_use) != 0)
-        return msWCSException(map, NULL, NULL, params->version);
-    } else if (strcasecmp(crs_to_use, "imageCRS") == 0) {
+    if (strcasecmp(crs_to_use, "imageCRS") == 0) {
       /* use layer native CRS, and rework bounding box accordingly */
       if (msWCSGetCoverage_ImageCRSSetup(map, params, &cm, lp) != MS_SUCCESS) {
         msWCSFreeCoverageMetadata(&cm);
         return MS_FAILURE;
       }
-    } else { /* should we support WMS style AUTO: projections? (not for now) */
-      msSetError(MS_WCSERR,
-                 "Unsupported SRS namespace (only EPSG currently supported).",
-                 "msWCSGetCoverage()");
+    } else if (strncasecmp(crs_to_use, "urn:ogc:def:crs:", 16) == 0 ||
+               strncasecmp(crs_to_use, "http://www.opengis.net/def/crs/", 31) ==
+                   0 ||
+               strchr(crs_to_use, ':') != NULL) {
+      /* Handles URNs, OGC URIs, and any AUTHORITY:CODE pattern
+      ** e.g. EPSG:4326, ESRI:54052, CRS:84, IAU_2015:30100 */
+      if (msLoadProjectionString(&(map->projection), (char *)crs_to_use) != 0) {
+        msSetError(MS_WCSERR, "Unsupported or unknown CRS '%s'.",
+                   "msWCSGetCoverage()", crs_to_use);
+        return msWCSException(map, "InvalidParameterValue", "srs",
+                              params->version);
+      }
+    } else {
+      msSetError(
+          MS_WCSERR,
+          "Unsupported SRS format '%s' (expected AUTHORITY:CODE, URN, or URI).",
+          "msWCSGetCoverage()", crs_to_use);
       return msWCSException(map, "InvalidParameterValue", "srs",
                             params->version);
     }

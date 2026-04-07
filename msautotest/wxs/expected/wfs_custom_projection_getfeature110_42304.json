@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "cities",
+"xy_coordinate_resolution": 0.001,
+"features": [
+{ "type": "Feature", "properties": { "name": "Vatican City" }, "geometry": { "type": "Point", "coordinates": [ 5417062.936, 5299444.448 ] } }
+]
+}
