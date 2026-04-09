@@ -730,6 +730,14 @@ static int _msProcessAutoProjection(projectionObj *p) {
 int msProcessProjection(projectionObj *p) {
   assert(p->proj == NULL);
 
+  if (p->numargs < 1 || p->args[0] == NULL) {
+    msSetError(
+        MS_PROJERR,
+        "No projection arguments provided or projection string is invalid.",
+        "msProcessProjection()");
+    return -1;
+  }
+
   p->generation_number++;
 
   if (strcasecmp(p->args[0], "GEOGRAPHIC") == 0) {
