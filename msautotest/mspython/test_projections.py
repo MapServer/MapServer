@@ -106,6 +106,11 @@ PROJECTION_CASES = [
         "IAU:2015:30100",
         marks=pytest.mark.xfail(reason="IAU:2015 is handled as IAU_2015"),
     ),
+    pytest.param(
+        "urn:ogc:def:crs:+",
+        None,
+        marks=pytest.mark.xfail(reason="Invalid projection string"),
+    ),
 ]
 
 
