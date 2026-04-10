@@ -730,7 +730,7 @@ static int _msProcessAutoProjection(projectionObj *p) {
 int msProcessProjection(projectionObj *p) {
   assert(p->proj == NULL);
 
-  if (p->numargs < 1 || p->args[0] == NULL) {
+  if (p->numargs < 1) {
     msSetError(
         MS_PROJERR,
         "No projection arguments provided or projection string is invalid.",
