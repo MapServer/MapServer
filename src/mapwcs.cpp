@@ -3575,8 +3575,10 @@ int msWCSGetCoverageMetadata(layerObj *layer, coverageMetadataObj *cm) {
 
     snprintf(projstring, sizeof(projstring), "init=epsg:%.20s",
              cm->srs_epsg + 5);
-    if (msLoadProjectionString(&proj, projstring) != 0)
+    if (msLoadProjectionString(&proj, projstring) != 0) {
+      msFreeProjection(&proj);
       return MS_FAILURE;
+    }
     msProjectRect(&proj, NULL, &(cm->llextent));
   }
 
