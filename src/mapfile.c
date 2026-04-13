@@ -1559,7 +1559,7 @@ int msLoadProjectionString(projectionObj *p, const char *value) {
     ** EPSG and OGC are handled above due to axis order and CRS identifier
     ** special cases.
     */
-    msLoadProjectionStringGenericCRS(p, value + 31, '/');
+    return msLoadProjectionStringGenericCRS(p, value + 31, '/');
   } else if (msLoadProjectionStringEPSGLike(
                  p, value, "http://www.opengis.net/gml/srs/epsg.xml#",
                  MS_FALSE) == 0) {
@@ -1571,7 +1571,7 @@ int msLoadProjectionString(projectionObj *p, const char *value) {
      ** Format is urn:ogc:def:crs:AUTHORITY:version:CODE where version may be
      *empty
      */
-    msLoadProjectionStringGenericCRS(p, value + 16, ':');
+    return msLoadProjectionStringGenericCRS(p, value + 16, ':');
   } else if (strchr(value, ':') != NULL &&
              strncasecmp(value, "init=", 5) != 0) {
     /* Handle AUTHORITY:CODE pattern e.g. ESRI:54030, IAU:2015:30100,
