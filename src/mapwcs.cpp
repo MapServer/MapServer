@@ -2638,6 +2638,7 @@ this request. Check wcs/ows_enable_request settings.",
     msInitProjection(&tmp_proj);
     msProjectionInheritContextFrom(&tmp_proj, &(map->projection));
     if (msLoadProjectionString(&tmp_proj, (char *)params->crs) != 0) {
+      msFreeProjection(&tmp_proj);
       msWCSFreeCoverageMetadata(&cm);
       return msWCSException(map, NULL, NULL, params->version);
     }
