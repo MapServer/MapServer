@@ -70,6 +70,7 @@ PROJECTION_CASES = [
     ("epsg2:42304", "+init=epsg2:42304"),
     ("http://www.opengis.net/def/crs/EPSG/0/4326", "+init=epsg:4326 +epsgaxis=ne"),
     ("http://www.opengis.net/def/crs/EPSG/0/32615", "+init=epsg:32615"),
+    ("http://www.opengis.net/def/crs/ESRI/0/53009", "ESRI:53009"),
     ("http://www.opengis.net/gml/srs/epsg.xml#4326", "+init=epsg:4326"),
     ("urn:ogc:def:crs:ESRI::53009", "ESRI:53009"),
     ("urn:ogc:def:crs:EPSG::4326", "+init=epsg:4326 +epsgaxis=ne"),

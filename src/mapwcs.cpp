@@ -2638,6 +2638,7 @@ this request. Check wcs/ows_enable_request settings.",
     msInitProjection(&tmp_proj);
     msProjectionInheritContextFrom(&tmp_proj, &(map->projection));
     if (msLoadProjectionString(&tmp_proj, (char *)params->crs) != 0) {
+      msFreeProjection(&tmp_proj);
       msWCSFreeCoverageMetadata(&cm);
       return msWCSException(map, NULL, NULL, params->version);
     }
@@ -3574,8 +3575,10 @@ int msWCSGetCoverageMetadata(layerObj *layer, coverageMetadataObj *cm) {
 
     snprintf(projstring, sizeof(projstring), "init=epsg:%.20s",
              cm->srs_epsg + 5);
-    if (msLoadProjectionString(&proj, projstring) != 0)
+    if (msLoadProjectionString(&proj, projstring) != 0) {
+      msFreeProjection(&proj);
       return MS_FAILURE;
+    }
     msProjectRect(&proj, NULL, &(cm->llextent));
   }
 

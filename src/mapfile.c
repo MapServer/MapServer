@@ -1458,6 +1458,41 @@ int msLoadProjectionStringEPSG(projectionObj *p, const char *value) {
   return msLoadProjectionString(p, value);
 }
 
+/* Extract AUTHORITY<sep>version<sep>CODE from a string, to
+** create AUTHORITY:CODE and pas this to msLoadProjectionString().
+** For example:
+**   ESRI/0/53009 to ESRI:53009
+**   ESRI::53009  to ESRI:53009
+** sep_char is '/' for URIs and ':' for URNs.
+** Returns 0 on success, -1 if the string could not be parsed. */
+static int msLoadProjectionStringGenericCRS(projectionObj *p,
+                                            const char *p_auth, char sep_char) {
+  const char *sep = strchr(p_auth, sep_char);
+  if (sep == NULL)
+    return -1;
+
+  char auth[64] = {0};
+  size_t authlen = sep - p_auth;
+  if (authlen == 0 || authlen >= sizeof(auth))
+    return -1;
+
+  strlcpy(auth, p_auth, authlen + 1);
+
+  /* skip version field (as it may be empty, e.g. ESRI::53009 or ESRI/0/53009)
+   */
+  const char *p_code = sep + 1;
+  sep = strchr(p_code, sep_char);
+  if (sep != NULL)
+    p_code = sep + 1;
+
+  if (*p_code == '\0')
+    return -1;
+
+  char authcode[128] = {0};
+  snprintf(authcode, sizeof(authcode), "%s:%s", auth, p_code);
+  return msLoadProjectionString(p, authcode);
+}
+
 int msLoadProjectionString(projectionObj *p, const char *value) {
   assert(p);
   p->gt.need_geotransform = MS_FALSE;
@@ -1511,41 +1546,32 @@ int msLoadProjectionString(projectionObj *p, const char *value) {
   } else if (msLoadProjectionStringEPSGLike(
                  p, value, "http://www.opengis.net/def/crs/EPSG/", MS_TRUE) ==
              0) {
-    /* URI projection support */
+    /* URI projection support. Kept separate from the generic URI handler
+    ** below because MS_TRUE enforces correct EPSG axis ordering. */
   } else if (msLoadProjectionStringCRSLike(
                  p, value, "http://www.opengis.net/def/crs/OGC/") == 0) {
     /* Mandatory support for this URI format specified in WFS1.1 (also in 1.0?)
      */
+  } else if (strncasecmp(value, "http://www.opengis.net/def/crs/", 31) == 0) {
+    /* Generic URI handler for non-EPSG/OGC authorities
+    ** in the format http://www.opengis.net/def/crs/AUTHORITY/version/CODE
+    ** e.g. http://www.opengis.net/def/crs/ESRI/0/53009
+    ** EPSG and OGC are handled above due to axis order and CRS identifier
+    ** special cases.
+    */
+    return msLoadProjectionStringGenericCRS(p, value + 31, '/');
   } else if (msLoadProjectionStringEPSGLike(
                  p, value, "http://www.opengis.net/gml/srs/epsg.xml#",
                  MS_FALSE) == 0) {
-    /* We assume always long/lat ordering, as that is what GeoServer does... */
+    /* We assume always long/lat ordering, as that is what GeoServer does...  */
   } else if (msLoadProjectionStringCRSLike(p, value, "CRS:") == 0) {
   } else if (strncasecmp(value, "urn:ogc:def:crs:", 16) == 0) {
-    /* Generic URN handler for any authority e.g. urn:ogc:def:crs:ESRI::53009
-    ** Format is urn:ogc:def:crs:AUTHORITY:version:CODE where version may
-    ** be empty */
-    const char *p_auth = value + 16;
-    const char *sep = strchr(p_auth, ':');
-    if (sep != NULL) {
-      char auth[64] = {0};
-      size_t authlen = sep - p_auth;
-      if (authlen < sizeof(auth)) {
-        strlcpy(auth, p_auth, authlen + 1);
-        /* skip version field - may be empty e.g. ESRI::53009 or
-        ** have a value e.g. EPSG:6.18:4326 */
-        const char *p_code = sep + 1;
-        sep = strchr(p_code, ':');
-        if (sep != NULL)
-          p_code = sep + 1; /* skip version, point to code */
-        if (*p_code != '\0') {
-          /* Assemble as AUTHORITY:CODE and recurse */
-          char authcode[128] = {0};
-          snprintf(authcode, sizeof(authcode), "%s:%s", auth, p_code);
-          return msLoadProjectionString(p, authcode);
-        }
-      }
-    }
+    /* Generic URN handler for non-EPSG/OGC authorities e.g.
+     *urn:ogc:def:crs:ESRI::53009
+     ** Format is urn:ogc:def:crs:AUTHORITY:version:CODE where version may be
+     *empty
+     */
+    return msLoadProjectionStringGenericCRS(p, value + 16, ':');
   } else if (strchr(value, ':') != NULL &&
              strncasecmp(value, "init=", 5) != 0) {
     /* Handle AUTHORITY:CODE pattern e.g. ESRI:54030, IAU:2015:30100,
