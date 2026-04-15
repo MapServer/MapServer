@@ -767,9 +767,9 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
         map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
 
       msAcquireLock(TLOCK_GDAL);
-      status = msInterpolationDataset(map, &interpolation_image, layer,
-                                      (void **)&hDS,
-                                      &kernel_density_cleanup_ptr);
+      status =
+          msInterpolationDataset(map, &interpolation_image, layer,
+                                 (void **)&hDS, &kernel_density_cleanup_ptr);
       /* Restore map state modified to satisfy msInterpolationDataset */
       map->cellsize = saved_cellsize;
       map->extent = saved_extent;
