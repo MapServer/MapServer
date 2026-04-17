@@ -5001,21 +5001,33 @@ int msReturnOpenLayersPage(mapservObj *mapserv) {
   char *format = NULL;
 
   /* 2 CGI parameters are used in the template. we need to transform them
-   * to be sure the case match during the template processing. We also
-   * need to search the SRS/CRS parameter to get the projection info. OGC
-   * services version >= 1.3.0 uses CRS rather than SRS */
+   * to be sure the case matches during the template processing.*/
+
+  const char *version = NULL;
   for (i = 0; i < mapserv->request->NumParams; i++) {
-    if ((strcasecmp(mapserv->request->ParamNames[i], "SRS") == 0) ||
-        (strcasecmp(mapserv->request->ParamNames[i], "CRS") == 0)) {
-      projection = mapserv->request->ParamValues[i];
-    } else if (strcasecmp(mapserv->request->ParamNames[i], "LAYERS") == 0) {
+    if (strcasecmp(mapserv->request->ParamNames[i], "LAYERS") == 0) {
       free(mapserv->request->ParamNames[i]);
       mapserv->request->ParamNames[i] = msStrdup("LAYERS");
     } else if (strcasecmp(mapserv->request->ParamNames[i], "VERSION") == 0) {
       free(mapserv->request->ParamNames[i]);
       mapserv->request->ParamNames[i] = msStrdup("VERSION");
+      version = mapserv->request->ParamValues[i];
     }
   }
+
+  /* Determine whether this is a 1.3.0 request.
+   * CRS is used for VERSION 1.3.0, SRS for earlier versions. */
+  const int use_crs = (version != NULL && strcmp(version, "1.3.0") >= 0);
+  const char *proj_param = use_crs ? "CRS" : "SRS";
+
+  /* get the correct projection parameter */
+  for (i = 0; i < mapserv->request->NumParams; i++) {
+    if (strcasecmp(mapserv->request->ParamNames[i], proj_param) == 0) {
+      projection = mapserv->request->ParamValues[i];
+      break;
+    }
+  }
+
   if (mapserv->map->outputformat->mimetype &&
       *mapserv->map->outputformat->mimetype) {
     format = mapserv->map->outputformat->mimetype;
