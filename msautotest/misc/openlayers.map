@@ -1,7 +1,9 @@
 # Test OpenLayers HTML template output through CGI and WMS
 
 # RUN_PARMS: browse.html [MAPSERV] QUERY_STRING="map=[MAPFILE]&layers=world-polys world-lines&mode=browse&template=openlayers" > [RESULT_DEMIME]
-# RUN_PARMS: wms.html [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetMap&SERVICE=WMS&VERSION=1.3.0&FORMAT=application/openlayers&STYLES=&TRANSPARENT=false&LAYERS=world-polys,world-lines&WIDTH=956&HEIGHT=705&CRS=EPSG:4326&BBOX=-180,-90,180,90" > [RESULT_DEMIME]
+# RUN_PARMS: browse_all.html [MAPSERV] QUERY_STRING="map=[MAPFILE]&layers=all&mode=browse&template=openlayers" > [RESULT_DEMIME]
+# RUN_PARMS: browse_invalid.html [MAPSERV] QUERY_STRING="map=[MAPFILE]&layers=x%3C/script%3E%3Cimg%20src%3Dx%20onerror%3Dalert(document.domain)%3E%3Cscript%3E&mode=browse&template=openlayers&SRS=x%3C/script%3E%3Cimg%20src%3Dx%20onerror%3Dalert(document.domain)%3E%3Cscript%3E" > [RESULT_DEMIME]
+# RUN_PARMS: wms.html [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetMap&SERVICE=WMS&VERSION=1.3.0&FORMAT=application/openlayers&STYLES=&TRANSPARENT=false&LAYERS=world-polys,world-lines,quotes%27&WIDTH=956&HEIGHT=705&CRS=EPSG:4326&BBOX=-180,-90,180,90" > [RESULT_DEMIME]
 # RUN_PARMS: wms_projected.html [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetMap&SERVICE=WMS&VERSION=1.3.0&FORMAT=application/openlayers&STYLES=&TRANSPARENT=false&LAYERS=world-polys,world-lines&WIDTH=956&HEIGHT=705&CRS=EPSG:3857&BBOX=-20037508.34,-20048966.1,20037508.34,20048966.1" > [RESULT_DEMIME]
 # RUN_PARMS: wms_projected_extra.html [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetMap&SERVICE=WMS&VERSION=1.3.0&FORMAT=application/openlayers&STYLES=&TRANSPARENT=false&LAYERS=world-polys,world-lines&WIDTH=956&HEIGHT=705&CRS=EPSG:3395&BBOX=-20037508.34,-15496570.74,20037508.34,18764656.23" > [RESULT_DEMIME]
 # RUN_PARMS: wms_invalid_parameter1.html [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetMap&SERVICE=WMS&VERSION=1.1.1&FORMAT=application/openlayers&STYLES=&TRANSPARENT=false&LAYERS=world-polys,world-lines&WIDTH=956&HEIGHT=705&CRS=x%3C/script%3E%3Cimg%20src%3Dx%20onerror%3Dalert(document.domain)%3E%3Cscript%3E&BBOX=-20037508.34,-15496570.74,20037508.34,18764656.23" > [RESULT_DEMIME]
@@ -58,6 +60,19 @@ MAP
       STYLE
         WIDTH 0.5
         COLOR 0 0 0
+      END
+    END
+  END
+
+  LAYER
+    NAME "quotes'"
+    TYPE LINE
+    STATUS OFF
+    DATA "data/testlines.shp"
+    CLASS
+      STYLE
+        WIDTH 0.5
+        COLOR 255 0 0
       END
     END
   END
