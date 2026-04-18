@@ -5017,14 +5017,17 @@ int msReturnOpenLayersPage(mapservObj *mapserv) {
 
   /* Determine whether this is a 1.3.0 request.
    * CRS is used for VERSION 1.3.0, SRS for earlier versions. */
-  const int use_crs = (version != NULL && strcmp(version, "1.3.0") >= 0);
-  const char *proj_param = use_crs ? "CRS" : "SRS";
 
-  /* get the correct projection parameter */
-  for (i = 0; i < mapserv->request->NumParams; i++) {
-    if (strcasecmp(mapserv->request->ParamNames[i], proj_param) == 0) {
-      projection = mapserv->request->ParamValues[i];
-      break;
+  if (mapserv->Mode != BROWSE) {
+    const int use_crs = (version != NULL && strcmp(version, "1.3.0") >= 0);
+    const char *proj_param = use_crs ? "CRS" : "SRS";
+
+    /* get the correct projection parameter */
+    for (i = 0; i < mapserv->request->NumParams; i++) {
+      if (strcasecmp(mapserv->request->ParamNames[i], proj_param) == 0) {
+        projection = msEncodeHTMLEntities(mapserv->request->ParamValues[i]);
+        break;
+      }
     }
   }
 
@@ -5067,6 +5070,7 @@ int msReturnOpenLayersPage(mapservObj *mapserv) {
   msIO_fwrite(buffer, strlen(buffer), 1, stdout);
   free(layer);
   free(buffer);
+  free(projection);
 
   return MS_SUCCESS;
 }
