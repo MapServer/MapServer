@@ -1,0 +1,49 @@
+#
+# Test Raster Queries with NaN values and classes
+#
+# REQUIRES: INPUT=GDAL SUPPORTS=WMS
+
+# RUN_PARMS: wms_raster_query_nan.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&&exceptions=XML&version=1.3.0&feature_count=101&styles=&service=WMS&request=GetFeatureInfo&layers=test&bbox=3757032.814272985%2C-626172.1357121654%2C4383204.9499851465%2C0&width=256&height=256&crs=EPSG%3A3857&query_layers=test&info_format=text%2Fplain&i=43&j=168" > [RESULT_DEMIME]
+
+MAP
+    NAME 'RASTER_NAN_QUERY'
+    SIZE 800 800
+    UNITS METERS
+    EXTENT 33.89333673234122 -4.676208154654717 40.77100565298233 2.661891659578913
+    PROJECTION
+        'epsg:4326'
+    END
+    WEB
+        METADATA
+            'ows_enable_request' '*'
+            'ows_srs' 'EPSG:4326 EPSG:3857 EPSG:54009 EPSG:54012'
+        END
+    END
+    LAYER
+        NAME 'test'
+        TYPE RASTER
+        DATA "data/nan.tif"
+        PROJECTION
+            'EPSG:32737'
+        END
+        EXTENT -67111.201 9481062.486 696888.799 10294362.486
+        STATUS ON
+        TEMPLATE 'ttt'
+        CLASS
+            NAME '0 - 731.2'
+            GROUP 'Default'
+            EXPRESSION ( ( [pixel] >= 0 ) AND ( [pixel] <= 731.2 ) )
+            STYLE
+                COLOR '#56a1b3'
+            END
+        END      
+        CLASS
+            NAME '731.2 - 7012'
+            GROUP 'Default'
+            EXPRESSION ( ( [pixel] >= 731.2 ) AND ( [pixel] <= 7012 ) )
+            STYLE
+                COLOR '#d7191c'
+            END
+        END
+    END
+END

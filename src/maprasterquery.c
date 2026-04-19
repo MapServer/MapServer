@@ -329,11 +329,20 @@ static void msRasterQueryAddPixel(layerObj *layer, pointObj *location,
   /* -------------------------------------------------------------------- */
   else {
     if (rlinfo->band_count >= 3) {
-      red = (int)MS_MAX(0, MS_MIN(255, values[0]));
-      green = (int)MS_MAX(0, MS_MIN(255, values[1]));
-      blue = (int)MS_MAX(0, MS_MIN(255, values[2]));
+      if (!CPLIsFinite(values[0]) || !CPLIsFinite(values[1]) ||
+          !CPLIsFinite(values[2])) {
+        nodata = TRUE;
+      } else {
+        red = (int)MS_MAX(0, MS_MIN(255, values[0]));
+        green = (int)MS_MAX(0, MS_MIN(255, values[1]));
+        blue = (int)MS_MAX(0, MS_MIN(255, values[2]));
+      }
     } else {
-      red = green = blue = (int)MS_MAX(0, MS_MIN(255, values[0]));
+      if (!CPLIsFinite(values[0])) {
+        nodata = TRUE;
+      } else {
+        red = green = blue = (int)MS_MAX(0, MS_MIN(255, values[0]));
+      }
     }
   }
 
@@ -345,7 +354,7 @@ static void msRasterQueryAddPixel(layerObj *layer, pointObj *location,
   /*      described in:                                                   */
   /*       http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1021         */
   /* -------------------------------------------------------------------- */
-  if (rlinfo->qc_class != NULL) {
+  if (rlinfo->qc_class != NULL && !nodata) {
     p_class = msGetClass_FloatRGB(layer, values[0], red, green, blue);
 
     if (p_class == -1)
