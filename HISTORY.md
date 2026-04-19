@@ -13,6 +13,15 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.6.2 release (2026-04-19)
+--------------------------
+
+- security: only allow SRS or CRS parameters for OpenLayers template (#7480)
+
+- fix segmentation fault in PHP MapScriptNG (#7471)
+
+see detailed changelog for other fixes
+
 8.6.1 release (2026-03-23)
 --------------------------
 
