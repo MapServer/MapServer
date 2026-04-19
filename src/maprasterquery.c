@@ -660,6 +660,8 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
 {
   int status = MS_SUCCESS;
   char *filename = NULL;
+  imageObj interpolation_image;
+  void *kernel_density_cleanup_ptr = NULL;
 
   layerObj *tlp = NULL; /* pointer to the tile layer either real or temporary */
   int tileitemindex = -1, tilelayerindex = -1, tilesrsindex = -1;
@@ -708,7 +710,9 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
   if (layer->debug > 0 || map->debug > 1)
     msDebug("msRasterQueryByRect(%s): entering.\n", layer->name);
 
-  if (!layer->data && !layer->tileindex) {
+  if (!layer->data && !layer->tileindex &&
+      !(layer->connectiontype == MS_KERNELDENSITY ||
+        layer->connectiontype == MS_IDW)) {
     if (layer->debug > 0 || map->debug > 0)
       msDebug("msRasterQueryByRect(%s): layer data and tileindex NULL ... "
               "doing nothing.",
@@ -755,50 +759,100 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
     GDALDatasetH hDS;
     char *decrypted_path = NULL;
 
-    /* -------------------------------------------------------------------- */
-    /*      Get filename.                                                   */
-    /* -------------------------------------------------------------------- */
-    if (layer->tileindex) {
-      status = msDrawRasterIterateTileIndex(
-          layer, tlp, &tshp, tileitemindex, tilesrsindex, tilename,
-          sizeof(tilename), tilesrsname, sizeof(tilesrsname));
-      if (status == MS_FAILURE) {
-        break;
-      }
-
-      if (status == MS_DONE)
-        break; /* no more tiles/images */
-      filename = tilename;
-    } else {
-      filename = layer->data;
-      done = MS_TRUE; /* only one image so we're done after this */
-    }
-
-    if (strlen(filename) == 0)
-      continue;
-
-    /* -------------------------------------------------------------------- */
-    /*      Open the file.                                                  */
-    /* -------------------------------------------------------------------- */
     msGDALInitialize();
 
-    msDrawRasterBuildRasterPath(map, layer, filename, szPath);
+    if (layer->connectiontype == MS_KERNELDENSITY ||
+        layer->connectiontype == MS_IDW) {
+      memset(&interpolation_image, 0, sizeof(interpolation_image));
+      interpolation_image.width = map->width;
+      interpolation_image.height = map->height;
 
-    decrypted_path = msDecryptStringTokens(map, szPath);
-    if (!decrypted_path) {
-      status = MS_FAILURE;
-      goto cleanup;
-    }
+      /* map->cellsize is set by msCalculateScale() in the draw path but is
+       * often 0 during query/GFI requests. msInterpolationDataset() needs it
+       * to build the in-memory raster geotransform. Compute it temporarily. */
+      const double saved_cellsize = map->cellsize;
+      const rectObj saved_extent = map->extent;
+      if (map->cellsize <= 0 && map->width > 0)
+        map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
 
-    msAcquireLock(TLOCK_GDAL);
-    if (!layer->tileindex) {
-      char **connectionoptions =
-          msGetStringListFromHashTable(&(layer->connectionoptions));
-      hDS = GDALOpenEx(decrypted_path, GDAL_OF_RASTER, NULL,
-                       (const char *const *)connectionoptions, NULL);
-      CSLDestroy(connectionoptions);
+      msAcquireLock(TLOCK_GDAL);
+      status =
+          msInterpolationDataset(map, &interpolation_image, layer,
+                                 (void **)&hDS, &kernel_density_cleanup_ptr);
+      /* Restore map state modified to satisfy msInterpolationDataset */
+      map->cellsize = saved_cellsize;
+      map->extent = saved_extent;
+      if (status != MS_SUCCESS) {
+        msReleaseLock(TLOCK_GDAL);
+        goto cleanup;
+      }
+      done = MS_TRUE;
+      filename = layer->name;
+
+      if (msProjectionsDiffer(&map->projection, &layer->projection)) {
+        char *mapProjStr = msGetProjectionString(&(map->projection));
+
+        /* Set the projection to the map projection for the generated raster.
+         */
+        if (msLoadProjectionString(&(layer->projection), mapProjStr) != 0) {
+          GDALClose(hDS);
+          msCleanupInterpolationDataset(map, &interpolation_image, layer,
+                                        kernel_density_cleanup_ptr);
+          kernel_density_cleanup_ptr = NULL;
+          msReleaseLock(TLOCK_GDAL);
+          msFree(mapProjStr);
+          msSetError(MS_CGIERR,
+                     "Unable to set projection on interpolation layer.",
+                     "msRasterQueryByRect()");
+          status = MS_FAILURE;
+          goto cleanup;
+        }
+        msFree(mapProjStr);
+      }
     } else {
-      hDS = GDALOpen(decrypted_path, GA_ReadOnly);
+      /* -------------------------------------------------------------------- */
+      /*      Get filename.                                                   */
+      /* -------------------------------------------------------------------- */
+      if (layer->tileindex) {
+        status = msDrawRasterIterateTileIndex(
+            layer, tlp, &tshp, tileitemindex, tilesrsindex, tilename,
+            sizeof(tilename), tilesrsname, sizeof(tilesrsname));
+        if (status == MS_FAILURE) {
+          break;
+        }
+
+        if (status == MS_DONE)
+          break; /* no more tiles/images */
+        filename = tilename;
+      } else {
+        filename = layer->data;
+        done = MS_TRUE; /* only one image so we're done after this */
+      }
+
+      if (strlen(filename) == 0)
+        continue;
+
+      /* -------------------------------------------------------------------- */
+      /*      Open the file.                                                  */
+      /* -------------------------------------------------------------------- */
+      msDrawRasterBuildRasterPath(map, layer, filename, szPath);
+
+      decrypted_path = msDecryptStringTokens(map, szPath);
+      if (!decrypted_path) {
+        status = MS_FAILURE;
+        goto cleanup;
+      }
+
+      msAcquireLock(TLOCK_GDAL);
+      if (!layer->tileindex) {
+        char **connectionoptions =
+            msGetStringListFromHashTable(&(layer->connectionoptions));
+        hDS = GDALOpenEx(decrypted_path, GDAL_OF_RASTER, NULL,
+                         (const char *const *)connectionoptions, NULL);
+        CSLDestroy(connectionoptions);
+      } else {
+        hDS = GDALOpen(decrypted_path, GA_ReadOnly);
+      }
     }
 
     if (hDS == NULL) {
@@ -846,6 +900,11 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
       status = msRasterQueryByRectLow(map, layer, hDS, queryRect);
 
     GDALClose(hDS);
+    if (kernel_density_cleanup_ptr) {
+      msCleanupInterpolationDataset(map, &interpolation_image, layer,
+                                    kernel_density_cleanup_ptr);
+      kernel_density_cleanup_ptr = NULL;
+    }
     msReleaseLock(TLOCK_GDAL);
 
   } /* next tile */
@@ -854,6 +913,11 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
   /*      Cleanup tileindex if it is open.                                */
   /* -------------------------------------------------------------------- */
 cleanup:
+  if (kernel_density_cleanup_ptr) {
+    msCleanupInterpolationDataset(map, &interpolation_image, layer,
+                                  kernel_density_cleanup_ptr);
+  }
+
   if (layer->tileindex) { /* tiling clean-up */
     msDrawRasterCleanupTileLayer(tlp, tilelayerindex);
   } else {
