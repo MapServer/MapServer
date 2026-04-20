@@ -38,29 +38,43 @@ cd msautotest
 sudo cp ./wxs/data/epsg2 /usr/share/proj/
 
 # lint Python msautotests
-python -m pyflakes .
+python3 -m pyflakes .
 
 # run the Python server for the tests
-python -m http.server &> /dev/null &
+python3 -m http.server &> /dev/null &
 
-# get PHPUnit
-echo "PHP version"
-php -v
-PHPVersionMinor=$(php --version | head -n 1 | cut -d " " -f 2 | cut -c 1,3)
-if [ ${PHPVersionMinor} -gt 83 ]; then
-    cd php && curl -LO https://phar.phpunit.de/phpunit-13.phar
-    echo "PHPUnit version"
-    php phpunit-13.phar --version
-else
-    cd php && curl -LO https://phar.phpunit.de/phpunit-10.phar
-    echo "PHPUnit version"
-    php phpunit-10.phar --version
-fi
-echo "PHP includes"
-php-config --includes
+cd .. # Back to root
 
-cd ../../
+# --- PHP multi-version testing ---
+PHP_VERSIONS="8.3 8.4 8.5"
+ORIG_PHP_VERSION=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')
 
+for v in ${PHP_VERSIONS}; do
+    echo "--- Testing PHP ${v} ---"
+    sudo update-alternatives --set php /usr/bin/php${v}
+    sudo update-alternatives --set php-config /usr/bin/php-config${v}
+
+    # Force CMake reconfiguration for the new PHP version
+    rm -f build/Makefile build/CMakeCache.txt
+
+    PHP_CONFIG_PATH="/usr/bin/php-config${v}"
+    make cmakebuild_mapscript_php EXTRA_CMAKEFLAGS="${EXTRA_CMAKEFLAGS} -DPHP_CONFIG_EXECUTABLE=${PHP_CONFIG_PATH}"
+
+    # Verify extension loads
+    export PHP_MAPSCRIPT_SO=$(pwd)/build/src/mapscript/phpng/php_mapscriptng.so
+    php -d "extension=${PHP_MAPSCRIPT_SO}" -r "if(!class_exists('mapObj')) { echo 'FAIL'; exit(1); } else { echo 'PHP ${v}: MapScript OK'; }"
+
+    # Run PHP tests
+    cd msautotest/php
+    ./run_test.sh
+    cd ../..
+done
+
+# Restore original PHP version
+sudo update-alternatives --set php /usr/bin/php${ORIG_PHP_VERSION}
+sudo update-alternatives --set php-config /usr/bin/php-config${ORIG_PHP_VERSION}
+
+# Run MapServer tests
 if [ "${WITH_ASAN:-}" = "true" ]; then
     export AUTOTEST_OPTS="--strict_mode --run_under_asan"
     # Only run tests that only involve mapserv/map2img binaries. mspython, etc would require LD_PREOLOAD'ing the asan shared object
