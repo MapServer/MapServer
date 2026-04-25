@@ -2215,7 +2215,9 @@ int msOracleSpatialLayerWhichShapes(layerObj *layer, rectObj rect,
   if (strcmp(srid, "NULL") == 0)
     strcpy(srid, "-1");
 
-  query_str = msStringConcatenate(query_str, "SELECT ");
+  /* main query as subquery so that ROWNUM for paging is outside of ORDER BY */
+  query_str =
+      msStringConcatenate(query_str, "SELECT btmp.*, ROWNUM FROM (SELECT ");
   numitemsinselect = layer->numitems;
   /* allocate enough space for items */
   if (layer->numitems >= 0) {
@@ -2284,31 +2286,11 @@ int msOracleSpatialLayerWhichShapes(layerObj *layer, rectObj rect,
     query_str = msStringConcatenate(query_str, ",");
   }
 
-  /*we always want to add rownum in the selection to allow paging to work*/
-  query_str = msStringConcatenate(query_str, "rownum, ");
-
   query_str = msStringConcatenate(query_str, geom_column_name);
   query_str = msStringConcatenate(query_str, " FROM ");
   query_str = msStringConcatenate(query_str, table_name);
 
   query_str = osFilteritem(layer, function, query_str, 1);
-
-  if (layerinfo->paging && layer->maxfeatures > 0 && layer->startindex < 0) {
-    if (function == FUNCTION_NONE && layer->filter.native_string == NULL) {
-      query_str = msStringConcatenate(query_str, " WHERE ");
-    } else if (function == FUNCTION_NONE &&
-               layer->filter.native_string != NULL) {
-      query_str = msStringConcatenate(query_str, " AND ");
-    }
-    // avoiding an allocation on the heap here sounds acceptable
-    char tmpBuf[256];
-    snprintf(tmpBuf, sizeof(tmpBuf), " ROWNUM<=%d ", layer->maxfeatures);
-    query_str = msStringConcatenate(query_str, tmpBuf);
-
-    if (function != FUNCTION_NONE) {
-      query_str = msStringConcatenate(query_str, " AND ");
-    }
-  }
 
   if ((((atol(srid) >= 8192) && (atol(srid) <= 8330)) || (atol(srid) == 2) ||
        (atol(srid) == 5242888) || (atol(srid) == 2000001)) &&
@@ -2327,6 +2309,16 @@ int msOracleSpatialLayerWhichShapes(layerObj *layer, rectObj rect,
     query_str = msStringConcatenate(query_str, tmp1_str);
     query_str = msStringConcatenate(query_str, "  ");
     msFree(tmp1_str);
+  }
+
+  query_str = msStringConcatenate(query_str, " ) btmp ");
+
+  if (layerinfo->paging && layer->maxfeatures > 0 && layer->startindex < 0) {
+    query_str = msStringConcatenate(query_str, " WHERE ");
+    // avoiding an allocation on the heap here sounds acceptable
+    char tmpBuf[256];
+    snprintf(tmpBuf, sizeof(tmpBuf), " ROWNUM<=%d ", layer->maxfeatures);
+    query_str = msStringConcatenate(query_str, tmpBuf);
   }
 
   /*assuming startindex starts at 1*/
