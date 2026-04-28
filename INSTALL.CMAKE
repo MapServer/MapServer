@@ -1,10 +1,10 @@
 CMake Build Instructions
 ========================
 
-Since version 6.4, MapServer is built with the CMake build tool instead of the
-previous autotools chain. CMake is open source and free of charge and is usually
-included in distribution packages, or can be downloaded and compiled with no
-third party dependencies.
+Since version 6.4, MapServer must be compiled using the CMake build tool, 
+instead of the previous autotools chain. CMake is open source and free of 
+charge and is usually included in distribution packages, or can be downloaded 
+and compiled with no third party dependencies.
 CMake itself does not do the actual compiling of the MapServer source code, it
 mainly creates platform specific build files that can then be used by standard
 build utilities (make on Unix, Visual Studio on Windows, Xcode on OSX, etc...)
