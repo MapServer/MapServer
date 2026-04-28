@@ -179,4 +179,4 @@ The following are some common CMake options not specific to MapServer itself:
  - CMAKE_BUILD_TYPE : Specify the build type. Usually one of 'Debug' or 'Release', e.g.
    "-DCMAKE_BUILD_TYPE=Release" "-DCMAKE_BUILD_TYPE=Debug"
 
-You can find a more extensive list of cmake variables here: https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/Useful-Variables
+You can find a more extensive list of CMake variables here: https://cmake.org/cmake/help/latest/manual/cmake-variables.7.html
