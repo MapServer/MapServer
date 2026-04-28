@@ -2,17 +2,17 @@ CMake Build Instructions
 ========================
 
 Since version 6.4, MapServer is built with the CMake build tool instead of the
-previous autotools chain. CMake is opensource and free of charge and is usually
+previous autotools chain. CMake is open source and free of charge and is usually
 included in distribution packages, or can be downloaded and compiled with no
 third party dependencies.
 CMake itself does not do the actual compiling of the MapServer source code, it
 mainly creates platform specific build files that can then be used by standard
-build utilities (make on unixes, visual studio on windows, xcode on osx, etc...)
+build utilities (make on Unix, Visual Studio on Windows, Xcode on OSX, etc...)
 
 Install CMake
 -------------
 
-MapServer now requires at least CMake version 3.0, although the CMake process was
+MapServer requires at least CMake version 3.16, although the CMake process was
 first implemented in MapServer 6.4 with CMake 2.6.0.
 
 Distro Packaged Version
@@ -24,8 +24,8 @@ with your usual package manager: apt-get, yum, yast, etc...
 Installing Your Own
 ...................
 
-Head over to http://www.cmake.org/cmake/resources/software.html to download
-a source tarball (for unixes) or a binary installer (for windows).
+Head over to https://cmake.org/download/ to download
+a source tarball (for unixes) or a binary installer (for Windows).
 If you are building from source, the build process is detailed in the tarball
 readme files, and consists only in
 
@@ -121,12 +121,12 @@ of these can be enabled or disabled by passing "-DWITH_XXX=0" or "-DWITH_XXX=1" 
 This Readme file may be out of sync with the actual CMakeLists files shipped.
 Refer to the CMakeLists.txt file for up-to-date options.
 
- - option(WITH_PROJ "Choose if reprojection support should be built in" ON)
+ - option(WITH_PROTOBUFC "Choose if protocol buffers support should be built in (required for vector tiles)" ON)
  - option(WITH_KML "Enable native KML output support (requires libxml2 support)" OFF)
  - option(WITH_SOS "Enable SOS Server support (requires PROJ and libxml2 support)" OFF)
- - option(WITH_WMS "Enable WMS Server support (requires proj support)" ON)
- - option(WITH_FRIBIDI "Choose if FriBidi glyph reordering should be enabled (useful for right-to-left languages)(requires harfbuzz)" ON)
- - option(WITH_HARFBUZZ "Choose if Harfbuzz complex script glyph shaping support should be built in (requires fribidi)" ON)
+ - option(WITH_WMS "Enable WMS Server support (requires PROJ support)" ON)
+ - option(WITH_FRIBIDI "Choose if FriBidi glyph shaping support should be built in (useful for right-to-left languages) (requires HARFBUZZ)" ON)
+ - option(WITH_HARFBUZZ "Choose if Harfbuzz complex text layout should be included (needed for e.g. arabic and hindi) (requires FRIBIDI)" ON)
  - option(WITH_ICONV "Choose if Iconv Internationalization support should be built in" ON)
  - option(WITH_CAIRO "Choose if CAIRO  rendering support should be built in (required for SVG and PDF output)" ON)
  - option(WITH_SVGCAIRO "Choose if SVG symbology support (via libsvgcairo) should be built in (requires cairo, libsvg, libsvg-cairo. Incompatible with librsvg)" OFF)
@@ -135,18 +135,17 @@ Refer to the CMakeLists.txt file for up-to-date options.
  - option(WITH_FCGI "Choose if FastCGI support should be built in" ON)
  - option(WITH_GEOS "Choose if GEOS geometry operations support should be built in" ON)
  - option(WITH_POSTGIS "Choose if Postgis input support should be built in" ON)
- - option(WITH_GDAL "Choose if GDAL input raster support should be built in" ON)
- - option(WITH_OGR "Choose if OGR/GDAL input vector support should be built in" ON)
- - option(WITH_CURL "Enable Curl HTTP support (required for wms/wfs client, remote SLDs and pixmap symbols)" OFF)
- - option(WITH_CLIENT_WMS "Enable Client WMS Layer support (requires CURL and GDAL support)" OFF)
- - option(WITH_CLIENT_WFS "Enable Client WMS Layer support (requires CURL and OGR support)" OFF)
+ - option(WITH_CLIENT_WMS "Enable Client WMS Layer support (requires CURL)" OFF)
+ - option(WITH_CLIENT_WFS "Enable Client WMS Layer support (requires CURL)" OFF)
+ - option(WITH_CURL "Enable Curl HTTP support (required for wms/wfs client, and remote SLD)" OFF)
  - option(WITH_WFS "Enable WFS Server support (requires PROJ and OGR support)" ON)
  - option(WITH_WCS "Enable WCS Server support (requires PROJ and GDAL support)" ON)
+ - option(WITH_OGCAPI "Enable OGCAPI Server support (requires PROJ and OGR support)" ON)
  - option(WITH_LIBXML2 "Choose if libxml2 support should be built in (used for sos, wcs 1.1,2.0 and wfs 1.1)" ON)
  - option(WITH_THREAD_SAFETY "Choose if a thread-safe version of libmapserver should be built (only recommended for some mapscripts)" OFF)
  - option(WITH_GIF "Enable GIF support (for PIXMAP loading)" ON)
  - option(WITH_PYTHON "Enable Python mapscript support" OFF)
- - option(WITH_PHP "Enable PHP mapscript support" OFF)
+ - option(WITH_PHPNG "Enable PHPNG (SWIG) mapscript support" OFF)
  - option(WITH_PERL "Enable Perl mapscript support" OFF)
  - option(WITH_RUBY "Enable Ruby mapscript support" OFF)
  - option(WITH_JAVA "Enable Java mapscript support" OFF)
@@ -154,12 +153,10 @@ Refer to the CMakeLists.txt file for up-to-date options.
  - option(WITH_ORACLESPATIAL "include oracle spatial database input support" OFF)
  - option(WITH_ORACLE_PLUGIN "include oracle spatial database input support as plugin" OFF)
  - option(WITH_MSSQL2008 "include mssql 2008 database input support as plugin" OFF)
- - option(WITH_SDE_PLUGIN "include ArcSDE support as a plugin (must specify SDE_INCLUDE_DIR and SDE_LIBRARY_DIR)." OFF)
- - option(WITH_SDE "include ArcSDE support. Add -DSDE_VERSION=91 to use 9.1 arcSDE version" OFF)
  - option(WITH_EXEMPI "include xmp output metadata support" OFF)
  - option(WITH_XMLMAPFILE "include native xml mapfile support (requires libxslt/libexslt)" OFF)
  - option(WITH_V8 "include javascript v8 scripting" OFF)
-
+ - option(WITH_PIXMAN "use (experimental) support for pixman for layer compositing operations" OFF)
 
 The following options are for advanced users, i.e. you should not enable them unless
 you know what you are doing:
@@ -168,6 +165,10 @@ you know what you are doing:
  - option(LINK_STATIC_LIBMAPSERVER "Link to static version of libmapserver (also for mapscripts)" OFF)
  - option(WITH_APACHE_MODULE "include (experimental) support for apache module" OFF)
  - option(WITH_GENERIC_NINT "generic rounding" OFF)
+ - option(WITH_PYMAPSCRIPT_ANNOTATIONS "Add annotations to Python mapscript output" OFF)
+ - option(INSTALL_HTML_BOOTSTRAP "Whether to install HTML Bootstrap resources for OGCAPIs" ON)
+ - option(FUZZER "Build fuzzers using libFuzzer (requires Clang, will disable executable - mapserv, etc. - generation)" OFF)
+ - option(BUILD_FUZZER_REPRODUCER "Build fuzzer reproducer programs" ON)
 
 The following are some common CMake options not specific to MapServer itself:
 
@@ -178,4 +179,4 @@ The following are some common CMake options not specific to MapServer itself:
  - CMAKE_BUILD_TYPE : Specify the build type. Usually one of 'Debug' or 'Release', e.g.
    "-DCMAKE_BUILD_TYPE=Release" "-DCMAKE_BUILD_TYPE=Debug"
 
-You can find a more extensive list of cmake variables here: http://www.cmake.org/Wiki/CMake_Useful_Variables
+You can find a more extensive list of cmake variables here: https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/Useful-Variables
