@@ -1,9 +1,9 @@
 # CMake Build Instructions
 
-Since version 6.4, MapServer must be built using the CMake build tool, 
-instead of the previous autotools chain. CMake is open source and free of 
-charge and is usually included in distribution packages, or can be downloaded 
-and compiled with no third party dependencies.
+Since version 6.4, MapServer must be built using the [CMake](https://cmake.org) 
+build tool, instead of the previous autotools chain. CMake is open source, 
+free of charge, and is usually included in distribution packages, or can be 
+downloaded and compiled with no third party dependencies.
 CMake itself does not do the actual compiling of the MapServer source code, it
 mainly creates platform specific build files that can then be used by standard
 build utilities (make on Unix, Visual Studio on Windows, Xcode on OSX, etc...)
@@ -116,11 +116,12 @@ or not.
 
 ## Available Options
 
-Following is a list of option, taken from MapServer's CMakeLists.txt configuration file.
-After the description of the option, the ON/OFF flag states if the option is enabled by
-default (in which case the cmake step will fail if the dependency cannot be found). All
-of these can be enabled or disabled by passing "-DWITH_XXX=0" or "-DWITH_XXX=1" to the
-"cmake .." invocation in order to override a default selection.
+Following is a list of option, taken from MapServer's [CMakeLists.txt](https://github.com/MapServer/MapServer/blob/main/CMakeLists.txt) 
+configuration file. After the description of the option, the ON/OFF flag states 
+if the option is enabled by default (in which case the cmake step will fail if 
+the dependency cannot be found). All of these can be enabled or disabled by 
+passing `"-DWITH_XXX=0"` or `"-DWITH_XXX=1"` to the `"cmake .."` invocation 
+in order to override a default selection.
 
 This Readme file may be out of sync with the actual CMakeLists files shipped.
 Refer to the CMakeLists.txt file for up-to-date options.
@@ -184,7 +185,9 @@ The following are some common CMake options not specific to MapServer itself:
      ```
  - `CMAKE_BUILD_TYPE`: Specify the build type. Usually one of 'Debug' or 'Release', e.g.
      ```bash
-     "-DCMAKE_BUILD_TYPE=Release" "-DCMAKE_BUILD_TYPE=Debug"
+     "-DCMAKE_BUILD_TYPE=Release"
+     or
+     "-DCMAKE_BUILD_TYPE=Debug"
      ```
 
 You can find a more extensive list of CMake variables here: https://cmake.org/cmake/help/latest/manual/cmake-variables.7.html
