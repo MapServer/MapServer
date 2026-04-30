@@ -1,7 +1,7 @@
 # CMake Build Instructions
 
 Since version 6.4, MapServer must be built using the [CMake](https://cmake.org) 
-build tool, instead of the previous autotools chain. CMake is open source, 
+build tool, instead of the previous autotools chain. CMake is Open Source, 
 free of charge, and is usually included in distribution packages, or can be 
 downloaded and compiled with no third party dependencies.
 CMake itself does not do the actual compiling of the MapServer source code, it
