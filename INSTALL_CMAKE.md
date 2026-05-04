@@ -22,8 +22,8 @@ with your usual package manager: apt-get, yum, yast, etc...
 
 Head over to https://cmake.org/download/ to download
 a source tarball (for unixes) or a binary installer (for Windows).
-If you are building from source, the build process is detailed in the tarball
-readme files, and consists only in
+If you are building CMake from source, the build process is detailed in the 
+tarball readme files, such as
 
 ```bash
  $ tar xzf cmake-x.y.z.tar.gz
