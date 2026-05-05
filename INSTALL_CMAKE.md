@@ -23,7 +23,7 @@ with your usual package manager: apt-get, yum, yast, etc...
 Head over to https://cmake.org/download/ to download
 a source tarball (for unixes) or a binary installer (for Windows).
 If you are building CMake from source, the build process is detailed in the 
-tarball readme files, such as
+tarball readme files, such as:
 
 ```bash
  $ tar xzf cmake-x.y.z.tar.gz
@@ -55,7 +55,7 @@ make
 ### Running the GUI version of cmake
 
 CMake can be run in graphical mode, in which case the list of available options
-are presented in a more user-friendly manner
+are presented in a more user-friendly manner, such as:
 
 ```bash
 mkdir build
@@ -93,14 +93,14 @@ or not.
    $ cmake ..
    ```
    
- 2 You have installed the third party package in a non standard location, which you
-   must give to cmake so it can find the required headers and libraries
+ 2 You have installed the third party package in a non-standard location, which you
+   must give to cmake so it can find the required headers and libraries:
 
    ```bash
    $ cmake .. -DCMAKE_PREFIX_PATH=/opt/cairo-1.18.2
    ```
 
-   Cmake expects these nonstandard prefixes to contain standard subdirectories, i.e.
+   CMake expects these non-standard prefixes to contain standard subdirectories, i.e.
    /opt/cairo-1.18.2/include/cairo.h and /opt/cairo-1.18.2/lib/libcairo.so.
    You can specify multiple prefixes on the cmake command line by separating them with
    the platform specific separator (e.g. ":" on unixes), e.g.
@@ -116,7 +116,7 @@ or not.
 
 ## Available Options
 
-Following is a list of option, taken from MapServer's [CMakeLists.txt](https://github.com/MapServer/MapServer/blob/main/CMakeLists.txt) 
+The following is a list of options, taken from MapServer's [CMakeLists.txt](https://github.com/MapServer/MapServer/blob/main/CMakeLists.txt) 
 configuration file. After the description of the option, the ON/OFF flag states 
 if the option is enabled by default (in which case the cmake step will fail if 
 the dependency cannot be found). All of these can be enabled or disabled by 
