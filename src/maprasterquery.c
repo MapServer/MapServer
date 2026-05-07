@@ -1205,7 +1205,10 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record) {
 
         switch (rlinfo->eDataType) {
         case GDT_Byte:
+#if GDAL_VERSION_MAJOR > 3 ||                                                  \
+    (GDAL_VERSION_MAJOR == 3 && GDAL_VERSION_MINOR >= 7)
         case GDT_Int8:
+#endif
         case GDT_UInt16:
         case GDT_Int16:
         case GDT_Int32:
