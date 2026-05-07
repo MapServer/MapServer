@@ -13,6 +13,15 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.6.3 release (2026-05-07)
+--------------------------
+
+- security: fix out of bounds access on SLD with only a Rule with a ElseFilter but without a symbolizer (#7497)
+
+- Oracle: revert change regarding case insensitive ogc filters (#7493)
+
+- Oracle: revert change regarding adding subquery to apply sortBy before rownum paging (#7491)
+
 8.6.2 release (2026-04-19)
 --------------------------
 
