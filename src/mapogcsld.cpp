@@ -930,9 +930,17 @@ static void msSLDParseUserStyle(CPLXMLNode *psUserStyle, layerObj *psLayer) {
     LOOP_ON_CHILD_ELEMENT(psFeatureTypeStyle, psRule, "Rule") {
       CPLXMLNode *psElseFilter = CPLGetXMLNode(psRule, "ElseFilter");
       if (psElseFilter) {
+        const int nNumClassesBeforeRule = psLayer->numclasses;
         msSLDParseRule(psRule, psLayer, pszUserStyleName);
-        _SLDApplyRuleValues(psRule, psLayer, 1);
-        psLayer->_class[psLayer->numclasses - 1]->isfallback = TRUE;
+        const int nNumClassesAfterRule = psLayer->numclasses;
+        const int nNumClassesAdded =
+            nNumClassesAfterRule - nNumClassesBeforeRule;
+        if (nNumClassesAdded > 0) {
+          _SLDApplyRuleValues(psRule, psLayer, nNumClassesAdded);
+          for (int i = 0; i < nNumClassesAdded; ++i) {
+            psLayer->_class[psLayer->numclasses - 1 - i]->isfallback = TRUE;
+          }
+        }
       }
     }
   }
