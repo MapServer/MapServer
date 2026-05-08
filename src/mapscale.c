@@ -309,7 +309,7 @@ imageObj *msDrawScalebar(mapObj *map) {
         }
       }
 
-      sprintf(label, "%g", j * i);
+      snprintf(label, sizeof(label), "%g", j * i);
       map->scalebar.label.position = MS_CC;
       p.x = ox + j * isx; /* + MS_NINT(fontPtr->w/2); */
       p.y = oy + map->scalebar.height + MS_NINT(VSPACING * fontHeight);
@@ -320,9 +320,10 @@ imageObj *msDrawScalebar(mapObj *map) {
       }
       state = -state;
     }
-    sprintf(label, "%g", j * i);
+    snprintf(label, sizeof(label), "%g", j * i);
     ox = ox + j * isx - MS_NINT((strlen(label) * fontWidth) / 2.0);
-    sprintf(label, "%g %s", j * i, unitText[map->scalebar.units]);
+    snprintf(label, sizeof(label), "%g %s", j * i,
+             unitText[map->scalebar.units]);
     map->scalebar.label.position = MS_CR;
     p.x = ox; /* + MS_NINT(fontPtr->w/2); */
     p.y = oy + map->scalebar.height + MS_NINT(VSPACING * fontHeight);
@@ -361,12 +362,13 @@ imageObj *msDrawScalebar(mapObj *map) {
         goto scale_cleanup;
       }
 
-      sprintf(label, "%g", j * i);
+      snprintf(label, sizeof(label), "%g", j * i);
       if (j != map->scalebar.intervals) {
         map->scalebar.label.position = MS_CC;
         p.x = ox + j * isx; /* + MS_NINT(fontPtr->w/2); */
       } else {
-        sprintf(label, "%g %s", j * i, unitText[map->scalebar.units]);
+        snprintf(label, sizeof(label), "%g %s", j * i,
+                 unitText[map->scalebar.units]);
         map->scalebar.label.position = MS_CR;
         p.x = ox + j * isx - MS_NINT((strlen(label) * fontWidth) / 2.0);
       }
