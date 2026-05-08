@@ -11,7 +11,7 @@ xmlns="http://www.opengis.net/wfs/2.0"
 xmlns:inspire_dls="http://inspire.ec.europa.eu/schemas/inspire_dls/1.0"
 xmlns:inspire_common="http://inspire.ec.europa.eu/schemas/common/1.0"
 version="2.0.0" updateSequence="123"
-xsi:schemaLocation="http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://inspire.ec.europa.eu/schemas/inspire_dls/1.0 http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd http://inspire.ec.europa.eu/schemas/common/1.0 http://inspire.ec.europa.eu/schemas/common/1.0/common.xsd">
+xsi:schemaLocation="http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://inspire.ec.europa.eu/schemas/inspire_dls/1.0 https://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd http://inspire.ec.europa.eu/schemas/common/1.0 https://inspire.ec.europa.eu/schemas/common/1.0/common.xsd">
   <ows:ServiceIdentification>
     <ows:Title>Test simple wfs</ows:Title>
     <ows:Abstract>Test WFS Abstract</ows:Abstract>
