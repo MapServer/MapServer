@@ -1468,7 +1468,7 @@ const char *msOWSGetInspireSchemasLocation(mapObj *map) {
   schemas_location =
       msLookupHashTable(&(map->web.metadata), "inspire_schemas_location");
   if (schemas_location == NULL)
-    schemas_location = "http://inspire.ec.europa.eu/schemas";
+    schemas_location = INSPIRE_DEFAULT_SCHEMAS_LOCATION;
 
   return schemas_location;
 }
