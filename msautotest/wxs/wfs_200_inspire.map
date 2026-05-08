@@ -37,7 +37,7 @@ WEB
     #"wfs_validate_xml" "true"
     #"wfs_schemas_dir" "SCHEMAS_OPENGIS_NET"
 
-    "inspire_schemas_location" "http://inspire.ec.europa.eu/schemas"              # this is actually the default value
+    "inspire_schemas_location" "https://inspire.ec.europa.eu/schemas"              # this is actually the default value
 
     "wfs_inspire_capabilities" "embed"
 
