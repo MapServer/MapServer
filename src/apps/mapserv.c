@@ -60,6 +60,14 @@ static int finish_process = 0;
 static void msCleanupOnSignal(int nInData) {
   (void)nInData;
   finish_process = 1;
+#ifdef USE_FASTCGI
+  /* Ask libfcgi to stop accepting new requests. This causes a blocked
+   * FCGI_Accept() to return -1, so the main loop can exit promptly
+   * instead of waiting for the next request to arrive. Safe to call
+   * from a signal handler: it just sets an internal flag (declared in
+   * fcgiapp.h, which is pulled in via fcgi_stdio.h above). */
+  FCGX_ShutdownPending();
+#endif
 }
 #endif
 
@@ -242,8 +250,22 @@ int main(int argc, char *argv[]) {
   /*      Setup cleanup magic, mainly for FastCGI case.                   */
   /* -------------------------------------------------------------------- */
 #ifndef _WIN32
-  signal(SIGUSR1, msCleanupOnSignal);
-  signal(SIGTERM, msCleanupOnSignal);
+  {
+    /* Install via sigaction without SA_RESTART so that a blocking
+     * accept()/select() inside FCGI_Accept() returns EINTR when the
+     * signal arrives while the process is idle. Combined with
+     * FCGX_ShutdownPending() in the handler, this lets the FastCGI
+     * loop exit on SIGTERM instead of waiting for the next request. */
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = msCleanupOnSignal;
+    sigemptyset(&sa.sa_mask);
+    sigaddset(&sa.sa_mask, SIGUSR1);
+    sigaddset(&sa.sa_mask, SIGTERM);
+    sa.sa_flags = 0; /* deliberately no SA_RESTART */
+    sigaction(SIGUSR1, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
+  }
 #endif
 
 #ifdef USE_FASTCGI
