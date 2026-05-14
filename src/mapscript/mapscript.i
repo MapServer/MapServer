@@ -239,7 +239,7 @@ typedef struct {
 %include "tclmodule.i"
 #endif /* SWIGTCL8 */
 
-/* PHP7 */
+/* PHP7 (also used for PHP 8.x) */
 #ifdef SWIGPHP7
 %include "php7module.i"
 #endif /* SWIGPHP7 */
