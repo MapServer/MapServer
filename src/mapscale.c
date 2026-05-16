@@ -351,8 +351,10 @@ imageObj *msDrawScalebar(mapObj *map) {
   do {
     double units_per_pixel;
     if (msScalebarMeasurePixelSpan(map, &map->scalebar, dsx, &msx) !=
-        MS_SUCCESS)
-      return NULL;
+        MS_SUCCESS) {
+      status = MS_FAILURE;
+      goto scale_cleanup;
+    }
     i = roundInterval(msx / map->scalebar.intervals);
     snprintf(label, sizeof(label), "%g",
              map->scalebar.intervals * i); /* last label */
@@ -519,7 +521,8 @@ imageObj *msDrawScalebar(mapObj *map) {
   }
   default:
     msSetError(MS_MISCERR, "Unsupported scalebar style.", "msDrawScalebar()");
-    return (NULL);
+    status = MS_FAILURE;
+    goto scale_cleanup;
   }
 
 scale_cleanup:
