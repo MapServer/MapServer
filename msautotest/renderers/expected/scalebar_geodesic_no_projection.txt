@@ -1,2 +1,1 @@
 msDrawScalebar(): General error message. Geodesic scalebar measurement requires a map projection or decimal degree map units. <br>
-[stripped line matching "msLoadConfig"]
