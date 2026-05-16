@@ -1,4 +1,4 @@
-# RUN_PARMS: scalebar_geodesic_no_projection.txt [MAP2IMG] -conf ../config/empty2.conf -m [MAPFILE] -i png -o result/scalebar_geodesic_no_projection.png 2> [RESULT_DEVERSION]
+# RUN_PARMS: scalebar_geodesic_no_projection.txt [MAP2IMG] -conf ../config/empty2.conf -m [MAPFILE] -i png -o result/scalebar_geodesic_no_projection.png 2> [RESULT_DEVERSION] [ASAN_SKIP_LOG]
 #
 # Test geodesic scalebar failure without a usable map projection.
 #
