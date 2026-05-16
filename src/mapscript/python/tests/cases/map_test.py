@@ -250,9 +250,7 @@ class MapScalebarTestCase(unittest.TestCase):
 
     def testScalebarMeasureProperty(self):
         test_map = mapscript.mapObj()
-        assert (
-            test_map.scalebar.measure == mapscript.MS_SCALEBAR_MEASURE_CARTESIAN
-        )
+        assert test_map.scalebar.measure == mapscript.MS_SCALEBAR_MEASURE_CARTESIAN
 
         test_map.scalebar.measure = mapscript.MS_SCALEBAR_MEASURE_GEODESIC
         assert test_map.scalebar.measure == mapscript.MS_SCALEBAR_MEASURE_GEODESIC
