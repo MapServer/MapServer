@@ -396,22 +396,38 @@ char *fmakeword(FILE *f, char stop, int *cl) {
   }
 }
 
-char x2c(char *what) {
-  register char digit;
-
-  digit = (what[0] >= 'A' ? ((what[0] & 0xdf) - 'A') + 10 : (what[0] - '0'));
-  digit *= 16;
-  digit += (what[1] >= 'A' ? ((what[1] & 0xdf) - 'A') + 10 : (what[1] - '0'));
-  return (digit);
+int x2i(char c) {
+  if (c >= '0' && c <= '9')
+    return c - '0';
+  if (c >= 'A' && c <= 'F')
+    return c - 'A' + 10;
+  if (c >= 'a' && c <= 'f')
+    return c - 'a' + 10;
+  return -1;
 }
 
 void unescape_url(char *url) {
-  register int x, y;
+  register int x, y, hi, lo;
 
   for (x = 0, y = 0; url[y]; ++x, ++y) {
-    if ((url[x] = url[y]) == '%') {
-      url[x] = x2c(&url[y + 1]);
-      y += 2;
+    if (url[y] == '%') {
+        hi = x2i(url[y + 1]);
+        if (hi < 0) {
+          /* %-encoding is malformed, leave as-is */
+          url[x] = '%';
+          continue;
+        }
+        lo = x2i(url[y + 2]);
+        if (lo < 0) {
+          /* %-encoding is malformed, leave as-is */
+          url[x] = '%';
+          continue;
+        }
+        url[x] = (char)(hi * 16 + lo);
+        y += 2;
+    }
+    else {
+        url[x] = url[y];
     }
   }
   url[x] = '\0';
