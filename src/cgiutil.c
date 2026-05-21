@@ -396,7 +396,7 @@ char *fmakeword(FILE *f, char stop, int *cl) {
   }
 }
 
-int x2i(char c) {
+static int hexadecimalToDecimal(char c) {
   if (c >= '0' && c <= '9')
     return c - '0';
   if (c >= 'A' && c <= 'F')
@@ -411,13 +411,13 @@ void unescape_url(char *url) {
 
   for (x = 0, y = 0; url[y]; ++x, ++y) {
     if (url[y] == '%') {
-        hi = x2i(url[y + 1]);
+        hi = hexadecimalToDecimal(url[y + 1]);
         if (hi < 0) {
           /* %-encoding is malformed, leave as-is */
           url[x] = '%';
           continue;
         }
-        lo = x2i(url[y + 2]);
+        lo = hexadecimalToDecimal(url[y + 2]);
         if (lo < 0) {
           /* %-encoding is malformed, leave as-is */
           url[x] = '%';
