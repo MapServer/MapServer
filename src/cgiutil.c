@@ -411,23 +411,22 @@ void unescape_url(char *url) {
 
   for (x = 0, y = 0; url[y]; ++x, ++y) {
     if (url[y] == '%') {
-        hi = hexadecimalToDecimal(url[y + 1]);
-        if (hi < 0) {
-          /* %-encoding is malformed, leave as-is */
-          url[x] = '%';
-          continue;
-        }
-        lo = hexadecimalToDecimal(url[y + 2]);
-        if (lo < 0) {
-          /* %-encoding is malformed, leave as-is */
-          url[x] = '%';
-          continue;
-        }
-        url[x] = (char)(hi * 16 + lo);
-        y += 2;
-    }
-    else {
-        url[x] = url[y];
+      hi = hexadecimalToDecimal(url[y + 1]);
+      if (hi < 0) {
+        /* %-encoding is malformed, leave as-is */
+        url[x] = '%';
+        continue;
+      }
+      lo = hexadecimalToDecimal(url[y + 2]);
+      if (lo < 0) {
+        /* %-encoding is malformed, leave as-is */
+        url[x] = '%';
+        continue;
+      }
+      url[x] = (char)(hi * 16 + lo);
+      y += 2;
+    } else {
+      url[x] = url[y];
     }
   }
   url[x] = '\0';
