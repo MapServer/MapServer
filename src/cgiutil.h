@@ -93,7 +93,6 @@ MS_DLL_EXPORT void getword(char *, char *, char);
 MS_DLL_EXPORT char *makeword_skip(char *, char, char);
 MS_DLL_EXPORT char *makeword(char *, char);
 MS_DLL_EXPORT char *fmakeword(FILE *, char, int *);
-MS_DLL_EXPORT int x2i(char);
 MS_DLL_EXPORT void unescape_url(char *);
 MS_DLL_EXPORT void plustospace(char *);
 MS_DLL_EXPORT int rind(char *, char);
