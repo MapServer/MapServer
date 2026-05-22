@@ -4,6 +4,9 @@
 # test with a missing PATH_INFO
 # RUN_PARMS: ms_index_no_path_info.txt [MAPSERV] -conf index.conf "QUERY_STRING=f=json" > [RESULT_DEVERSION]
 
+# test with an invalid format
+# RUN_PARMS: landing-missing-format.json [MAPSERV] -conf index.conf "PATH_INFO=/" "QUERY_STRING=f=missing" > [RESULT]
+
 # check querystrings and POST requests with Mapfiles are still processed
 # RUN_PARMS: index_map_mapfile_key.png [MAPSERV]  -conf index.conf QUERY_STRING="map=[MAPFILE]&mode=map" > [RESULT_DEMIME]
 # RUN_PARMS: index_map_mapfile_url.png [MAPSERV]  -conf index.conf "PATH_INFO=/[MAPFILE]" QUERY_STRING="mode=map" > [RESULT_DEMIME]
