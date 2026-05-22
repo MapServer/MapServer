@@ -3013,9 +3013,6 @@ OGCAPIFormat msOGCAPIGetOutputFormat(const cgiRequestObj *request) {
                    strstr(p, OGCAPI_MIMETYPE_HTML) != nullptr)) {
     format = OGCAPIFormat::HTML;
   } else if (p) {
-    std::string errorMsg("Unsupported format requested: ");
-    errorMsg += p;
-    msOGCAPIOutputError(OGCAPI_PARAM_ERROR, errorMsg.c_str());
     format = OGCAPIFormat::Invalid;
   } else {
     format = OGCAPIFormat::HTML; // default for now
@@ -3050,6 +3047,7 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request) {
   const OGCAPIFormat format = msOGCAPIGetOutputFormat(request);
 
   if (format == OGCAPIFormat::Invalid) {
+    msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
     return MS_SUCCESS; // avoid any downstream MapServer processing
   }
 
