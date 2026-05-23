@@ -425,7 +425,7 @@ static int createHTMLOutput(json response, const char *templateName) {
 int msOGCAPIDispatchMapIndexRequest(mapservObj *mapserv, configObj *config) {
 #ifdef USE_OGCAPI_SVR
   if (!mapserv || !config)
-    return -1; // Handle null pointers
+    return MS_FAILURE; // Handle null pointers
 
   cgiRequestObj *request = mapserv->request;
 
@@ -437,6 +437,12 @@ int msOGCAPIDispatchMapIndexRequest(mapservObj *mapserv, configObj *config) {
   }
 
   OGCAPIFormat format = msOGCAPIGetOutputFormat(request);
+
+  if (format == OGCAPIFormat::Invalid) {
+    msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
+    return MS_FAILURE;
+  }
+
   const char *key = request->api_path[0];
 
   mapObj *map = getMapFromConfig(config, key);
@@ -479,10 +485,15 @@ int msOGCAPIDispatchMapIndexRequest(mapservObj *mapserv, configObj *config) {
 int msOGCAPIDispatchIndexRequest(mapservObj *mapserv, configObj *config) {
 #ifdef USE_OGCAPI_SVR
   if (!mapserv || !config)
-    return -1; // Handle null pointers
+    return MS_FAILURE; // Handle null pointers
 
   cgiRequestObj *request = mapserv->request;
   const OGCAPIFormat format = msOGCAPIGetOutputFormat(request);
+
+  if (format == OGCAPIFormat::Invalid) {
+    msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
+    return MS_FAILURE;
+  }
 
   const char *key = NULL;
   json links = json::array();
@@ -504,7 +515,7 @@ int msOGCAPIDispatchIndexRequest(mapservObj *mapserv, configObj *config) {
   } else if (format == OGCAPIFormat::HTML) {
     createHTMLOutput(response, TEMPLATE_HTML_INDEX);
   } else {
-    msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
+    assert(false && "Unhandled OGCAPIFormat value");
   }
 
   return MS_SUCCESS;
