@@ -1,0 +1,81 @@
+#
+# Test WMS
+
+# SKIP_WHOLE_FILE:
+
+MAP
+
+NAME WMS_TEST
+STATUS ON
+SIZE 400 300
+#EXTENT   2018000 -73300 3410396 647400
+#UNITS METERS
+EXTENT -67.5725 42 -58.9275 48.5
+UNITS DD
+IMAGECOLOR 255 255 255
+SHAPEPATH ./data
+SYMBOLSET etc/symbols.sym
+FONTSET etc/fonts.txt
+
+
+OUTPUTFORMAT
+  NAME png
+  DRIVER "AGG/PNG8"
+  MIMETYPE "image/png"
+  EXTENSION "png"
+END
+
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+ EMPTY    "https://example.com/empty.html"
+
+  METADATA
+    "wms_title" "test"
+    "wms_srs"		   "EPSG:42304 EPSG:4326"
+    "ows_enable_request" "*" 
+  END
+END
+
+PROJECTION
+  "init=epsg:4326"
+  #"init=./data/epsg2:42304"
+END
+
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME road
+  DATA road
+  TEMPLATE "ttt"
+  METADATA
+    "wms_title"       "road"
+    "wms_description" "Roads of I.P.E."
+    "wms_srs" "EPSG:43204"
+    "gml_include_items" "all"
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+  END
+
+  CLASSITEM "Name_e"
+  CLASS
+    NAME "Roads"
+    STYLE
+        SYMBOL 0 
+        COLOR 220 0 0
+    END
+  END
+END # Layer
+
+END # Map File

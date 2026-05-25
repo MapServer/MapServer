@@ -136,6 +136,7 @@ def read_test_directives(mapfile_name):
         lines = open(mapfile_name, encoding="utf8").readlines()
     else:
         lines = open(mapfile_name).readlines()
+    skip_whole_file = False
     for line in lines:
         req_off = line.find("REQUIRES:")
         if req_off != -1:
@@ -153,7 +154,10 @@ def read_test_directives(mapfile_name):
                     (items[0], "[MAP2IMG] [RENDERER] -m [MAPFILE] -o [RESULT]")
                 )
 
-    if len(runparms_list) == 0:
+        if "SKIP_WHOLE_FILE:" in line:
+            skip_whole_file = True
+
+    if len(runparms_list) == 0 and not skip_whole_file:
         runparms_list.append(
             (
                 mapfile_name[:-4] + ".png",
