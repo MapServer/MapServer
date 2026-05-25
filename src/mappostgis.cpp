@@ -2024,18 +2024,16 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect,
       }
     }
   }
-  bool insert_and = false;
+
   std::string strWhere;
   if (bIsValidRect && !strRect.empty()) {
     strWhere += strRect;
-    insert_and = true;
   }
 
   /* Handle a translated filter (RFC91). */
   if (layer->filter.native_string) {
-    if (insert_and) {
+    if (!strWhere.empty()) {
       strWhere += " AND ";
-      insert_and = true;
     }
     strWhere += '(';
     strWhere += layer->filter.native_string;
@@ -2045,17 +2043,17 @@ static std::string msPostGISBuildSQLWhere(layerObj *layer, const rectObj *rect,
   /* Handle a native filter set as a PROCESSING option (#5001). */
   const char *native_filter = msLayerGetProcessingKey(layer, "NATIVE_FILTER");
   if (native_filter) {
-    if (insert_and) {
+    if (!strWhere.empty()) {
       strWhere += " AND ";
-      insert_and = true;
     }
+
     strWhere += '(';
     strWhere += native_filter;
     strWhere += ')';
   }
 
   if (uid) {
-    if (insert_and) {
+    if (!strWhere.empty()) {
       strWhere += " AND ";
     }
 
