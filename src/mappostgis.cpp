@@ -3736,6 +3736,17 @@ static int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter,
       native_string += stresc;
       native_string += '\'';
     } else {
+      char *endptr = nullptr;
+      std::strtod(stresc, &endptr);
+      if (endptr != stresc + strlen(stresc)) {
+        if (layer->debug >= 2) {
+          msDebug(
+              "msPostGISLayerTranslateFilter. '%s' is not a numeric value.\n",
+              filter->string);
+        }
+        msFree(stresc);
+        return MS_FAILURE;
+      }
       native_string += stresc;
     }
     msFree(stresc);
