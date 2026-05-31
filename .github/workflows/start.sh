@@ -190,4 +190,11 @@ EOF
 MAPSERVER_CONFIG_FILE=/tmp/mapserver.conf mapserv QUERY_STRING="MAP=wfs_simple.map&SERVICE=WFS&REQUEST=GetCapabilities" > /tmp/res.txt
 cat /tmp/res.txt | grep "Web application error" >/dev/null || (cat /tmp/res.txt && /bin/false)
 
+# Check https://github.com/MapServer/MapServer/security/advisories/GHSA-xqj6-vjqr-33vv
+MAPSERVER_CONFIG_FILE=${WORK_DIR}/msautotest/etc/mapserv.conf SCRIPT_NAME=mapserv SERVER_PORT=80 HTTP_X_FORWARDED_HOST="with'single'quote" mapserv QUERY_STRING="MAP=wms_simple_no_onlineresource.map&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-67.5725,42.3683,-58.9275,48.13&FORMAT=application/openlayers&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=road" > /tmp/res.txt
+# We need to escape backslash once for the grep regexp, and once for the shell...
+# Hence 4 backslashes for one in the actual output
+cat /tmp/res.txt | grep "with\\\\'single\\\\'quote" >/dev/null || (cat /tmp/res.txt && /bin/false)
+
+
 echo "Done !"
