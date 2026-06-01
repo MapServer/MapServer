@@ -4097,7 +4097,21 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream,
 #else
     ol = msBuildOnlineResource(mapserv->map, mapserv->request);
 #endif
-    outstr = msReplaceSubstring(outstr, "[mapserv_onlineresource]", ol);
+
+    if (strstr(outstr, "'[mapserv_onlineresource]'")) {
+      // Fix
+      // https://github.com/MapServer/MapServer/security/advisories/GHSA-xqj6-vjqr-33vv
+      char *pszEscaped = msEscapeJSonLikeString(ol, '\'');
+      const size_t nLen = 1 + strlen(pszEscaped) + 1 + 1;
+      char *pszEscapedWithSingleQuotes = (char *)msSmallMalloc(nLen);
+      snprintf(pszEscapedWithSingleQuotes, nLen, "'%s'", pszEscaped);
+      outstr = msReplaceSubstring(outstr, "'[mapserv_onlineresource]'",
+                                  pszEscapedWithSingleQuotes);
+      msFree(pszEscapedWithSingleQuotes);
+      msFree(pszEscaped);
+    } else {
+      outstr = msReplaceSubstring(outstr, "[mapserv_onlineresource]", ol);
+    }
     msFree(ol);
   }
 
