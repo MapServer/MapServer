@@ -8,3 +8,5 @@ tags
 tests/map.png
 .vagrant
 .idea
+swig-git-master/
+venv/
