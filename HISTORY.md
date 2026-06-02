@@ -13,6 +13,13 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.6.4 release (2026-06-01)
+--------------------------
+
+- security: properly escape mapserv_onlineresource in OpenLayers viewer with WMS (#7517)
+
+- security: PostGIS: make sure identifier value is numeric when the declared type is numeric too (#7516)
+
 8.6.3 release (2026-05-07)
 --------------------------
 

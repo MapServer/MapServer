@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 title: MapServer
 message: If you use this software, please cite it using the metadata from this file.
-version: 8.6.3
-date-released: 2026-05-07
+version: 8.6.4
+date-released: 2026-06-01
 abstract: MapServer is an Open Source platform for publishing spatial data and interactive mapping applications to the web.
 type: software
 authors:
