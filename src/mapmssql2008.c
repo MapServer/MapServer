@@ -247,11 +247,6 @@ typedef struct msODBCconn_t {
   SQLHSTMT hstmt;          /* ODBC HSTMNT */
   char errorMessage[1024]; /* Last error message if any */
 
-  /* cached column info using sql+connection as a key */
-  char *cache_sql; /* the SELECT top 0 sql this cache is valid for */
-  char **items;
-  SQLSMALLINT *itemtypes;
-  int numitems;
 } msODBCconn;
 
 typedef struct ms_MSSQL2008_layer_info_t {
@@ -726,18 +721,6 @@ static void msMSSQL2008CloseConnection(void *conn_handle) {
   if (!conn) {
     return;
   }
-
-  /* free item cache */
-  msFree(conn->cache_sql);
-  conn->cache_sql = NULL;
-
-  if (conn->items) {
-    msFreeCharArray(conn->items, conn->numitems);
-    conn->items = NULL;
-  }
-  msFree(conn->itemtypes);
-  conn->itemtypes = NULL;
-  conn->numitems = 0;
 
   if (conn->hstmt) {
     SQLFreeHandle(SQL_HANDLE_STMT, conn->hstmt);
@@ -2887,27 +2870,6 @@ int msMSSQL2008LayerGetItems(layerObj *layer) {
 
   snprintf(sql, sqlSize, "SELECT top 0 * FROM %s", layerinfo->geom_table);
 
-  /* check if this exact sql is cached on the connection */
-  if (layerinfo->conn->numitems > 0 && layerinfo->conn->cache_sql != NULL &&
-      strcmp(layerinfo->conn->cache_sql, sql) == 0) {
-    if (layer->debug) {
-      msDebug("msMSSQL2008LayerGetItems: connection cache hit for sql: %s\n",
-              sql);
-    }
-    msFree(sql);
-
-    layer->numitems = layerinfo->conn->numitems;
-    layer->items = msSmallMalloc(sizeof(char *) * (layer->numitems + 1));
-    layerinfo->itemtypes =
-        msSmallMalloc(sizeof(SQLSMALLINT) * (layer->numitems + 1));
-    for (int i = 0; i < layer->numitems; i++) {
-      layer->items[i] = msStrdup(layerinfo->conn->items[i]);
-      layerinfo->itemtypes[i] = layerinfo->conn->itemtypes[i];
-    }
-    return msMSSQL2008LayerInitItemInfo(layer);
-  }
-
-  /* cache miss - execute the query */
   if (!executeSQL(layerinfo->conn, sql)) {
     msFree(sql);
     return MS_FAILURE;
@@ -2960,29 +2922,6 @@ int msMSSQL2008LayerGetItems(layerObj *layer) {
                "miss-capitialized? '%s'",
                "msMSSQL2008LayerGetItems()", layerinfo->geom_column);
     return MS_FAILURE;
-  }
-
-  /* populate connection cache */
-  msFree(layerinfo->conn->cache_sql);
-  layerinfo->conn->cache_sql =
-      sql; /* transfer ownership, so don't msFree sql */
-
-  if (layerinfo->conn->items) {
-    msFreeCharArray(layerinfo->conn->items, layerinfo->conn->numitems);
-  }
-  if (layerinfo->conn->itemtypes) {
-    msFree(layerinfo->conn->itemtypes);
-  }
-
-  layerinfo->conn->numitems = layer->numitems;
-  layerinfo->conn->items =
-      msSmallMalloc(sizeof(char *) * (layer->numitems + 1));
-  layerinfo->conn->itemtypes =
-      msSmallMalloc(sizeof(SQLSMALLINT) * (layer->numitems + 1));
-
-  for (int i = 0; i < layer->numitems; i++) {
-    layerinfo->conn->items[i] = msStrdup(layer->items[i]);
-    layerinfo->conn->itemtypes[i] = layerinfo->itemtypes[i];
   }
 
   return msMSSQL2008LayerInitItemInfo(layer);
