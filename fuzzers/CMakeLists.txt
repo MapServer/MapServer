@@ -1,4 +1,4 @@
-foreach(FUZZER_NAME IN ITEMS shapefuzzer mapfuzzer configfuzzer)
+foreach(FUZZER_NAME IN ITEMS shapefuzzer mapfuzzer configfuzzer owsfuzzer)
     if(FUZZER)
         add_executable(${FUZZER_NAME} ${FUZZER_NAME}.c)
         target_compile_options(${FUZZER_NAME} PRIVATE -Wall -Wextra -Werror=format-security)
