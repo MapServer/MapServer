@@ -95,5 +95,5 @@ zip -r $OUT/configfuzzer_seed_corpus.zip tests/*.conf etc/*.conf msautotest/conf
 printf "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities" > /tmp/ows_seed1
 printf "SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=l&STYLES=&SRS=EPSG:4326&BBOX=-180,-90,180,90&WIDTH=10&HEIGHT=10&FORMAT=image/png" > /tmp/ows_seed2
 printf "SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=l" > /tmp/ows_seed3
-printf "service=wms&request=getfeatureinfo&query_layers=l&x=1&y=1" > /tmp/ows_seed4
+printf "SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=l&QUERY_LAYERS=l&STYLES=&SRS=EPSG:4326&BBOX=-180,-90,180,90&WIDTH=10&HEIGHT=10&FORMAT=image/png&INFO_FORMAT=text/plain&X=1&Y=1" > /tmp/ows_seed4
 zip -j $OUT/owsfuzzer_seed_corpus.zip /tmp/ows_seed1 /tmp/ows_seed2 /tmp/ows_seed3 /tmp/ows_seed4
