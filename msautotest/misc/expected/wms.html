@@ -21,7 +21,7 @@
     <script src="//mapserver.org/lib/10.5.0/ol-mapserver.js"></script>
     <script>
         if (!ol.proj.get('EPSG:4326')) {
-            ol.proj.addProjection(new ol.proj.Projection({ code : 'EPSG:4326' }));
+            ol.proj.addProjection(new ol.proj.Projection({ code: 'EPSG:4326' }));
         }
         const mslayer = new ol.layer.Image({
             source: new ol.source.Image({

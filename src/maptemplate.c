@@ -84,7 +84,7 @@ static const char *const olTemplate =
     "src=\"[openlayers_js_url]\"></script>\n"
     "    <script>\n"
     "        if (!ol.proj.get('[openlayers_projection]')) {\n"
-    "            ol.proj.addProjection(new ol.proj.Projection({ code : "
+    "            ol.proj.addProjection(new ol.proj.Projection({ code: "
     "'[openlayers_projection]' }));\n"
     "        }\n"
     "        [openlayers_layer]\n"
