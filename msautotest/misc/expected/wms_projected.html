@@ -40,7 +40,11 @@
         const map = new ol.Map({
             layers: [mslayer],
             target: 'map',
-            view: new ol.View()
+            view: new ol.View({
+                projection: 'EPSG:3857',
+                minResolution: 0.149165,
+                maxResolution: 156410
+            })
         });
         map.getView().fit([-20016548.603243, -20020527.850213, 20016548.603243, 20020527.850213], { size: map.getSize() });
     </script>
