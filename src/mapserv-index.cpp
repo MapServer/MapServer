@@ -25,6 +25,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  ****************************************************************************/
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "mapserver.h"
 #include "mapogcapi.h"
 #include "mapserv-index.h"
@@ -495,16 +499,25 @@ int msOGCAPIDispatchIndexRequest(mapservObj *mapserv, configObj *config) {
     return MS_FAILURE;
   }
 
+  // Collect keys and sort alphabetically (case-insensitive)
+  std::vector<std::string> keys;
   const char *key = NULL;
-  json links = json::array();
-
   while ((key = msNextKeyFromHashTable(&config->maps, key)) != NULL) {
-    if (mapObj *map = getMapFromConfig(config, key)) {
-      links.push_back(createMapSummary(map, key, request));
+    keys.push_back(key);
+  }
+  std::sort(keys.begin(), keys.end(),
+            [](const std::string &a, const std::string &b) {
+              return strcasecmp(a.c_str(), b.c_str()) < 0;
+            });
+
+  json links = json::array();
+  for (const auto &k : keys) {
+    if (mapObj *map = getMapFromConfig(config, k.c_str())) {
+      links.push_back(createMapSummary(map, k.c_str(), request));
       msFreeMap(map);
     } else {
       // there was a problem loading the map
-      links.push_back(createMapError(key));
+      links.push_back(createMapError(k.c_str()));
     }
   }
 
