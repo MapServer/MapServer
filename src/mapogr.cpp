@@ -2677,9 +2677,11 @@ static void msOGRPassThroughFieldDefinitions(layerObj *layer,
   }
 
   // FID columns in OGR are 64-bit integers so set type to Long
-  const char *fidColumn = OGR_L_GetFIDColumn(psInfo->hLayer);
-  if (fidColumn != NULL && fidColumn[0] != '\0') {
-    msUpdateGMLFieldMetadata(layer, fidColumn, "Long", "", "", 0);
+  const char *exposeFID = msLayerGetProcessingKey(layer, "OGR_EXPOSE_FID");
+  if (exposeFID != NULL && CSLTestBoolean(exposeFID)) {
+    const char *fidColumn = OGR_L_GetFIDColumn(psInfo->hLayer);
+    if (fidColumn != NULL && fidColumn[0] != '\0')
+      +msUpdateGMLFieldMetadata(layer, fidColumn, "Long", "", "", 0);
   }
 
   /* Should we try to address style items, or other special items? */
@@ -2705,7 +2707,9 @@ static char **msOGRFileGetItems(layerObj *layer, msOGRFileInfo *psInfo) {
   }
 
   const char *fidColumn = OGR_L_GetFIDColumn(psInfo->hLayer);
-  int hasFID = (fidColumn != NULL && fidColumn[0] != '\0');
+  const char *exposeFID = msLayerGetProcessingKey(layer, "OGR_EXPOSE_FID");
+  int hasFID = (fidColumn != NULL && fidColumn[0] != '\0') &&
+               (exposeFID != NULL && CSLTestBoolean(exposeFID));
 
   totalnumitems = numitems = OGR_FD_GetFieldCount(hDefn);
 
