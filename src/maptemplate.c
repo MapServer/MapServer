@@ -5018,7 +5018,6 @@ int msReturnOpenLayersPage(mapservObj *mapserv) {
   const char *openlayersCssUrl = olCssUrl;
   char *projection = NULL;
   char *format = NULL;
-  char *epsgCode = NULL;
 
   /* 2 CGI parameters are used in the template. we need to transform them
    * to be sure the case matches during the template processing.*/
@@ -5052,9 +5051,11 @@ int msReturnOpenLayersPage(mapservObj *mapserv) {
   }
 
   if (mapserv->Mode == BROWSE) {
+    char *epsgCode = NULL;
     msOWSGetEPSGProj(&(mapserv->map->projection), NULL, NULL, MS_TRUE,
                      &epsgCode);
     if (epsgCode) {
+      // Transfers ownership of epsgCode to projection
       projection = epsgCode;
     }
   }
