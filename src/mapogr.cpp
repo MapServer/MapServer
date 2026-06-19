@@ -2676,6 +2676,12 @@ static void msOGRPassThroughFieldDefinitions(layerObj *layer,
                              0);
   }
 
+  // FID columns in OGR are 64-bit integers so set type to Long
+  const char *fidColumn = OGR_L_GetFIDColumn(psInfo->hLayer);
+  if (fidColumn != NULL && fidColumn[0] != '\0') {
+    msUpdateGMLFieldMetadata(layer, fidColumn, "Long", "", "", 0);
+  }
+
   /* Should we try to address style items, or other special items? */
 }
 
@@ -2698,7 +2704,14 @@ static char **msOGRFileGetItems(layerObj *layer, msOGRFileInfo *psInfo) {
     return NULL;
   }
 
+  const char *fidColumn = OGR_L_GetFIDColumn(psInfo->hLayer);
+  int hasFID = (fidColumn != NULL && fidColumn[0] != '\0');
+
   totalnumitems = numitems = OGR_FD_GetFieldCount(hDefn);
+
+  if (hasFID) {
+    totalnumitems++;
+  }
 
   getShapeStyleItems = msLayerGetProcessingKey(layer, "GETSHAPE_STYLE_ITEMS");
   if (getShapeStyleItems && EQUAL(getShapeStyleItems, "all"))
@@ -2712,6 +2725,10 @@ static char **msOGRFileGetItems(layerObj *layer, msOGRFileInfo *psInfo) {
   for (i = 0; i < numitems; i++) {
     OGRFieldDefnH hField = OGR_FD_GetFieldDefn(hDefn, i);
     items[i] = msStrdup(OGR_Fld_GetNameRef(hField));
+  }
+
+  if (hasFID) {
+    items[i++] = msStrdup(fidColumn);
   }
 
   if (getShapeStyleItems && EQUAL(getShapeStyleItems, "all")) {
