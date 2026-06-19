@@ -34,11 +34,11 @@
   {% endif %}
   <div class="col-auto">
     <select class="form-control" id="limit"> <!-- TODO: dynamically populate the values based on oga_max_limit -->
-      <option value="10">page size</option>
-      <option>10</option>
-      <option>100</option>
-      <option>1000</option>
-      <option>10000</option>
+      <option value="" disabled>page size</option>
+      <option value="10">10</option>
+      <option value="100">100</option>
+      <option value="1000">1000</option>
+      <option value="10000">10000</option>
     </select>
   </div>
   {% if show_next_link == true %}
@@ -52,8 +52,8 @@
     <th>ID</th>
 {% if response.features %}
 {% for key, value in response.features.0.properties %}
-    <th>{{ key }}</th>
-{% endfor %} 
+    <th data-property="{{ key }}">{{ key }}</th>
+{% endfor %}
 {% endif %}
   </tr>
   </thead>
@@ -73,9 +73,39 @@
 <script>
 function changePageSize() {
     const limitSelect = document.getElementById("limit");
-    const url = "{{ template.api_root }}/collections/{{ response.collection.id }}/items?limit=" + limitSelect.value + "{{ template.extra_params }}";
-    window.location.href = url;
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("limit", limitSelect.value);
+    url.searchParams.delete("offset");
+
+    window.location.href = url.toString();
 }
+
+// sorting
+let sortables = [];
+
+function renderSortableHeaders() {
+  const currentSort = new URLSearchParams(window.location.search).get('sortby') || '';
+  document.querySelectorAll('th[data-property]').forEach(th => {
+    const prop = th.dataset.property;
+    if (!sortables.includes(prop)) return;
+
+    const isAsc = currentSort === '+' + prop || currentSort === prop;
+    const isDesc = currentSort === '-' + prop;
+    const nextSort = isAsc ? '-' + prop : '+' + prop;
+    const arrow = isAsc ? ' ▲' : isDesc ? ' ▼' : ' ⇅';
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('sortby', nextSort);
+    url.searchParams.delete('offset'); // reset to first page on sort change
+
+    th.innerHTML = `<a href="${url.toString()}" style="text-decoration:none;color:inherit;">
+      ${prop}${arrow}
+    </a>`;
+    th.style.cursor = 'pointer';
+  });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   //
   // mapping
@@ -89,7 +119,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   ));
   const features = L.geoJSON(geojson).addTo(map);
-  map.fitBounds(features.getBounds());
+  const bounds = features.getBounds();
+
+  if (bounds.isValid()) {
+    map.fitBounds(bounds);
+  }
 
   //
   // paging
@@ -100,17 +134,40 @@ document.addEventListener("DOMContentLoaded", function () {
   {% if existsIn(template.params, "offset") %}
   offset = {{ template.params.offset }};
   {% endif %}
+
   {% if existsIn(template.params, "limit") %}
   limit = {{ template.params.limit }};
   {% endif %}
 
-  document.getElementById("current_page").textContent = (offset + limit) / limit;
-  document.getElementById("total_pages").textContent = Math.ceil({{ response.numberMatched }}/limit);
+  // Set dropdown to current page size
+  document.getElementById("limit").value = String(limit);
+
+  document.getElementById("current_page").textContent =
+      Math.floor(offset / limit) + 1;
+
+  document.getElementById("total_pages").textContent =
+      Math.ceil({{ response.numberMatched }} / limit);
+
 
   //
   // event handling
   //
   document.getElementById("limit").addEventListener("change", changePageSize);
+
+  //
+  // sorting
+  //
+
+  fetch("{{ template.api_root }}/collections/{{ response.collection.id }}/sortables?f=json{{ template.extra_params }}")
+  .then(r => r.json())
+  .then(data => {
+    sortables = data.properties ? Object.keys(data.properties) : [];
+    renderSortableHeaders();
+  })
+  .catch(err => {
+    console.error("Failed to load sortable fields", err);
+  });
+
 });
 </script>
 
