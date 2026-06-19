@@ -220,8 +220,8 @@ MAP
       "gml_CTYONLY__type" "Integer"
       "gml_LASTMOD_type" "DateTime"
       "oga_featureid" "coun"
-      "oga_queryable_items" "CTY_NAME,AREA,CTYONLY_,LASTMOD"
-      "oga_sortable_items" "LASTMOD"
+      "oga_queryable_items" "cty_name,AREA,CTYONLY_,LASTMOD"
+      "oga_sortable_items" "lastmod"
     END
     VALIDATION
       "coun" "^[0-9]{1,2}$" # 1 or 2-digit number

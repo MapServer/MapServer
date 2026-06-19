@@ -290,6 +290,14 @@ static const char *getGeometryFormat(const layerObj *layer) {
   return geometryFormat;
 }
 
+namespace {
+struct CaseInsensitiveComparator {
+  bool operator()(const std::string &a, const std::string &b) const {
+    return strcasecmp(a.c_str(), b.c_str()) < 0;
+  }
+};
+} // namespace
+
 /** Return the list of queryable items */
 static std::vector<std::string> msOOGCAPIGetLayerQueryables(
     layerObj *layer, const std::set<std::string> &reservedParams, bool &error) {
@@ -312,7 +320,7 @@ static std::vector<std::string> msOOGCAPIGetLayerQueryables(
           }
         }
       } else {
-        std::set<std::string> validItems;
+        std::set<std::string, CaseInsensitiveComparator> validItems;
         for (int i = 0; i < layer->numitems; ++i) {
           validItems.insert(layer->items[i]);
         }
@@ -363,7 +371,7 @@ static std::vector<std::string> msOOGCAPIGetLayerSortables(
           }
         }
       } else {
-        std::set<std::string> validItems;
+        std::set<std::string, CaseInsensitiveComparator> validItems;
         for (int i = 0; i < layer->numitems; ++i) {
           validItems.insert(layer->items[i]);
         }
@@ -1694,8 +1702,10 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
         items.emplace_back(msStrdup(item.c_str()));
       }
       prop.item = items.back().get();
-      if (std::find(sortables.begin(), sortables.end(), prop.item) ==
-          sortables.end()) {
+      if (std::find_if(sortables.begin(), sortables.end(),
+                       [&prop](const std::string &s) {
+                         return strcasecmp(prop.item, s.c_str()) == 0;
+                       }) == sortables.end()) {
         msOGCAPIOutputError(OGCAPI_PARAM_ERROR, (std::string("'") + prop.item +
                                                  "' is not a sortable item")
                                                     .c_str());
