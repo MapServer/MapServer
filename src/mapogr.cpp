@@ -2681,7 +2681,7 @@ static void msOGRPassThroughFieldDefinitions(layerObj *layer,
   if (exposeFID != NULL && CSLTestBoolean(exposeFID)) {
     const char *fidColumn = OGR_L_GetFIDColumn(psInfo->hLayer);
     if (fidColumn != NULL && fidColumn[0] != '\0')
-      +msUpdateGMLFieldMetadata(layer, fidColumn, "Long", "", "", 0);
+      msUpdateGMLFieldMetadata(layer, fidColumn, "Long", "", "", 0);
   }
 
   /* Should we try to address style items, or other special items? */
