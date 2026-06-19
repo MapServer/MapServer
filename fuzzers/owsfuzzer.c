@@ -10,7 +10,8 @@
 #include "src/maptemplate.h"
 
 #define kMaxInputLength 65536
-// Stay under MS_DEFAULT_CGI_PARAMS (100) so ParamNames/ParamValues don't overflow
+// Stay under MS_DEFAULT_CGI_PARAMS (100) so ParamNames/ParamValues don't
+// overflow
 #define kMaxParams 90
 
 extern int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size);
@@ -104,15 +105,17 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 
   parseParams(request, (const char *)Data, Size);
 
-  // capture dispatcher output so nothing leaks to real stdout
-  msIOContext *old_stdout = msIO_pushStdoutToBufferAndGetOldContext();
+  // capture dispatcher output so nothing leaks to real stdout. Use only the
+  // public (MS_DLL_EXPORT) msIO buffer API so the reproducer links on Windows.
+  msIO_installStdoutToBuffer();
 
   (void)msOWSDispatch(map, request, OWS);
 
   char *content_type = msIO_stripStdoutBufferContentType();
   if (content_type)
     msFree(content_type);
-  msIO_restoreOldStdoutContext(old_stdout);
+  // reset stdout back to the default stdio context and free the buffer
+  msIO_resetHandlers();
 
   msFreeCgiObj(request);
   msFreeMap(map);
