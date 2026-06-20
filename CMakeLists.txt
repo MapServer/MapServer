@@ -343,7 +343,7 @@ src/mapresample.c src/mapwfs.cpp src/mapgdal.cpp src/mapogcsos.c src/mapscale.c 
 src/mapgeomtransform.c src/mapogroutput.cpp src/mapwfslayer.c src/mapagg.cpp src/mapkml.cpp
 src/mapgeomutil.cpp src/mapkmlrenderer.cpp src/fontcache.c src/textlayout.c src/maputfgrid.cpp
 src/mapogr.cpp src/mapcontour.c src/mapsmoothing.c src/mapv8.cpp ${REGEX_SOURCES} src/kerneldensity.c
-src/idw.c src/interpolation.c src/mapflatgeobuf.c src/mapcompositingfilter.c src/mapmvt.c src/mapiconv.c
+src/idw.c src/kriging.c src/interpolation.c src/mapflatgeobuf.c src/mapcompositingfilter.c src/mapmvt.c src/mapiconv.c
 src/mapgraph.cpp src/mapserv-config.cpp src/maprasterlabel.cpp src/mapserv-index.cpp
 src/cql2.cpp src/cql2json.cpp src/cql2text.cpp src/cql2textparser.cpp)
 
