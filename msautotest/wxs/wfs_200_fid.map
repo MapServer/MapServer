@@ -1,0 +1,81 @@
+#
+# Test WFS 2.0 and FeatureId filtering
+#
+# REQUIRES: INPUT=OGR SUPPORTS=WFS
+#
+# Filter by FeatureId without OGR_EXPOSE_FID (native WFS FID filtering)
+# RUN_PARMS: wfs_filter_ogr_fid_native.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=popplace_gpkg_nofid&FILTER=<fes:Filter+xmlns:fes='http://www.opengis.net/fes/2.0'><fes:ResourceId+rid='popplace_gpkg_nofid.1'/></fes:Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_filter_ogr_fid_native_range.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=popplace_gpkg_nofid&FILTER=<fes:Filter+xmlns:fes='http://www.opengis.net/fes/2.0'><fes:ResourceId+rid='popplace_gpkg_nofid.1'/><fes:ResourceId+rid='popplace_gpkg_nofid.2'/><fes:ResourceId+rid='popplace_gpkg_nofid.3'/><fes:ResourceId+rid='popplace_gpkg_nofid.4'/><fes:ResourceId+rid='popplace_gpkg_nofid.5'/></fes:Filter>" > [RESULT_DEVERSION]
+# DescribeFeatureType for popplace_gpkg_nofid to verify fid is NOT exposed as a field
+# RUN_PARMS: wfs_filter_ogr_fid_native_describe.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAMES=popplace_gpkg_nofid" > [RESULT_DEVERSION]
+
+# Filter by FID using OGR_EXPOSE_FID
+# RUN_PARMS: wfs_filter_ogr_fid.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=popplace_gpkg&FILTER=<fes:Filter+xmlns:fes='http://www.opengis.net/fes/2.0'><fes:PropertyIsEqualTo><fes:ValueReference>fid</fes:ValueReference><fes:Literal>1</fes:Literal></fes:PropertyIsEqualTo></fes:Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_filter_ogr_fid_range.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=popplace_gpkg&FILTER=<fes:Filter+xmlns:fes='http://www.opengis.net/fes/2.0'><fes:PropertyIsBetween><fes:ValueReference>fid</fes:ValueReference><fes:LowerBoundary><fes:Literal>1</fes:Literal></fes:LowerBoundary><fes:UpperBoundary><fes:Literal>5</fes:Literal></fes:UpperBoundary></fes:PropertyIsBetween></fes:Filter>" > [RESULT_DEVERSION]
+# DescribeFeatureType for popplace_gpkg to verify fid is exposed as a field
+# RUN_PARMS: wfs_filter_ogr_fid_describe.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAMES=popplace_gpkg" > [RESULT_DEVERSION]
+
+MAP
+  NAME WFS_FILTER
+  STATUS ON
+  SIZE 400 300
+  EXTENT -67.5725 42 -58.9275 48.5
+  UNITS DD
+  IMAGECOLOR 255 255 255
+  SHAPEPATH ./data
+
+  WEB
+
+   IMAGEPATH "/tmp/ms_tmp/"
+   IMAGEURL "/ms_tmp/"
+
+    METADATA
+      "wfs_title" "Test simple wfs"
+      "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?"
+      "wfs_srs" "EPSG:4326 EPSG:4269"
+      "ows_enable_request" "*" 
+    END
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END
+
+  LAYER
+    NAME popplace_gpkg_nofid
+    CONNECTIONTYPE OGR
+    CONNECTION "./data/popplace.gpkg"
+    METADATA
+      "wfs_title"         "popplace_gpkg_nofid"
+      "wfs_featureid"     "fid"
+      "wfs_description"   "Cities (GeoPackage without OGR_EXPOSE_FID)"
+      "gml_include_items" "all"
+      "gml_types"         "auto"
+    END
+    TYPE POINT
+    STATUS ON
+    PROJECTION
+      "epsg:3978"
+    END
+  END # Layer
+
+  LAYER
+    NAME popplace_gpkg
+    CONNECTIONTYPE OGR
+    CONNECTION "./data/popplace.gpkg"
+    PROCESSING "OGR_EXPOSE_FID=YES"
+    METADATA
+      "wfs_title"         "popplace_gpkg"
+      "wfs_description"   "Cities (GeoPackage with FID)"
+      "wfs_featureid"     "fid"
+      "gml_include_items" "all"
+      "gml_types"         "auto"
+    END
+    TYPE POINT
+    STATUS ON
+    PROJECTION
+      "epsg:3978"
+    END
+  END # Layer
+
+END # Map File
