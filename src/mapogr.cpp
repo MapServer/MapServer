@@ -2708,7 +2708,7 @@ static char **msOGRFileGetItems(layerObj *layer, msOGRFileInfo *psInfo) {
 
   const char *fidColumn = OGR_L_GetFIDColumn(psInfo->hLayer);
   const char *exposeFID = msLayerGetProcessingKey(layer, "OGR_EXPOSE_FID");
-  int hasFID = (fidColumn != NULL && fidColumn[0] != '\0') &&
+  const bool hasFID = (fidColumn != NULL && fidColumn[0] != '\0') &&
                (exposeFID != NULL && CSLTestBoolean(exposeFID));
 
   totalnumitems = numitems = OGR_FD_GetFieldCount(hDefn);
