@@ -20,6 +20,9 @@
     <div id="map"></div>
     <script src="//mapserver.org/lib/10.5.0/ol-mapserver.js"></script>
     <script>
+        if (!ol.proj.get('EPSG:4326')) {
+            ol.proj.addProjection(new ol.proj.Projection({ code: 'EPSG:4326' }));
+        }
         const mslayer = new ol.layer.Image({
             extent: [-180.000000, -180.000000, 180.000000, 180.000000],
             source: new ol.source.Image({
@@ -34,7 +37,11 @@
         const map = new ol.Map({
             layers: [mslayer],
             target: 'map',
-            view: new ol.View()
+            view: new ol.View({
+                projection: 'EPSG:4326',
+                minResolution: 1.3411e-06,
+                maxResolution: 1.40625
+            })
         });
         map.getView().fit([-180.000000, -180.000000, 180.000000, 180.000000], { size: map.getSize() });
     </script>

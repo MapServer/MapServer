@@ -43,6 +43,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <math.h>
 
 static inline void IGUR_sizet(size_t ignored) {
   (void)ignored;
@@ -82,11 +83,19 @@ static const char *const olTemplate =
     "    <script "
     "src=\"[openlayers_js_url]\"></script>\n"
     "    <script>\n"
+    "        if (!ol.proj.get('[openlayers_projection]')) {\n"
+    "            ol.proj.addProjection(new ol.proj.Projection({ code: "
+    "'[openlayers_projection]' }));\n"
+    "        }\n"
     "        [openlayers_layer]\n"
     "        const map = new ol.Map({\n"
     "            layers: [mslayer],\n"
     "            target: 'map',\n"
-    "            view: new ol.View()\n"
+    "            view: new ol.View({\n"
+    "                projection: '[openlayers_projection]',\n"
+    "                minResolution: [ol_minresolution],\n"
+    "                maxResolution: [ol_maxresolution]\n"
+    "            })\n"
     "        });\n"
     "        map.getView().fit([[minx], [miny], [maxx], [maxy]], { size: "
     "map.getSize() });\n"
@@ -108,11 +117,7 @@ static const char *const olLayerMapServerTag =
     "        });";
 
 static const char *const olLayerWMSTag =
-    "if (!ol.proj.get('[openlayers_projection]')) {\n"
-    "            ol.proj.addProjection(new ol.proj.Projection({ code : "
-    "'[openlayers_projection]' }));\n"
-    "        }\n"
-    "        const mslayer = new ol.layer.Image({\n"
+    "const mslayer = new ol.layer.Image({\n"
     "            source: new ol.source.Image({\n"
     "                loader: ol.source.wms.createLoader({\n"
     "                    url: '[mapserv_onlineresource]',\n"
@@ -5045,6 +5050,16 @@ int msReturnOpenLayersPage(mapservObj *mapserv) {
     }
   }
 
+  if (mapserv->Mode == BROWSE) {
+    char *epsgCode = NULL;
+    msOWSGetEPSGProj(&(mapserv->map->projection), NULL, NULL, MS_TRUE,
+                     &epsgCode);
+    if (epsgCode) {
+      // Transfers ownership of epsgCode to projection
+      projection = epsgCode;
+    }
+  }
+
   if (mapserv->map->outputformat->mimetype &&
       *mapserv->map->outputformat->mimetype) {
     format = mapserv->map->outputformat->mimetype;
@@ -5075,12 +5090,36 @@ int msReturnOpenLayersPage(mapservObj *mapserv) {
   buffer = msReplaceSubstring(buffer, "[openlayers_js_url]", openlayersUrl);
   buffer = msReplaceSubstring(buffer, "[openlayers_css_url]", openlayersCssUrl);
   buffer = msReplaceSubstring(buffer, "[openlayers_layer]", layer);
-  if (projection)
-    buffer = msReplaceSubstring(buffer, "[openlayers_projection]", projection);
-  if (format)
+  if (!projection) {
+    // if no projection can be found then use the default OL projection
+    projection = msStrdup("EPSG:3857");
+  }
+  buffer = msReplaceSubstring(buffer, "[openlayers_projection]", projection);
+  if (format) {
     buffer = msReplaceSubstring(buffer, "[openlayers_format]", format);
-  else
+  } else {
     buffer = msReplaceSubstring(buffer, "[openlayers_format]", "image/png");
+  }
+
+  double extentWidth = mapserv->map->extent.maxx - mapserv->map->extent.minx;
+  double extentHeight = mapserv->map->extent.maxy - mapserv->map->extent.miny;
+  // assume default tile size and zoom-levels
+  int zoomLevels = 20;
+  double maxResolution = MS_MAX(extentWidth, extentHeight) / 256.0;
+
+  if (maxResolution <= 0) {
+    maxResolution = 1; // fallback to avoid any divide by zero
+  }
+
+  double minResolution = maxResolution / pow(2.0, zoomLevels);
+  char olMinRes[64], olMaxRes[64];
+
+  snprintf(olMaxRes, sizeof(olMaxRes), "%g", maxResolution);
+  snprintf(olMinRes, sizeof(olMinRes), "%g", minResolution);
+
+  buffer = msReplaceSubstring(buffer, "[ol_maxresolution]", olMaxRes);
+  buffer = msReplaceSubstring(buffer, "[ol_minresolution]", olMinRes);
+
   msIO_fwrite(buffer, strlen(buffer), 1, stdout);
   free(layer);
   free(buffer);
