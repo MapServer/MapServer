@@ -602,9 +602,13 @@ std::string cql2_expr_node::ToMapServerFilter(
       if (m_osVal == "TIMESTAMP" || m_osVal == "DATE") {
         if (m_apoChildren.size() == 1 &&
             m_apoChildren[0]->m_field_type == CQL2_STRING) {
-          return std::string("`")
-              .append(msStdStringEscape(m_apoChildren[0]->m_osVal.c_str()))
-              .append("`");
+          const std::string &val = m_apoChildren[0]->m_osVal;
+          // Reject anything that isn't a valid RFC 3339 timestamp/date
+          if (val.find_first_of("`'\"\\") != std::string::npos) {
+            errorMsg = "Invalid characters in " + m_osVal + "() argument";
+            break;
+          }
+          return std::string("`").append(val).append("`");
         } else {
           errorMsg = "Unhandled syntax for function ";
           errorMsg += m_osVal;

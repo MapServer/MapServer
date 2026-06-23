@@ -152,6 +152,7 @@
 
 # RUN_PARMS: ogcapi_cql2_json_timestamp.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" 'QUERY_STRING=f=json&filter={"op":"=","args":[{"property":"LASTMOD"},{"timestamp":"2003-01-01T01:10:00Z"}]}&filter-lang=cql2-json' > [RESULT]
 # RUN_PARMS: ogcapi_cql2_json_date.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" 'QUERY_STRING=f=json&filter={"op":"=","args":[{"property":"LASTMOD"},{"date":"2003-01-01"}]}&filter-lang=cql2-json' > [RESULT]
+# RUN_PARMS: ogcapi_cql2_json_timestamp_with_backtick.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" 'QUERY_STRING=f=json&filter={"op":"=","args":[{"property":"LASTMOD"},{"timestamp":"with`backtick"}]}&filter-lang=cql2-json' > [RESULT]
 
 # RUN_PARMS: ogcapi_cql2_json_s_intersects_bbox.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" 'QUERY_STRING=f=json&filter={"op":"s_intersects","args":[{"property":"geom"},{"bbox":[-180,-90,180,90]}]}&filter-lang=cql2-json&limit=1' > [RESULT]
 # RUN_PARMS: ogcapi_cql2_json_s_intersects_bbox_3D.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" 'QUERY_STRING=f=json&filter={"op":"s_intersects","args":[{"property":"geom"},{"bbox":[-90,-180,-1000,90,180,1000]}]}&filter-lang=cql2-json&filter-crs=http://www.opengis.net/def/crs/EPSG/0/4326&limit=1' > [RESULT]
