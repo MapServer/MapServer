@@ -34,6 +34,7 @@
 #include "mapserver-config.h"
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef USE_FASTCGI
 #define NO_FCGI_DEFINES
@@ -341,8 +342,24 @@ int main(int argc, char *argv[]) {
         if (ms_index_dir != NULL) {
           // Try normal dispatch first
           if (msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
-            // Fallback to landing page
-            if (msCGIDispatchMapIndexRequest(mapserv, config) != MS_SUCCESS) {
+            errorObj *ms_error = msGetErrorObj();
+            int show_index = MS_FALSE;
+            if (mapserv->request->NumParams == 0) {
+              show_index = MS_TRUE;
+            } else if (ms_error != NULL && ms_error->code == MS_WEBERR) {
+              if (strstr(ms_error->message, "No query information to decode") !=
+                      NULL ||
+                  strstr(ms_error->message,
+                         "Traditional BROWSE mode requires a TEMPLATE") !=
+                      NULL) {
+                // Fallback to landing page
+                show_index = MS_TRUE;
+              }
+            }
+
+            if (show_index &&
+                msCGIDispatchMapIndexRequest(mapserv, config) == MS_SUCCESS) {
+            } else {
               msCGIWriteError(mapserv);
               goto end_request;
             }
