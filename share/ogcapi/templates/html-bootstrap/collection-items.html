@@ -34,16 +34,21 @@
   {% endif %}
   <div class="col-auto">
     <select class="form-control" id="limit"> <!-- TODO: dynamically populate the values based on oga_max_limit -->
-      <option value="10">page size</option>
-      <option>10</option>
-      <option>100</option>
-      <option>1000</option>
-      <option>10000</option>
+      <option value="" disabled>page size</option>
+      <option value="10">10</option>
+      <option value="100">100</option>
+      <option value="1000">1000</option>
+      <option value="10000">10000</option>
     </select>
   </div>
   {% if show_next_link == true %}
   <div class="col-auto"><a class="btn btn-secondary" title="next page" href="{{ next_link.href }}">next</a></div>
   {% endif %}
+  <div class="col-auto ms-auto">
+    <button class="btn btn-primary btn-sm" onclick="applyFilters()" title="Apply filters">Apply filters</button>
+    <a class="btn btn-outline-secondary btn-sm" title="Clear filters"
+       href="{{ template.api_root }}/collections/{{ response.collection.id }}/items?f=html{{ template.extra_params }}">Clear filters</a>
+  </div>
 </div>
 <div class="table-responsive">
 <table class="table">
@@ -52,8 +57,16 @@
     <th>ID</th>
 {% if response.features %}
 {% for key, value in response.features.0.properties %}
-    <th>{{ key }}</th>
-{% endfor %} 
+    <th data-property="{{ key }}">{{ key }}</th>
+{% endfor %}
+{% endif %}
+  </tr>
+  <tr id="filter-row">
+    <th></th>
+{% if response.features %}
+{% for key, value in response.features.0.properties %}
+    <th data-filter-cell="{{ key }}"></th>
+{% endfor %}
 {% endif %}
   </tr>
   </thead>
@@ -71,11 +84,145 @@
 </div>
 
 <script>
+
+let sortables = [];
+let queryables = {};
+
 function changePageSize() {
     const limitSelect = document.getElementById("limit");
-    const url = "{{ template.api_root }}/collections/{{ response.collection.id }}/items?limit=" + limitSelect.value + "{{ template.extra_params }}";
-    window.location.href = url;
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("limit", limitSelect.value);
+    url.searchParams.delete("offset");
+
+    window.location.href = url.toString();
 }
+
+// sorting
+function getCurrentSorts() {
+    const sortby = new URLSearchParams(window.location.search).get('sortby') || '';
+    return sortby ? sortby.split(',') : [];
+}
+
+function renderSortableHeaders() {
+    const currentSorts = getCurrentSorts();
+
+    document.querySelectorAll('th[data-property]').forEach(th => {
+        const prop = th.dataset.property;
+        if (!sortables.includes(prop)) return;
+
+        const ascEntry = '+' + prop;
+        const descEntry = '-' + prop;
+        const isAsc = currentSorts.includes(ascEntry) || currentSorts.includes(prop);
+        const isDesc = currentSorts.includes(descEntry);
+
+        // toggle this field: unsorted -> asc -> desc -> remove
+        let newSorts;
+        if (isAsc) {
+            newSorts = currentSorts.map(s => (s === ascEntry || s === prop) ? descEntry : s);
+        } else if (isDesc) {
+            newSorts = currentSorts.filter(s => s !== descEntry);
+        } else {
+            newSorts = [...currentSorts, ascEntry];
+        }
+
+        const arrow = isAsc ? ' ▲' : isDesc ? ' ▼' : ' ⇅';
+        const sortIndex = currentSorts.findIndex(s => s === ascEntry || s === descEntry || s === prop);
+        const badge = sortIndex >= 0 ? ` <small>(${sortIndex + 1})</small>` : '';
+
+        const url = new URL(window.location.href);
+        if (newSorts.length > 0) {
+            url.searchParams.set('sortby', newSorts.join(','));
+        } else {
+            url.searchParams.delete('sortby');
+        }
+        url.searchParams.delete('offset');
+
+        const tooltipText = isAsc
+            ? 'Sorted ascending — click for descending'
+            : isDesc
+            ? 'Sorted descending — click to remove sort'
+                : 'Click to sort ascending';
+
+        th.innerHTML = `<a href="${url.toString()}"
+            data-bs-toggle="tooltip"
+            data-bs-placement="top"
+            title="${tooltipText}"
+            style="text-decoration:none;color:inherit;">
+            ${prop}${arrow}${badge}
+        </a>`;
+
+        // initialise the new tooltip
+        const anchor = th.querySelector('a');
+                new bootstrap.Tooltip(anchor);
+
+        th.style.cursor = 'pointer';
+    });
+}
+
+function renderFilterInputs() {
+    document.querySelectorAll('th[data-filter-cell]').forEach(th => {
+        const prop = th.dataset.filterCell;
+        if (!queryables[prop]) return;
+
+        const type = queryables[prop].type || 'string';
+        let input;
+
+        if (type === 'number' || type === 'integer') {
+            input = `
+                <div class="input-group input-group-sm">
+                    <input type="number" class="form-control form-control-sm px-1"
+                        placeholder="min" data-filter="${prop}" data-op="gte" style="width:60px">
+                    <input type="number" class="form-control form-control-sm px-1"
+                        placeholder="max" data-filter="${prop}" data-op="lte" style="width:60px">
+                </div>`;
+        } else {
+            input = `<input type="text" class="form-control form-control-sm"
+                placeholder="filter..." data-filter="${prop}" data-op="like">`;
+        }
+
+        th.innerHTML = input;
+    });
+
+    document.querySelectorAll('[data-filter]').forEach(input => {
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') applyFilters();
+        });
+    });
+}
+
+function applyFilters() {
+
+    const parts = [];
+    document.querySelectorAll('[data-filter]').forEach(input => {
+        if (!input.value) return;
+
+        const value = input.value.replace(/'/g, "''");
+
+        const prop = input.dataset.filter;
+        const op = input.dataset.op;
+
+        if (op === 'like') {
+            parts.push(`${prop} LIKE '%${value}%'`);
+        } else if (op === 'gte') {
+            parts.push(`${prop} >= ${input.value}`);
+        } else if (op === 'lte') {
+            parts.push(`${prop} <= ${input.value}`);
+        }
+    });
+
+    const url = new URL(window.location.href);
+    if (parts.length > 0) {
+        url.searchParams.set('filter', parts.join(' AND '));
+        url.searchParams.set('filter-lang', 'cql2-text');
+    } else {
+        url.searchParams.delete('filter');
+        url.searchParams.delete('filter-lang');
+    }
+    url.searchParams.delete('offset');
+    window.location.href = url.toString();
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   //
   // mapping
@@ -89,7 +236,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   ));
   const features = L.geoJSON(geojson).addTo(map);
-  map.fitBounds(features.getBounds());
+  const bounds = features.getBounds();
+
+  if (bounds.isValid()) {
+    map.fitBounds(bounds);
+  }
 
   //
   // paging
@@ -100,17 +251,64 @@ document.addEventListener("DOMContentLoaded", function () {
   {% if existsIn(template.params, "offset") %}
   offset = {{ template.params.offset }};
   {% endif %}
+
   {% if existsIn(template.params, "limit") %}
   limit = {{ template.params.limit }};
   {% endif %}
 
-  document.getElementById("current_page").textContent = (offset + limit) / limit;
-  document.getElementById("total_pages").textContent = Math.ceil({{ response.numberMatched }}/limit);
+  // Set dropdown to current page size
+  document.getElementById("limit").value = String(limit);
+
+  document.getElementById("current_page").textContent =
+      Math.floor(offset / limit) + 1;
+
+  document.getElementById("total_pages").textContent =
+      Math.ceil({{ response.numberMatched }} / limit);
+
 
   //
   // event handling
   //
   document.getElementById("limit").addEventListener("change", changePageSize);
+
+  //
+  // sorting
+  //
+
+  fetch("{{ template.api_root }}/collections/{{ response.collection.id }}/sortables?f=json{{ template.extra_params }}")
+  .then(r => r.json())
+  .then(data => {
+    sortables = data.properties ? Object.keys(data.properties) : [];
+    renderSortableHeaders();
+  })
+  .catch(err => {
+    console.error("Failed to load sortable fields", err);
+  });
+
+  //
+  // filtering
+  //
+  fetch("{{ template.api_root }}/collections/{{ response.collection.id }}/queryables?f=json{{ template.extra_params }}")
+    .then(r => r.json())
+    .then(data => {
+      queryables = data.properties || {};
+      renderFilterInputs();
+  })
+  .catch(err => {
+    console.error("Failed to load queryables", err);
+  });
+
+  // add a div showing the current filter
+  // TODO parse the current filters and repopulate the column filter boxes
+  const currentFilter = new URLSearchParams(window.location.search).get('filter') || '';
+  if (currentFilter) {
+      const notice = document.createElement('div');
+      notice.className = 'alert alert-info py-1 mb-2';
+      notice.textContent = `Active filter: ${currentFilter}`;
+      document.getElementById('controls').after(notice);
+  }
+
+
 });
 </script>
 
