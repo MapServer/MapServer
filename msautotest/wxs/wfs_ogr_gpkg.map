@@ -24,6 +24,9 @@
 # PropertyIsNull
 # RUN_PARMS: wfs_ogr_gpkg_propertyisnull.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=test_6446&FILTER=<Filter><PropertyIsNull><PropertyName>fieldisnull</PropertyName></PropertyIsNull></Filter>" > [RESULT]
 #
+# OGR_EXPOSE_FID processing key
+# RUN_PARMS: wfs_ogr_gpkg_expose_fid.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=test_expose_fid&MAXFEATURES=1" > [RESULT]
+#
 
 MAP
 
@@ -127,6 +130,24 @@ LAYER
     "gml_include_items" "all"
     "gml_types"         "auto"
     "wfs_use_default_extent_for_getfeature" "no"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:4326"
+  END
+END # Layer
+
+LAYER
+  NAME "test_expose_fid"
+  CONNECTIONTYPE OGR
+  CONNECTION "./data/test.gpkg"
+  PROCESSING "OGR_EXPOSE_FID=YES"
+  METADATA
+    "ows_title"         "test_expose_fid"
+    "wfs_featureid"     "fid"
+    "gml_include_items" "all"
+    "gml_types"         "auto"
   END
   TYPE POINT
   STATUS ON

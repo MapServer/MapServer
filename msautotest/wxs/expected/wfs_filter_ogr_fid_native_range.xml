@@ -1,0 +1,178 @@
+Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   xmlns:wfs="http://www.opengis.net/wfs/2.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=popplace_gpkg_nofid&amp;OUTPUTFORMAT=application%2Fgml%2Bxml%3B%20version%3D3.2 http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"
+   timeStamp="" numberMatched="5" numberReturned="5">
+      <wfs:boundedBy>
+      	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+      		<gml:lowerCorner>44.911800 -64.052355</gml:lowerCorner>
+      		<gml:upperCorner>46.980843 -60.981038</gml:upperCorner>
+      	</gml:Envelope>
+      </wfs:boundedBy>
+    <wfs:member>
+      <ms:popplace_gpkg_nofid gml:id="popplace_gpkg_nofid.1">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>46.980843 -64.052355</gml:lowerCorner>
+        		<gml:upperCorner>46.980843 -64.052355</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="popplace_gpkg_nofid.1.1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>46.980843 -64.052355</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:AREA>0</ms:AREA>
+        <ms:PERIMETER>0</ms:PERIMETER>
+        <ms:POPPLACE_>8</ms:POPPLACE_>
+        <ms:POPPLACE_I>1</ms:POPPLACE_I>
+        <ms:UNIQUE_KEY>BACMK</ms:UNIQUE_KEY>
+        <ms:NAME>&quot;Tignish</ms:NAME>
+        <ms:NAME_E></ms:NAME_E>
+        <ms:NAME_F></ms:NAME_F>
+        <ms:UNIQUE_K_1></ms:UNIQUE_K_1>
+        <ms:UNIQUE_K_2></ms:UNIQUE_K_2>
+        <ms:REG_CODE>11</ms:REG_CODE>
+        <ms:NTS50>021I16</ms:NTS50>
+        <ms:LAT>465700</ms:LAT>
+        <ms:LONG>640200</ms:LONG>
+        <ms:SGC_CODE>0</ms:SGC_CODE>
+        <ms:CAPITAL>0</ms:CAPITAL>
+        <ms:POP_RANGE>1</ms:POP_RANGE>
+      </ms:popplace_gpkg_nofid>
+    </wfs:member>
+    <wfs:member>
+      <ms:popplace_gpkg_nofid gml:id="popplace_gpkg_nofid.2">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>46.689323 -60.981038</gml:lowerCorner>
+        		<gml:upperCorner>46.689323 -60.981038</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="popplace_gpkg_nofid.2.1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>46.689323 -60.981038</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:AREA>0</ms:AREA>
+        <ms:PERIMETER>0</ms:PERIMETER>
+        <ms:POPPLACE_>9</ms:POPPLACE_>
+        <ms:POPPLACE_I>1</ms:POPPLACE_I>
+        <ms:UNIQUE_KEY>CAGYX</ms:UNIQUE_KEY>
+        <ms:NAME>&#39;Cheticamp</ms:NAME>
+        <ms:NAME_E></ms:NAME_E>
+        <ms:NAME_F></ms:NAME_F>
+        <ms:UNIQUE_K_1></ms:UNIQUE_K_1>
+        <ms:UNIQUE_K_2></ms:UNIQUE_K_2>
+        <ms:REG_CODE>12</ms:REG_CODE>
+        <ms:NTS50>011K11</ms:NTS50>
+        <ms:LAT>463800</ms:LAT>
+        <ms:LONG>610100</ms:LONG>
+        <ms:SGC_CODE>1215011</ms:SGC_CODE>
+        <ms:CAPITAL>0</ms:CAPITAL>
+        <ms:POP_RANGE>2</ms:POP_RANGE>
+      </ms:popplace_gpkg_nofid>
+    </wfs:member>
+    <wfs:member>
+      <ms:popplace_gpkg_nofid gml:id="popplace_gpkg_nofid.3">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>44.911800 -62.513078</gml:lowerCorner>
+        		<gml:upperCorner>44.911800 -62.513078</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="popplace_gpkg_nofid.3.1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>44.911800 -62.513078</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:AREA>0</ms:AREA>
+        <ms:PERIMETER>0</ms:PERIMETER>
+        <ms:POPPLACE_>10</ms:POPPLACE_>
+        <ms:POPPLACE_I>1</ms:POPPLACE_I>
+        <ms:UNIQUE_KEY>CBIKA</ms:UNIQUE_KEY>
+        <ms:NAME>Sheet Harbour</ms:NAME>
+        <ms:NAME_E></ms:NAME_E>
+        <ms:NAME_F></ms:NAME_F>
+        <ms:UNIQUE_K_1></ms:UNIQUE_K_1>
+        <ms:UNIQUE_K_2></ms:UNIQUE_K_2>
+        <ms:REG_CODE>12</ms:REG_CODE>
+        <ms:NTS50>011D15</ms:NTS50>
+        <ms:LAT>445500</ms:LAT>
+        <ms:LONG>623200</ms:LONG>
+        <ms:SGC_CODE>1209036</ms:SGC_CODE>
+        <ms:CAPITAL>0</ms:CAPITAL>
+        <ms:POP_RANGE>2</ms:POP_RANGE>
+      </ms:popplace_gpkg_nofid>
+    </wfs:member>
+    <wfs:member>
+      <ms:popplace_gpkg_nofid gml:id="popplace_gpkg_nofid.4">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>46.373272 -62.272430</gml:lowerCorner>
+        		<gml:upperCorner>46.373272 -62.272430</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="popplace_gpkg_nofid.4.1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>46.373272 -62.272430</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:AREA>0</ms:AREA>
+        <ms:PERIMETER>0</ms:PERIMETER>
+        <ms:POPPLACE_>109</ms:POPPLACE_>
+        <ms:POPPLACE_I>2</ms:POPPLACE_I>
+        <ms:UNIQUE_KEY>BACII</ms:UNIQUE_KEY>
+        <ms:NAME>&#39;Souris&#39;</ms:NAME>
+        <ms:NAME_E></ms:NAME_E>
+        <ms:NAME_F></ms:NAME_F>
+        <ms:UNIQUE_K_1></ms:UNIQUE_K_1>
+        <ms:UNIQUE_K_2></ms:UNIQUE_K_2>
+        <ms:REG_CODE>11</ms:REG_CODE>
+        <ms:NTS50>011L08</ms:NTS50>
+        <ms:LAT>462100</ms:LAT>
+        <ms:LONG>621500</ms:LONG>
+        <ms:SGC_CODE>1101036</ms:SGC_CODE>
+        <ms:CAPITAL>0</ms:CAPITAL>
+        <ms:POP_RANGE>2</ms:POP_RANGE>
+      </ms:popplace_gpkg_nofid>
+    </wfs:member>
+    <wfs:member>
+      <ms:popplace_gpkg_nofid gml:id="popplace_gpkg_nofid.5">
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>45.311286 -61.038743</gml:lowerCorner>
+        		<gml:upperCorner>45.311286 -61.038743</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id="popplace_gpkg_nofid.5.1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>45.311286 -61.038743</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:AREA>0</ms:AREA>
+        <ms:PERIMETER>0</ms:PERIMETER>
+        <ms:POPPLACE_>110</ms:POPPLACE_>
+        <ms:POPPLACE_I>2</ms:POPPLACE_I>
+        <ms:UNIQUE_KEY>CAGBW</ms:UNIQUE_KEY>
+        <ms:NAME>&quot;Canso&quot;</ms:NAME>
+        <ms:NAME_E></ms:NAME_E>
+        <ms:NAME_F></ms:NAME_F>
+        <ms:UNIQUE_K_1></ms:UNIQUE_K_1>
+        <ms:UNIQUE_K_2></ms:UNIQUE_K_2>
+        <ms:REG_CODE>12</ms:REG_CODE>
+        <ms:NTS50>011F07</ms:NTS50>
+        <ms:LAT>452000</ms:LAT>
+        <ms:LONG>610000</ms:LONG>
+        <ms:SGC_CODE>1213006</ms:SGC_CODE>
+        <ms:CAPITAL>0</ms:CAPITAL>
+        <ms:POP_RANGE>2</ms:POP_RANGE>
+      </ms:popplace_gpkg_nofid>
+    </wfs:member>
+</wfs:FeatureCollection>
+

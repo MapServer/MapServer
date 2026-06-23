@@ -598,7 +598,7 @@ FilterEncodingNode *FLTParseFilterEncoding(const char *szXMLString) {
   if (psRoot == NULL)
     return NULL;
 
-  /* strip namespaces. We srtip all name spaces (#1350)*/
+  /* strip namespaces. We strip all name spaces (#1350)*/
   CPLStripXMLNamespace(psRoot, NULL, 1);
 
   /* -------------------------------------------------------------------- */
