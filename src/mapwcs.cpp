@@ -560,7 +560,8 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
         msFree(params->section);
         params->section =
             msStrdup(request->ParamValues[i]); /* TODO: validate value here */
-      } else if (strcasecmp(request->ParamNames[i], "SECTIONS") == 0) { /* 1.1 */
+      } else if (strcasecmp(request->ParamNames[i], "SECTIONS") ==
+                 0) { /* 1.1 */
         msFree(params->section);
         params->section =
             msStrdup(request->ParamValues[i]); /* TODO: validate value here */
