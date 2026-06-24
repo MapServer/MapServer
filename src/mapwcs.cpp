@@ -540,22 +540,31 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
   if (request->NumParams > 0) {
     for (i = 0; i < request->NumParams; i++) {
 
-      if (strcasecmp(request->ParamNames[i], "VERSION") == 0)
+      if (strcasecmp(request->ParamNames[i], "VERSION") == 0) {
+        msFree(params->version);
         params->version = msStrdup(request->ParamValues[i]);
-      if (strcasecmp(request->ParamNames[i], "UPDATESEQUENCE") == 0)
+      }
+      if (strcasecmp(request->ParamNames[i], "UPDATESEQUENCE") == 0) {
+        msFree(params->updatesequence);
         params->updatesequence = msStrdup(request->ParamValues[i]);
-      else if (strcasecmp(request->ParamNames[i], "REQUEST") == 0)
+      } else if (strcasecmp(request->ParamNames[i], "REQUEST") == 0) {
+        msFree(params->request);
         params->request = msStrdup(request->ParamValues[i]);
-      else if (strcasecmp(request->ParamNames[i], "INTERPOLATION") == 0)
+      } else if (strcasecmp(request->ParamNames[i], "INTERPOLATION") == 0) {
+        msFree(params->interpolation);
         params->interpolation = msStrdup(request->ParamValues[i]);
-      else if (strcasecmp(request->ParamNames[i], "SERVICE") == 0)
+      } else if (strcasecmp(request->ParamNames[i], "SERVICE") == 0) {
+        msFree(params->service);
         params->service = msStrdup(request->ParamValues[i]);
-      else if (strcasecmp(request->ParamNames[i], "SECTION") == 0) /* 1.0 */
+      } else if (strcasecmp(request->ParamNames[i], "SECTION") == 0) { /* 1.0 */
+        msFree(params->section);
         params->section =
             msStrdup(request->ParamValues[i]); /* TODO: validate value here */
-      else if (strcasecmp(request->ParamNames[i], "SECTIONS") == 0) /* 1.1 */
+      } else if (strcasecmp(request->ParamNames[i], "SECTIONS") == 0) { /* 1.1 */
+        msFree(params->section);
         params->section =
             msStrdup(request->ParamValues[i]); /* TODO: validate value here */
+      }
 
       /* GetCoverage parameters. */
       else if (strcasecmp(request->ParamNames[i], "BBOX") == 0) {
@@ -583,14 +592,19 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
       else if (strcasecmp(request->ParamNames[i], "COVERAGE") == 0)
         params->coverages =
             CSLAddString(params->coverages, request->ParamValues[i]);
-      else if (strcasecmp(request->ParamNames[i], "TIME") == 0)
+      else if (strcasecmp(request->ParamNames[i], "TIME") == 0) {
+        msFree(params->time);
         params->time = msStrdup(request->ParamValues[i]);
-      else if (strcasecmp(request->ParamNames[i], "FORMAT") == 0)
+      } else if (strcasecmp(request->ParamNames[i], "FORMAT") == 0) {
+        msFree(params->format);
         params->format = msStrdup(request->ParamValues[i]);
-      else if (strcasecmp(request->ParamNames[i], "CRS") == 0)
+      } else if (strcasecmp(request->ParamNames[i], "CRS") == 0) {
+        msFree(params->crs);
         params->crs = msStrdup(request->ParamValues[i]);
-      else if (strcasecmp(request->ParamNames[i], "RESPONSE_CRS") == 0)
+      } else if (strcasecmp(request->ParamNames[i], "RESPONSE_CRS") == 0) {
+        msFree(params->response_crs);
         params->response_crs = msStrdup(request->ParamValues[i]);
+      }
 
       /* WCS 1.1 DescribeCoverage and GetCoverage ... */
       else if (strcasecmp(request->ParamNames[i], "IDENTIFIER") == 0 ||
