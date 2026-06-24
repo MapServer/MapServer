@@ -905,11 +905,21 @@ int readGIF(char *path, rasterBufferObj *rb) {
   a = rb->data.rgba.a = &rb->data.rgba.pixels[3];
 
   cmap = (image->Image.ColorMap) ? image->Image.ColorMap : image->SColorMap;
+  if (cmap == NULL) {
+    msSetError(MS_MISCERR, "gif image has no color map", "readGIF()");
+    return MS_FAILURE;
+  }
+  /* the background index is read straight from the file and may point past
+     the end of the color table */
+  const int bgIndex = (image->SBackGroundColor >= 0 &&
+                       image->SBackGroundColor < cmap->ColorCount)
+                          ? image->SBackGroundColor
+                          : 0;
   for (unsigned i = 0; i < rb->width * rb->height; i++) {
     *a = 255;
-    *r = cmap->Colors[image->SBackGroundColor].Red;
-    *g = cmap->Colors[image->SBackGroundColor].Green;
-    *b = cmap->Colors[image->SBackGroundColor].Blue;
+    *r = cmap->Colors[bgIndex].Red;
+    *g = cmap->Colors[bgIndex].Green;
+    *b = cmap->Colors[bgIndex].Blue;
     a += rb->data.rgba.pixel_step;
     r += rb->data.rgba.pixel_step;
     g += rb->data.rgba.pixel_step;
@@ -983,7 +993,8 @@ int readGIF(char *path, rasterBufferObj *rb) {
 
               for (unsigned j = 0; j < width; j++) {
                 GifPixelType pix = line[j];
-                if (transIdx == -1 || pix != transIdx) {
+                if ((transIdx == -1 || pix != transIdx) &&
+                    pix < cmap->ColorCount) {
                   *a = 255;
                   *r = cmap->Colors[pix].Red;
                   *g = cmap->Colors[pix].Green;
@@ -1018,7 +1029,8 @@ int readGIF(char *path, rasterBufferObj *rb) {
             }
             for (unsigned j = 0; j < width; j++) {
               GifPixelType pix = line[j];
-              if (transIdx == -1 || pix != transIdx) {
+              if ((transIdx == -1 || pix != transIdx) &&
+                  pix < cmap->ColorCount) {
                 *a = 255;
                 *r = cmap->Colors[pix].Red;
                 *g = cmap->Colors[pix].Green;
