@@ -1,0 +1,53 @@
+#
+# Test that the OpenLayers GetMap output (FORMAT=application/openlayers) does
+# not let a request-controlled header break out of the <script> block.
+# See https://github.com/MapServer/MapServer/security/advisories/GHSA-xqj6-vjqr-33vv
+#
+# The mapserv_onlineresource is built from X-Forwarded-Host / SCRIPT_NAME /
+# SERVER_PORT and inlined in a single-quoted JS string. A '</script>' in the
+# header must be neutralized (encoded as </>), otherwise it closes
+# the script element at the HTML parsing layer and runs attacker JavaScript.
+#
+# RUN_PARMS: wms_openlayers_xss.txt [MAPSERV] [ENV HTTP_X_FORWARDED_HOST=</script><script>alert(document.domain)</script>] [ENV SCRIPT_NAME=/mapserv] [ENV SERVER_PORT=80] -conf ../etc/mapserv.conf QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-67.5725,42.3683,-58.9275,48.13&FORMAT=application/openlayers&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=road" > [RESULT_DEMIME]
+
+MAP
+
+NAME WMS_OPENLAYERS_XSS_TEST
+STATUS ON
+SIZE 400 300
+EXTENT -67.5725 42 -58.9275 48.5
+UNITS DD
+IMAGECOLOR 255 255 255
+
+PROJECTION
+  "init=epsg:4326"
+END
+
+OUTPUTFORMAT
+  NAME png
+  DRIVER "AGG/PNG8"
+  MIMETYPE "image/png"
+  EXTENSION "png"
+END
+
+WEB
+  METADATA
+    "wms_title"          "test"
+    "wms_srs"            "EPSG:4326"
+    "ows_enable_request" "*"
+  END
+END
+
+LAYER
+  NAME road
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=epsg:4326"
+  END
+  METADATA
+    "wms_title" "road"
+  END
+END
+
+END # Map File
