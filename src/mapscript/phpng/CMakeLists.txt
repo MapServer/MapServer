@@ -11,6 +11,76 @@ endif(WIN32)
 FIND_PACKAGE(PHP REQUIRED)
 INCLUDE(UseSWIG)
 
+if(NOT PHP_EXTENSION_DIR)
+    execute_process(COMMAND php-config --extension-dir 
+                    OUTPUT_VARIABLE PHP_EXTENSION_DIR 
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif()
+
+if(NOT PHP_EXTENSION_DIR)
+    message(WARNING "PHP_EXTENSION_DIR is empty after php-config probe. Defaulting to lib/php/extensions")
+    set(PHP_EXTENSION_DIR "lib/php/extensions")
+endif()
+
+message(STATUS "PHP Extension Directory: ${PHP_EXTENSION_DIR}")
+
+
+# Try to find standard PHP include directories if not already set
+if(NOT PHP_INCLUDE_PATH AND PHP_INCLUDE_DIRS)
+    set(PHP_INCLUDE_PATH ${PHP_INCLUDE_DIRS})
+endif()
+
+if(NOT PHP_INCLUDE_PATH)
+    # Explicitly find php-config executable
+    find_program(PHP_CONFIG_EXECUTABLE NAMES php-config php-config8.5 php-config8.4 php-config8.3 php-config8 php-config7)
+    
+    if(PHP_CONFIG_EXECUTABLE)
+        execute_process(COMMAND ${PHP_CONFIG_EXECUTABLE} --includes 
+                        OUTPUT_VARIABLE PHP_O_INCLUDE_PATH 
+                        OUTPUT_STRIP_TRAILING_WHITESPACE
+                        RESULT_VARIABLE PHP_CONFIG_RESULT)
+        
+        if(PHP_CONFIG_RESULT EQUAL 0 AND PHP_O_INCLUDE_PATH)
+            string(REPLACE "-I" "" PHP_INCLUDE_PATH "${PHP_O_INCLUDE_PATH}") 
+            string(REPLACE " " ";" PHP_INCLUDE_PATH "${PHP_INCLUDE_PATH}")
+        endif()
+    endif()
+endif()
+
+if(NOT PHP_INCLUDE_PATH)
+    message(WARNING "PHP_INCLUDE_PATH is empty. Attempting to guess based on standard locations.")
+    # Common locations on Linux/macOS
+    find_path(PHP_H_LOCATION php.h PATHS 
+        /usr/include/php
+        /usr/local/include/php
+        /opt/homebrew/include/php
+        /usr/include/php/main
+        /usr/local/include/php/main
+        /usr/include/php/8.5/main
+        /usr/include/php/8.4/main
+        /usr/include/php/8.3/main
+        /usr/include/php/8.2/main
+        /usr/include/php/8.1/main
+        /usr/include/php/7.4/main
+        ${CMAKE_PREFIX_PATH}/include/php
+        ${CMAKE_PREFIX_PATH}/include/php/main
+        ENV PHP_INCLUDE_DIR
+    )
+    if(PHP_H_LOCATION)
+        set(PHP_INCLUDE_PATH ${PHP_H_LOCATION})
+        # Add subdirectories often needed (TSRM, Zend, main)
+        list(APPEND PHP_INCLUDE_PATH "${PHP_H_LOCATION}/main" "${PHP_H_LOCATION}/TSRM" "${PHP_H_LOCATION}/Zend")
+    endif()
+endif()
+
+# Sanity check: Ensure php.h exists in at least one of the include paths
+find_path(PHP_H_CHECK "php.h" PATHS ${PHP_INCLUDE_PATH} NO_DEFAULT_PATH)
+if(NOT PHP_H_CHECK)
+    message(FATAL_ERROR "Could not find php.h in include paths: '${PHP_INCLUDE_PATH}'. Please install php-dev or set PHP_INCLUDE_PATH manually.")
+endif()
+
+message(STATUS "Final PHP Include Path: ${PHP_INCLUDE_PATH}")
+
 if(WIN32)
   add_definitions(/DWIN32 /DZEND_WIN32 /DPHP_WIN32 /DZEND_DEBUG=0)
   if(NOT CMAKE_CL_64)
@@ -75,13 +145,13 @@ IF(APPLE)
 ENDIF(APPLE)
 
 # hide "defined but not used" warnings
-target_compile_options(php_mapscriptng PRIVATE -Wno-unused-label)
+target_compile_options(php_mapscriptng PRIVATE -Wno-unused-label -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast)
 
 target_link_libraries(php_mapscriptng mapserver)
 set_target_properties(${SWIG_MODULE_mapscript_REAL_NAME} PROPERTIES PREFIX "")
 
 if(NOT WIN32)
-  install(TARGETS php_mapscriptng DESTINATION ${PHP_EXTENSION_DIR})
+  install(TARGETS php_mapscriptng LIBRARY DESTINATION ${PHP_EXTENSION_DIR})
   # check if we must install the required file containing MapServer constants and functions
   if(${SWIG_VERSION} LESS_EQUAL 4.0.2)
      install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mapscript.php DESTINATION ${PHP_EXTENSION_DIR} COMPONENT dev)
