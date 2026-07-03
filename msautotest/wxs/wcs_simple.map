@@ -23,7 +23,8 @@
 #
 # Capabilities 1.0.0
 # RUN_PARMS: wcs_cap.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION] [RESULT_DEMIME]
-# RUN_PARMS: wcs_cap.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION] [RESULT]
+# Also test duplicated parameter not to cause memory leak
+# RUN_PARMS: wcs_cap.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&VERSION=1.0.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION] [RESULT]
 #
 # RUN_PARMS: wcs10_caps_section_error.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCapabilities&SECTION=error" > [RESULT]
 #
