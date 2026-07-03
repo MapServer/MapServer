@@ -145,7 +145,8 @@ int flatgeobuf_decode_feature(ctx *ctx, layerObj *layer, shapeObj *shape)
     if (properties && properties->size() != 0) {
         ctx->properties = (uint8_t *) properties->data();
         ctx->properties_size = properties->size();
-        flatgeobuf_decode_properties(ctx, layer, shape);
+        if (flatgeobuf_decode_properties(ctx, layer, shape) == -1)
+            return -1;
     } else {
         ctx->properties_size = 0;
     }
