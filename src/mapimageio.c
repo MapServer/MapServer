@@ -860,6 +860,17 @@ static char const *gif_error_msg()
   }
 }
 
+/* release the giflib handle, ignoring the close status */
+static void closeGIF(GifFileType *image) {
+#if defined GIFLIB_MAJOR && GIFLIB_MINOR &&                                    \
+    ((GIFLIB_MAJOR == 5 && GIFLIB_MINOR >= 1) || (GIFLIB_MAJOR > 5))
+  int errcode;
+  DGifCloseFile(image, &errcode);
+#else
+  DGifCloseFile(image);
+#endif
+}
+
 /* not fully implemented and tested */
 /* missing: set the first pointer to a,r,g,b */
 int readGIF(char *path, rasterBufferObj *rb) {
@@ -907,6 +918,9 @@ int readGIF(char *path, rasterBufferObj *rb) {
   cmap = (image->Image.ColorMap) ? image->Image.ColorMap : image->SColorMap;
   if (cmap == NULL) {
     msSetError(MS_MISCERR, "gif image has no color map", "readGIF()");
+    free(rb->data.rgba.pixels);
+    rb->data.rgba.pixels = NULL;
+    closeGIF(image);
     return MS_FAILURE;
   }
   /* the background index is read straight from the file and may point past
@@ -965,6 +979,9 @@ int readGIF(char *path, rasterBufferObj *rb) {
           msSetError(MS_MISCERR,
                      "corrupted gif image, img size exceeds screen size",
                      "readGIF()");
+          free(rb->data.rgba.pixels);
+          rb->data.rgba.pixels = NULL;
+          closeGIF(image);
           return MS_FAILURE;
         }
 
