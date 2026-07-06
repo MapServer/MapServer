@@ -1,0 +1,44 @@
+# RUN_PARMS: gif_palette_oob.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=oob" > [RESULT_DEVERSION]
+# RUN_PARMS: gif_no_colormap.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=nocmap" > [RESULT_DEVERSION]
+#
+# Regression test for out-of-bounds reads of the GIF colour table in readGIF().
+# Both symbols point at GIFs whose palette indices fall outside the colour
+# table; decoding them must not read past cmap->Colors. Under ASAN the
+# unpatched decoder reports a heap-buffer-overflow here.
+#
+# REQUIRES: OUTPUT=PNG
+
+MAP
+
+STATUS ON
+EXTENT 0 0 400 300
+SIZE 200 150
+IMAGETYPE png24
+symbolset "symbolset"
+imagecolor 255 255 255
+
+LAYER
+  NAME "oob"
+  TYPE point
+  STATUS on
+  CLASS
+    STYLE
+      SYMBOL "gifpaletteoob"
+    END
+  END
+  FEATURE POINTS 200 150 END END
+END
+
+LAYER
+  NAME "nocmap"
+  TYPE point
+  STATUS on
+  CLASS
+    STYLE
+      SYMBOL "gifnocolormap"
+    END
+  END
+  FEATURE POINTS 200 150 END END
+END
+
+END
