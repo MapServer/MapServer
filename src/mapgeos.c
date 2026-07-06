@@ -1322,13 +1322,19 @@ shapeObj *msGEOSCenterline(shapeObj *shape) {
   shape2->type = MS_SHAPE_LINE; // will fill with centerline
 
   if (nodes.numpoints == 0) {
-    msSetError(MS_GEOSERR,
-               "Centerline generation failed, try densifying the shapes.",
-               "msGEOSCenterline()");
-    free(shape2);
+    /* The polygon is too simple (e.g. convex or with few vertices) for a
+       Voronoi-based centerline to be computed (#7058). Skip the centerline
+       for this feature instead of aborting the whole map draw: callers and
+       renderers tolerate the empty line returned below (msDrawShape and
+       msDrawLineSymbol early-return on numlines == 0). Densifying the input
+       first, e.g. GEOMTRANSFORM(centerline(densify([shape],N))), produces a
+       centerline and so avoids the skip. */
+    msDebug("msGEOSCenterline(): input polygon too simple for a centerline "
+            "(shapeindex %ld); skipping centerline for this feature.\n",
+            (long)shape->index);
     msFreeGraph(graph);
     free(nodes.point);
-    return NULL;
+    return shape2; /* empty line; callers skip it (numlines == 0) */
   }
 
   // step through edge nodes (z=1)
@@ -1363,11 +1369,14 @@ shapeObj *msGEOSCenterline(shapeObj *shape) {
 
   // transform the path into a shape
   if (!path) {
-    msSetError(MS_GEOSERR, "Centerline generation failed.",
-               "msGEOSCenterline()");
-    free(shape2);
+    /* No centerline path could be derived from the Voronoi graph (#7058):
+       skip the centerline for this feature rather than aborting the map
+       draw. Consistent with the too-simple-polygon case above. */
+    msDebug("msGEOSCenterline(): no centerline path could be built for "
+            "shapeindex %ld; skipping centerline for this feature.\n",
+            (long)shape->index);
     free(nodes.point);
-    return NULL;
+    return shape2; /* empty line; callers skip it (numlines == 0) */
   } else {
     lineObj line;
     line.point = (pointObj *)malloc(path_size * sizeof(pointObj));
