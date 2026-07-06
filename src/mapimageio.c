@@ -1131,25 +1131,7 @@ int readGIF(char *path, rasterBufferObj *rb) {
 
   } while (recordType != TERMINATE_RECORD_TYPE);
 
-#if defined GIFLIB_MAJOR && GIFLIB_MINOR &&                                    \
-    ((GIFLIB_MAJOR == 5 && GIFLIB_MINOR >= 1) || (GIFLIB_MAJOR > 5))
-  if (DGifCloseFile(image, &errcode) == GIF_ERROR) {
-    msSetError(MS_MISCERR, "failed to close gif after loading: %s", "readGIF()",
-               gif_error_msg(errcode));
-    return MS_FAILURE;
-  }
-#else
-  if (DGifCloseFile(image) == GIF_ERROR) {
-#if defined GIFLIB_MAJOR && GIFLIB_MAJOR >= 5
-    msSetError(MS_MISCERR, "failed to close gif after loading: %s", "readGIF()",
-               gif_error_msg(image->Error));
-#else
-    msSetError(MS_MISCERR, "failed to close gif after loading: %s", "readGIF()",
-               gif_error_msg());
-#endif
-    return MS_FAILURE;
-  }
-#endif
+  closeGIF(image);
 
   return MS_SUCCESS;
 }
