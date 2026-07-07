@@ -1,5 +1,7 @@
 #include "../../src/mapserver.h"
 #include "../../src/maperror.h"
+#include <thread>
+#include <vector>
 
 /* ----------------------------------------------------------------------- */
 
@@ -145,7 +147,36 @@ static void testToString() {
 
 /* ----------------------------------------------------------------------- */
 
+static void testRasterizeArcThreadSafety() {
+  // Regression test for #6507: msRasterizeArc kept the working-buffer size in
+  // a static variable, so concurrent callers raced on it and could overrun
+  // their own (per-call) buffer. Render arcs large enough to grow the buffer
+  // (radius ~800-4800 -> 200-1300 points); under ASan/TSan the pre-fix code
+  // reports a heap-buffer-overflow / data race here.
+  const int nthreads = 8;
+  const int iters = 250;
+  auto worker = [](int tid) {
+    for (int i = 0; i < iters; ++i) {
+      const double radius = 800.0 + ((tid * 37 + i) % 17) * 250.0;
+      shapeObj *s = msRasterizeArc(0.0, 0.0, radius, 0.0, 360.0, i & 1);
+      EXPECT_TRUE(s != nullptr);
+      if (s) {
+        EXPECT_TRUE(s->numlines == 1);
+        EXPECT_TRUE(s->line[0].numpoints > 0);
+        msFreeShape(s);
+        free(s);
+      }
+    }
+  };
+  std::vector<std::thread> threads;
+  for (int t = 0; t < nthreads; ++t)
+    threads.emplace_back(worker, t);
+  for (auto &th : threads)
+    th.join();
+}
+
 int main() {
+  testRasterizeArcThreadSafety();
   testRedactCredentials();
   testToString();
   return gTestRetCode;
