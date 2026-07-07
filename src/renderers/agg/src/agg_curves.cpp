@@ -137,12 +137,21 @@ namespace mapserver
     }
 
     //------------------------------------------------------------------------
-    void curve3_div::recursive_bezier(double x1, double y1, 
-                                      double x2, double y2, 
+    void curve3_div::recursive_bezier(double x1, double y1,
+                                      double x2, double y2,
                                       double x3, double y3,
                                       unsigned level)
     {
-        if(level > curve_recursion_limit) 
+        if(level > curve_recursion_limit)
+        {
+            return;
+        }
+
+        // Non-finite control points defeat every early-exit test below, so the
+        // subdivision runs to the recursion limit on every branch (up to 2^32
+        // calls for a quadratic) and never converges (#7310).
+        if(!isfinite(x1) || !isfinite(y1) || !isfinite(x2) || !isfinite(y2) ||
+           !isfinite(x3) || !isfinite(y3))
         {
             return;
         }
@@ -385,13 +394,21 @@ namespace mapserver
     }
 
     //------------------------------------------------------------------------
-    void curve4_div::recursive_bezier(double x1, double y1, 
-                                      double x2, double y2, 
-                                      double x3, double y3, 
+    void curve4_div::recursive_bezier(double x1, double y1,
+                                      double x2, double y2,
+                                      double x3, double y3,
                                       double x4, double y4,
                                       unsigned level)
     {
-        if(level > curve_recursion_limit) 
+        if(level > curve_recursion_limit)
+        {
+            return;
+        }
+
+        // See curve3_div::recursive_bezier: non-finite control points make the
+        // subdivision never converge (#7310).
+        if(!isfinite(x1) || !isfinite(y1) || !isfinite(x2) || !isfinite(y2) ||
+           !isfinite(x3) || !isfinite(y3) || !isfinite(x4) || !isfinite(y4))
         {
             return;
         }

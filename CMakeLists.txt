@@ -1234,4 +1234,7 @@ if(BUILD_DYNAMIC AND BUILD_TESTING)
     add_executable(unit_test tests/unit/test.cpp)
     target_link_libraries(unit_test PRIVATE mapserver)
     add_test(NAME unit_test COMMAND unit_test)
+    # Bounds the recursion-regression case (testAggCurvesNonFiniteControlPoints),
+    # which would otherwise spin if the guard in agg_curves.cpp is removed.
+    set_tests_properties(unit_test PROPERTIES TIMEOUT 60)
 endif()
