@@ -257,7 +257,7 @@ def fromstring(data, mappath=None, configpath=None):
         PyObject *order;
         order = PyTuple_New(self->numlayers);
         for (i = 0; i < self->numlayers; i++) {
-            PyTuple_SetItem(order,i,PyInt_FromLong((long)self->layerorder[i]));
+            PyTuple_SetItem(order,i,PyLong_FromLong((long)self->layerorder[i]));
         }
         return order;
     } 
@@ -269,7 +269,7 @@ def fromstring(data, mappath=None, configpath=None):
         int i;
         Py_ssize_t size = PyTuple_Size(order);
         for (i = 0; i < size; i++) {
-            self->layerorder[i] = (int)PyInt_AsLong(PyTuple_GetItem(order, i));
+            self->layerorder[i] = (int)PyLong_AsLong(PyTuple_GetItem(order, i));
         }
         return MS_SUCCESS;
     }
@@ -281,8 +281,8 @@ def fromstring(data, mappath=None, configpath=None):
     {
         PyObject* output ;
         output = PyTuple_New(2);
-        PyTuple_SetItem(output,0,PyInt_FromLong((long)self->width));
-        PyTuple_SetItem(output,1,PyInt_FromLong((long)self->height));
+        PyTuple_SetItem(output,0,PyLong_FromLong((long)self->width));
+        PyTuple_SetItem(output,1,PyLong_FromLong((long)self->height));
         return output;
     }
 
