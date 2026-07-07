@@ -607,19 +607,19 @@ def _run(map, out_file, command, extra_args):
 
     os.environ["MS_PDF_CREATION_DATE"] = "dummy date"
 
-    # support for environment variable of type [ENV foo=bar]
-    begin = command.find("[ENV")
-    envirkey = ""
-    if begin != -1:
-        end = command[begin:].find("]")
-        equal = command[begin:].find("=")
-        # print("equal is %d"%equal)
-        envirkey = command[begin + len("[ENV ") : begin + equal]
+    # support for environment variables of type [ENV foo=bar] (repeatable)
+    envir_keys = []
+    while True:
+        begin = command.find("[ENV ")
+        if begin == -1:
+            break
+        end = command.find("]", begin)
+        equal = command.find("=", begin)
+        envirkey = command[begin + len("[ENV ") : equal]
         envirval = command[equal + 1 : end]
         os.environ[envirkey] = envirval
-        tmp = command
-        command = tmp[:begin] + tmp[end + 1 :]
-        # print('added environment variable (%s)=(%s); new command:%s' % (envirkey,envirval,command))
+        envir_keys.append(envirkey)
+        command = command[:begin] + command[end + 1 :]
 
     # support for POST request method
     begin = command.find("[POST]")
@@ -688,7 +688,7 @@ def _run(map, out_file, command, extra_args):
         del os.environ["REQUEST_METHOD"]
         del os.environ["MS_MAPFILE"]
 
-    if envirkey != "":
+    for envirkey in envir_keys:
         del os.environ[envirkey]
 
     if demime:
