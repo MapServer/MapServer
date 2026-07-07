@@ -380,7 +380,7 @@ static int treeAddShapeId(treeObj *tree, int id, rectObj rect) {
   return (treeNodeAddShapeId(tree->root, id, rect, tree->maxdepth));
 }
 
-static void treeCollectShapeIds(treeNodeObj *node, rectObj aoi,
+static void treeCollectShapeIds(treeNodeObj *node, rectObj aoi, int numshapes,
                                 ms_bitarray status) {
   int i;
 
@@ -395,14 +395,15 @@ static void treeCollectShapeIds(treeNodeObj *node, rectObj aoi,
   /*      Add the local nodes shapeids to the list.                       */
   /* -------------------------------------------------------------------- */
   for (i = 0; i < node->numshapes; i++)
-    msSetBit(status, node->ids[i], 1);
+    if (node->ids[i] >= 0 && node->ids[i] < numshapes)
+      msSetBit(status, node->ids[i], 1);
 
   /* -------------------------------------------------------------------- */
   /*      Recurse to subnodes if they exist.                              */
   /* -------------------------------------------------------------------- */
   for (i = 0; i < node->numsubnodes; i++) {
     if (node->subnode[i])
-      treeCollectShapeIds(node->subnode[i], aoi, status);
+      treeCollectShapeIds(node->subnode[i], aoi, numshapes, status);
   }
 }
 
@@ -415,7 +416,7 @@ ms_bitarray msSearchTree(const treeObj *tree, rectObj aoi) {
     return (NULL);
   }
 
-  treeCollectShapeIds(tree->root, aoi, status);
+  treeCollectShapeIds(tree->root, aoi, tree->numshapes, status);
 
   return (status);
 }
@@ -507,11 +508,13 @@ static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi,
     if (disktree->needswap) {
       for (i = 0; i < numshapes; i++) {
         SwapWord(4, &ids[i]);
-        msSetBit(status, ids[i], 1);
+        if (ids[i] >= 0 && ids[i] < disktree->nShapes)
+          msSetBit(status, ids[i], 1);
       }
     } else {
       for (i = 0; i < numshapes; i++)
-        msSetBit(status, ids[i], 1);
+        if (ids[i] >= 0 && ids[i] < disktree->nShapes)
+          msSetBit(status, ids[i], 1);
     }
     free(ids);
     ids = NULL;
