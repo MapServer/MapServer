@@ -860,6 +860,17 @@ static char const *gif_error_msg()
   }
 }
 
+/* release the giflib handle, ignoring the close status */
+static void closeGIF(GifFileType *image) {
+#if defined GIFLIB_MAJOR && GIFLIB_MINOR &&                                    \
+    ((GIFLIB_MAJOR == 5 && GIFLIB_MINOR >= 1) || (GIFLIB_MAJOR > 5))
+  int errcode;
+  DGifCloseFile(image, &errcode);
+#else
+  DGifCloseFile(image);
+#endif
+}
+
 /* not fully implemented and tested */
 /* missing: set the first pointer to a,r,g,b */
 int readGIF(char *path, rasterBufferObj *rb) {
@@ -905,11 +916,24 @@ int readGIF(char *path, rasterBufferObj *rb) {
   a = rb->data.rgba.a = &rb->data.rgba.pixels[3];
 
   cmap = (image->Image.ColorMap) ? image->Image.ColorMap : image->SColorMap;
+  if (cmap == NULL) {
+    msSetError(MS_MISCERR, "gif image has no color map", "readGIF()");
+    free(rb->data.rgba.pixels);
+    rb->data.rgba.pixels = NULL;
+    closeGIF(image);
+    return MS_FAILURE;
+  }
+  /* the background index is read straight from the file and may point past
+     the end of the color table */
+  const int bgIndex = (image->SBackGroundColor >= 0 &&
+                       image->SBackGroundColor < cmap->ColorCount)
+                          ? image->SBackGroundColor
+                          : 0;
   for (unsigned i = 0; i < rb->width * rb->height; i++) {
     *a = 255;
-    *r = cmap->Colors[image->SBackGroundColor].Red;
-    *g = cmap->Colors[image->SBackGroundColor].Green;
-    *b = cmap->Colors[image->SBackGroundColor].Blue;
+    *r = cmap->Colors[bgIndex].Red;
+    *g = cmap->Colors[bgIndex].Green;
+    *b = cmap->Colors[bgIndex].Blue;
     a += rb->data.rgba.pixel_step;
     r += rb->data.rgba.pixel_step;
     g += rb->data.rgba.pixel_step;
@@ -955,6 +979,9 @@ int readGIF(char *path, rasterBufferObj *rb) {
           msSetError(MS_MISCERR,
                      "corrupted gif image, img size exceeds screen size",
                      "readGIF()");
+          free(rb->data.rgba.pixels);
+          rb->data.rgba.pixels = NULL;
+          closeGIF(image);
           return MS_FAILURE;
         }
 
@@ -983,7 +1010,8 @@ int readGIF(char *path, rasterBufferObj *rb) {
 
               for (unsigned j = 0; j < width; j++) {
                 GifPixelType pix = line[j];
-                if (transIdx == -1 || pix != transIdx) {
+                if ((transIdx == -1 || pix != transIdx) &&
+                    pix < cmap->ColorCount) {
                   *a = 255;
                   *r = cmap->Colors[pix].Red;
                   *g = cmap->Colors[pix].Green;
@@ -1018,7 +1046,8 @@ int readGIF(char *path, rasterBufferObj *rb) {
             }
             for (unsigned j = 0; j < width; j++) {
               GifPixelType pix = line[j];
-              if (transIdx == -1 || pix != transIdx) {
+              if ((transIdx == -1 || pix != transIdx) &&
+                  pix < cmap->ColorCount) {
                 *a = 255;
                 *r = cmap->Colors[pix].Red;
                 *g = cmap->Colors[pix].Green;
@@ -1102,25 +1131,7 @@ int readGIF(char *path, rasterBufferObj *rb) {
 
   } while (recordType != TERMINATE_RECORD_TYPE);
 
-#if defined GIFLIB_MAJOR && GIFLIB_MINOR &&                                    \
-    ((GIFLIB_MAJOR == 5 && GIFLIB_MINOR >= 1) || (GIFLIB_MAJOR > 5))
-  if (DGifCloseFile(image, &errcode) == GIF_ERROR) {
-    msSetError(MS_MISCERR, "failed to close gif after loading: %s", "readGIF()",
-               gif_error_msg(errcode));
-    return MS_FAILURE;
-  }
-#else
-  if (DGifCloseFile(image) == GIF_ERROR) {
-#if defined GIFLIB_MAJOR && GIFLIB_MAJOR >= 5
-    msSetError(MS_MISCERR, "failed to close gif after loading: %s", "readGIF()",
-               gif_error_msg(image->Error));
-#else
-    msSetError(MS_MISCERR, "failed to close gif after loading: %s", "readGIF()",
-               gif_error_msg());
-#endif
-    return MS_FAILURE;
-  }
-#endif
+  closeGIF(image);
 
   return MS_SUCCESS;
 }
