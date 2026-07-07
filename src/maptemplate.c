@@ -4106,7 +4106,13 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream,
     if (strstr(outstr, "'[mapserv_onlineresource]'")) {
       // Fix
       // https://github.com/MapServer/MapServer/security/advisories/GHSA-xqj6-vjqr-33vv
+      // The value is inside a single-quoted JS string in a <script> element.
+      // Escaping the quote is not enough: a literal "</script>" in the value
+      // still closes the element. Encode '<' and '>' as JS unicode escapes so
+      // they cannot break out of the script block.
       char *pszEscaped = msEscapeJSonLikeString(ol, '\'');
+      pszEscaped = msReplaceSubstring(pszEscaped, "<", "\\u003c");
+      pszEscaped = msReplaceSubstring(pszEscaped, ">", "\\u003e");
       const size_t nLen = 1 + strlen(pszEscaped) + 1 + 1;
       char *pszEscapedWithSingleQuotes = (char *)msSmallMalloc(nLen);
       snprintf(pszEscapedWithSingleQuotes, nLen, "'%s'", pszEscaped);
