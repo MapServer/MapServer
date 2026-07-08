@@ -2889,6 +2889,7 @@ MS_DLL_EXPORT void msStringFirstCap(char *string);
 MS_DLL_EXPORT int msEncodeChar(const char);
 MS_DLL_EXPORT char *msEncodeUrlExcept(const char *, const char);
 MS_DLL_EXPORT char *msEncodeUrl(const char *);
+char *msDefaultEscapePropertyName(const char *pszString);
 MS_DLL_EXPORT char *msEscapeJSonString(const char *pszString);
 MS_DLL_EXPORT char *msEscapeJSonLikeString(const char *pszString, char chQuote);
 MS_DLL_EXPORT char *msEncodeHTMLEntities(const char *string);
