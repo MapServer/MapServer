@@ -17,6 +17,8 @@
 
 #include "third-party/include_nlohmann_json.hpp"
 
+#include <exception>
+
 using json = nlohmann::json;
 
 static std::unique_ptr<cql2_expr_node> ParseOperator(const json &j,
@@ -295,8 +297,23 @@ static std::unique_ptr<cql2_expr_node> ParseOperator(const json &j,
 
 std::unique_ptr<cql2_expr_node> CQL2JSONParse(const char *pszInput,
                                               std::string &errorMsg) {
+  struct ParsingException : public std::exception {
+    std::string msg{};
+    ParsingException(const std::string &s) : msg(s) {}
+
+    const char *what() const noexcept override { return msg.c_str(); }
+  };
+
   try {
-    return ParseOperator(json::parse(pszInput), errorMsg);
+    return ParseOperator(
+        json::parse(pszInput,
+                    [](int depth, json::parse_event_t, json &) {
+                      if (depth >= 256)
+                        throw ParsingException(
+                            "Too deep nesting in JSON content");
+                      return true;
+                    }),
+        errorMsg);
   } catch (const std::exception &e) {
     errorMsg = "Exception while parsing CQL2 JSON: ";
     errorMsg += e.what();
