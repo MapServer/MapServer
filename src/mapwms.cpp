@@ -1158,9 +1158,12 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
     non mandatory
    */
   for (int i = 0; i < numentries; i++) {
+    if (strcasecmp(names[i], "REQUEST") == 0) {
+      request = values[i];
+    }
     /* check if SLD is passed.  If yes, check for OGR support */
-    if (strcasecmp(names[i], "SLD") == 0 ||
-        strcasecmp(names[i], "SLD_BODY") == 0) {
+    else if (strcasecmp(names[i], "SLD") == 0 ||
+             strcasecmp(names[i], "SLD_BODY") == 0) {
       sldenabled =
           msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
 
@@ -1179,15 +1182,15 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion, char **names,
     }
   }
 
+  const char *layerKey = request && strcasecmp(request, "GetLegendGraphic") == 0
+                             ? "LAYER"
+                             : "LAYERS";
+
   std::vector<std::string> wmslayers;
   for (int i = 0; i < numentries; i++) {
     /* getMap parameters */
 
-    if (strcasecmp(names[i], "REQUEST") == 0) {
-      request = values[i];
-    }
-
-    if (strcasecmp(names[i], "LAYERS") == 0) {
+    if (strcasecmp(names[i], layerKey) == 0) {
       std::vector<int> layerOrder(map->numlayers);
 
       wmslayers = msStringSplit(values[i], ',');
@@ -5884,16 +5887,6 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request,
     }
     if (found) {
       isContentDependentLegend = true;
-      /* getLegendGraphic uses LAYER= , we need to create a LAYERS= value that
-       * is identical we'll suppose that the client is conformat and hasn't
-       * included a LAYERS= parameter in its request */
-      for (int i = 0; i < req->NumParams; i++) {
-        if (strcasecmp(req->ParamNames[i], "LAYER") == 0) {
-          req->ParamNames[req->NumParams] = msStrdup("LAYERS");
-          req->ParamValues[req->NumParams] = msStrdup(req->ParamValues[i]);
-          req->NumParams++;
-        }
-      }
     } else {
       return msWMSLegendGraphic(map, nVersion, req->ParamNames,
                                 req->ParamValues, req->NumParams,
