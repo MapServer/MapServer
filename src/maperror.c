@@ -659,6 +659,9 @@ char *msGetVersion() {
   strcat(version, " SUPPORTS=PROJ");
   strcat(version, " SUPPORTS=AGG");
   strcat(version, " SUPPORTS=FREETYPE");
+#ifdef USE_SKIA
+  strcat(version, " SUPPORTS=SKIA");
+#endif
 #ifdef USE_CAIRO
   strcat(version, " SUPPORTS=CAIRO");
 #endif

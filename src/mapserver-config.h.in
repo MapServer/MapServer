@@ -16,6 +16,7 @@
 #cmakedefine USE_WMS_LYR 1
 #cmakedefine USE_CURL 1
 #cmakedefine USE_CAIRO 1
+#cmakedefine USE_SKIA 1
 #cmakedefine USE_GEOS 1
 #cmakedefine USE_GIF 1
 #cmakedefine USE_JPEG 1
