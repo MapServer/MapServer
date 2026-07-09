@@ -1,0 +1,31 @@
+#
+# Test PostgreSQL join
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WFS GEOS POSTGIS
+#
+#
+# RUN_PARMS: pg_join.html [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=indexquery&qlayer=province&shapeindex=1&tileindex=0" > [RESULT_DEMIME]
+
+MAP
+  NAME "pgjoin"
+  LAYER
+    NAME province
+    INCLUDE "../wxs/postgis.include"
+    DATA "the_geom from (select gid, the_geom from province order by gid) as foo using srid=3978 using unique gid"
+    TYPE POLYGON
+    STATUS ON
+    PROJECTION
+      "init=epsg:3978"
+    END
+    TEMPLATE "pg_join_template.html"
+    JOIN
+      NAME "join"
+      CONNECTIONTYPE POSTGRESQL
+      CONNECTION "dbname=msautotest user=postgres"
+      TABLE "province"
+      FROM "gid"
+      TO "gid"
+      TYPE ONE-TO-ONE
+    END
+  END
+END
