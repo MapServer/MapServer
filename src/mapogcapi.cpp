@@ -1828,6 +1828,18 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
       return MS_SUCCESS;
     }
   } else { // bbox query
+    const char *offsetStr = getRequestParameter(request, "offset");
+    if (offsetStr) {
+      if (msStringToInt(offsetStr, &offset, 10) != MS_SUCCESS) {
+        msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Bad value for offset.");
+        return MS_SUCCESS;
+      }
+      if (offset < 0) {
+        msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Offset out of range.");
+        return MS_SUCCESS;
+      }
+    }
+
     map->query.type = MS_QUERY_BY_RECT;
     map->query.mode = MS_QUERY_MULTIPLE;
     map->query.layer = iLayer;
@@ -1862,14 +1874,8 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
 
       msOWSSetShapeCache(map, "AO");
 
-      const char *offsetStr = getRequestParameter(request, "offset");
       if (offsetStr) {
-        if (msStringToInt(offsetStr, &offset, 10) != MS_SUCCESS) {
-          msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Bad value for offset.");
-          return MS_SUCCESS;
-        }
-
-        if (offset < 0 || offset >= numberMatched) {
+        if (offset >= numberMatched) {
           msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Offset out of range.");
           return MS_SUCCESS;
         }
