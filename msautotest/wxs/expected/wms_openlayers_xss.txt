@@ -26,7 +26,7 @@
         const mslayer = new ol.layer.Image({
             source: new ol.source.Image({
                 loader: ol.source.wms.createLoader({
-                    url: 'http://\u003c/script\u003e\u003cscript\u003ealert(document.domain)\u003c/script\u003e/mapserv?map=',
+                    url: 'http://\u003c/script\u003e\u003cscript\u003ealert(document.domain)\u003c/script\u003e/mapserv?map=wms_openlayers_xss.map&',
                     params: {
                         LAYERS: 'road',
                         VERSION: '1.1.0',
