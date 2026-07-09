@@ -451,6 +451,15 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
           if (EQUAL((char *)tmpNode->name, "BoundingBox")) {
             xmlNodePtr cornerNode = NULL;
             params->crs = (char *)xmlGetProp(tmpNode, BAD_CAST "crs");
+            if (!params->crs) {
+              msSetError(MS_WCSERR, "Required parameter CRS was not supplied.",
+                         "msWCSGetCoverage()");
+              msWCSException(map, "MissingParameterValue", "crs",
+                             params->version);
+              xmlFreeDoc(doc);
+              xmlCleanupParser();
+              return MS_DONE;
+            }
             if (strncasecmp(params->crs, "urn:ogc:def:crs:", 16) == 0 &&
                 strncasecmp(params->crs + strlen(params->crs) - 8, "imageCRS",
                             8) == 0)
@@ -464,8 +473,13 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
                   msSetError(MS_WCSERR,
                              "Wrong number of arguments for LowerCorner",
                              "msWCSParseRequest()");
-                  return msWCSException(map, "InvalidParameterValue",
-                                        "LowerCorner", params->version);
+                  msWCSException(map, "InvalidParameterValue", "LowerCorner",
+                                 params->version);
+                  msFreeCharArray(tokens, n);
+                  xmlFree(value);
+                  xmlFreeDoc(doc);
+                  xmlCleanupParser();
+                  return MS_DONE;
                 }
                 params->bbox.minx = atof(tokens[0]);
                 params->bbox.miny = atof(tokens[1]);
@@ -479,8 +493,13 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
                   msSetError(MS_WCSERR,
                              "Wrong number of arguments for UpperCorner",
                              "msWCSParseRequest()");
-                  return msWCSException(map, "InvalidParameterValue",
-                                        "UpperCorner", params->version);
+                  msWCSException(map, "InvalidParameterValue", "UpperCorner",
+                                 params->version);
+                  msFreeCharArray(tokens, n);
+                  xmlFree(value);
+                  xmlFreeDoc(doc);
+                  xmlCleanupParser();
+                  return MS_DONE;
                 }
                 params->bbox.maxx = atof(tokens[0]);
                 params->bbox.maxy = atof(tokens[1]);
@@ -510,8 +529,13 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
                   msSetError(MS_WCSERR,
                              "Wrong number of arguments for GridOrigin",
                              "msWCSParseRequest()");
-                  return msWCSException(map, "InvalidParameterValue",
-                                        "GridOffsets", params->version);
+                  msWCSException(map, "InvalidParameterValue", "GridOffsets",
+                                 params->version);
+                  msFreeCharArray(tokens, n);
+                  xmlFree(value);
+                  xmlFreeDoc(doc);
+                  xmlCleanupParser();
+                  return MS_DONE;
                 }
                 params->originx = atof(tokens[0]);
                 params->originy = atof(tokens[1]);
@@ -524,8 +548,13 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
                   msSetError(MS_WCSERR,
                              "Wrong number of arguments for GridOffsets",
                              "msWCSParseRequest()");
-                  return msWCSException(map, "InvalidParameterValue",
-                                        "GridOffsets", params->version);
+                  msWCSException(map, "InvalidParameterValue", "GridOffsets",
+                                 params->version);
+                  msFreeCharArray(tokens, n);
+                  xmlFree(value);
+                  xmlFreeDoc(doc);
+                  xmlCleanupParser();
+                  return MS_DONE;
                 }
                 /* take absolute values to convert to positive RESX/RESY style
                 WCS 1.0 behavior.  *but* this does break some possibilities! */
@@ -619,8 +648,10 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
         if (tokens == NULL || n < 5) {
           msSetError(MS_WCSERR, "Wrong number of arguments for BOUNDINGBOX.",
                      "msWCSParseRequest()");
-          return msWCSException(map, "InvalidParameterValue", "boundingbox",
-                                params->version);
+          msWCSException(map, "InvalidParameterValue", "boundingbox",
+                         params->version);
+          msFreeCharArray(tokens, n);
+          return MS_DONE;
         }
 
         /* NOTE: WCS 1.1 boundingbox is center of pixel oriented, not edge
@@ -644,8 +675,10 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
         if (tokens == NULL || n < 2) {
           msSetError(MS_WCSERR, "Wrong number of arguments for GridOffsets",
                      "msWCSParseRequest()");
-          return msWCSException(map, "InvalidParameterValue", "GridOffsets",
-                                params->version);
+          msWCSException(map, "InvalidParameterValue", "GridOffsets",
+                         params->version);
+          msFreeCharArray(tokens, n);
+          return MS_DONE;
         }
         /* take absolute values to convert to positive RESX/RESY style
            WCS 1.0 behavior.  *but* this does break some possibilities! */
@@ -657,8 +690,10 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
         if (tokens == NULL || n < 2) {
           msSetError(MS_WCSERR, "Wrong number of arguments for GridOrigin",
                      "msWCSParseRequest()");
-          return msWCSException(map, "InvalidParameterValue", "GridOffsets",
-                                params->version);
+          msWCSException(map, "InvalidParameterValue", "GridOffsets",
+                         params->version);
+          msFreeCharArray(tokens, n);
+          return MS_DONE;
         }
         params->originx = atof(tokens[0]);
         params->originy = atof(tokens[1]);
@@ -3177,6 +3212,11 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request,
       strcmp(ows_request->version, "1.1.2") == 0) {
     auto paramsTmp = msWCSCreateParams();
     status = msWCSParseRequest(request, paramsTmp, map);
+    if (status == MS_DONE) {
+      msWCSFreeParams(paramsTmp);
+      free(paramsTmp);
+      return MS_FAILURE;
+    }
     if (status == MS_FAILURE) {
       msWCSFreeParams(paramsTmp);
       free(paramsTmp);
