@@ -54,6 +54,9 @@ typedef struct {
 /* -------------------------------------------------------------------- */
 /*      prototypes.                                                     */
 /* -------------------------------------------------------------------- */
+
+bool msCheckDepthLessThan(const CPLXMLNode *psNode, int nMaxDepth);
+
 MS_DLL_EXPORT int FLTIsNumeric(const char *pszValue);
 MS_DLL_EXPORT int FLTApplyExpressionToLayer(layerObj *lp,
                                             const char *pszExpression);

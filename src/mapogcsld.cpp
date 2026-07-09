@@ -644,6 +644,11 @@ layerObj *msSLDParseSLD(mapObj *map, const char *psSLDXML, int *pnLayers) {
     msSetError(MS_WMSERR, "Invalid SLD document : %s", "", psSLDXML);
     return NULL;
   }
+  if (!msCheckDepthLessThan(psRoot, 256)) {
+    msSetError(MS_WMSERR, "Invalid SLD document : too deep nesting", "");
+    CPLDestroyXMLNode(psRoot);
+    return NULL;
+  }
 
   /* strip namespaces ogc and sld and gml */
   CPLStripXMLNamespace(psRoot, "ogc", 1);

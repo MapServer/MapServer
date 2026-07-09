@@ -806,6 +806,26 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
   return status;
 }
 
+static bool msCheckDepthLessThanInternal(const CPLXMLNode *psNode,
+                                         int nMaxDepth) {
+  if (nMaxDepth <= 0)
+    return false;
+  for (const CPLXMLNode *psIter = psNode->psChild; psIter;
+       psIter = psIter->psNext) {
+    if (!msCheckDepthLessThanInternal(psIter, nMaxDepth - 1))
+      return false;
+  }
+  return true;
+}
+
+bool msCheckDepthLessThan(const CPLXMLNode *psNode, int nMaxDepth) {
+  for (const CPLXMLNode *psIter = psNode; psIter; psIter = psIter->psNext) {
+    if (!msCheckDepthLessThanInternal(psIter, nMaxDepth))
+      return false;
+  }
+  return true;
+}
+
 /************************************************************************/
 /*            FilterNode *FLTPaserFilterEncoding(char *szXMLString)     */
 /*                                                                      */
@@ -828,6 +848,11 @@ FilterEncodingNode *FLTParseFilterEncoding(const char *szXMLString) {
 
   if (psRoot == NULL)
     return NULL;
+  if (!msCheckDepthLessThan(psRoot, 256)) {
+    msDebug("FLTParseFilterEncoding(): %s", "Too deep nesting in filter");
+    CPLDestroyXMLNode(psRoot);
+    return NULL;
+  }
 
   /* strip namespaces. We srtip all name spaces (#1350)*/
   CPLStripXMLNamespace(psRoot, NULL, 1);
