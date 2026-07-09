@@ -32,7 +32,7 @@ More generally, consult [development practices](https://mapserver.org/developmen
 ## Tasklist
 
  - [ ] Make sure code is correctly formatted (cf [pre-commit configuration](https://mapserver.org/development/dev_practices.html#commit-hooks))
- - [ ] Add test case(s) in /msautotest (follow steps in [Regression Testing](https://mapserver.org/development/tests/autotest.html))
+ - [ ] Add test case(s) in `/msautotest` (follow steps in [Regression Testing](https://mapserver.org/development/tests/autotest.html))
  - [ ] Add documentation
  - [ ] Review
  - [ ] Adjust for comments
