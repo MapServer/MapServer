@@ -626,10 +626,12 @@ enum MS_CONNECTION_TYPE {
   MS_KERNELDENSITY,
   MS_IDW,
   MS_FLATGEOBUF,
-  MS_RASTER_LABEL
+  MS_RASTER_LABEL,
+  MS_KRIGING
 };
 #define IS_THIRDPARTY_LAYER_CONNECTIONTYPE(type)                               \
-  ((type) == MS_UNION || (type) == MS_KERNELDENSITY || (type) == MS_IDW)
+  ((type) == MS_UNION || (type) == MS_KERNELDENSITY || (type) == MS_IDW ||     \
+   (type) == MS_KRIGING)
 enum MS_JOIN_CONNECTION_TYPE {
   MS_DB_XBASE,
   MS_DB_CSV,
@@ -1079,12 +1081,19 @@ typedef struct {
 /************************************************************************/
 
 #ifndef SWIG
-/* Used by idw.c and kerneldensity.c */
+/* Used by idw.c, kerneldensity.c and kriging.c */
 typedef struct {
   float normalization_scale;
   int expand_searchrect;
   int radius;
   float power;
+  /* kriging / NNGP (kriging.c) */
+  int kriging_model;     /* KR_EXPONENTIAL | KR_GAUSSIAN | KR_SPHERICAL */
+  int kriging_type;      /* KR_ORDINARY | KR_SIMPLE */
+  int kriging_neighbors; /* m nearest samples used per pixel */
+  double kriging_range;  /* practical range in pixels; <=0 => auto */
+  double kriging_sill;   /* partial sill (variance); <=0 => auto */
+  double kriging_nugget; /* nugget variance; 0 => exact interpolation */
 } interpolationProcessingParams;
 #endif
 

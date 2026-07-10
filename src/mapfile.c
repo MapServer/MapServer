@@ -4570,10 +4570,10 @@ int loadLayer(layerObj *layer, mapObj *map) {
         return (-1); /* getString() cleans up previously allocated string */
       break;
     case (CONNECTIONTYPE):
-      if ((type = getSymbol(14, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL,
+      if ((type = getSymbol(15, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL,
                             MS_WFS, MS_GRATICULE, MS_PLUGIN, MS_UNION,
                             MS_UVRASTER, MS_CONTOUR, MS_KERNELDENSITY, MS_IDW,
-                            MS_FLATGEOBUF, MS_RASTER_LABEL)) == -1)
+                            MS_FLATGEOBUF, MS_RASTER_LABEL, MS_KRIGING)) == -1)
         return (-1);
       layer->connectiontype = type;
       break;
@@ -5025,12 +5025,12 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer) {
   writeCluster(stream, indent, &(layer->cluster));
   writeLayerCompositer(stream, indent, layer->compositer);
   writeString(stream, indent, "CONNECTION", NULL, layer->connection);
-  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 12,
+  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 13,
                MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS",
                MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_PLUGIN,
                "PLUGIN", MS_UNION, "UNION", MS_UVRASTER, "UVRASTER", MS_CONTOUR,
                "CONTOUR", MS_KERNELDENSITY, "KERNELDENSITY", MS_IDW, "IDW",
-               MS_FLATGEOBUF, "FLATGEOBUF");
+               MS_FLATGEOBUF, "FLATGEOBUF", MS_KRIGING, "KRIGING");
   writeHashTable(stream, indent, "CONNECTIONOPTIONS",
                  &(layer->connectionoptions));
   writeString(stream, indent, "DATA", NULL, layer->data);

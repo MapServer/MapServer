@@ -712,7 +712,8 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
 
   if (!layer->data && !layer->tileindex &&
       !(layer->connectiontype == MS_KERNELDENSITY ||
-        layer->connectiontype == MS_IDW)) {
+        layer->connectiontype == MS_IDW ||
+        layer->connectiontype == MS_KRIGING)) {
     if (layer->debug > 0 || map->debug > 0)
       msDebug("msRasterQueryByRect(%s): layer data and tileindex NULL ... "
               "doing nothing.",
@@ -762,7 +763,8 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
     msGDALInitialize();
 
     if (layer->connectiontype == MS_KERNELDENSITY ||
-        layer->connectiontype == MS_IDW) {
+        layer->connectiontype == MS_IDW ||
+        layer->connectiontype == MS_KRIGING) {
       memset(&interpolation_image, 0, sizeof(interpolation_image));
       interpolation_image.width = map->width;
       interpolation_image.height = map->height;
