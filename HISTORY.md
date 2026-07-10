@@ -13,6 +13,21 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.6.5 release (2026-07-10)
+--------------------------
+
+- security: OGC API Features: validate offset before rendering to fix reflected XSS (#7573)
+
+- security: WCS POST: NULL-Dereference Denial of Service When `BoundingBox` Omits `crs` (#7556)
+
+- security: Reflected XSS in WMS OpenLayers output via the `X-Forwarded-Host` header (#7544)
+
+- security: Heap buffer overflow in WMS GetLegendGraphic via repeated LAYER parameters (#7555)
+
+- security: msMySQLJoinNext(): prevent SQL injection (#7547)
+
+- security: msPOSTGRESQLJoinNext(): avoid potential SQL injection (#7546)
+
 8.6.4 release (2026-06-01)
 --------------------------
 
