@@ -1388,8 +1388,6 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
       map->query.only_cache_result_count = MS_FALSE;
       map->query.maxfeatures = limit;
 
-      msOWSSetShapeCache(map, "AO");
-
       if (offsetStr) {
         if (offset >= numberMatched) {
           msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Offset out of range.");
