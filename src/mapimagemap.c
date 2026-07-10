@@ -125,7 +125,7 @@ static const char *makeFmtSafe(const char *fmt, int MAX) {
   char *result = msSmallMalloc(strlen(fmt) + 1 + 3 * MAX), *cp;
   int numstr = 0, saw_percent = 0;
 
-  strcpy(result, fmt);
+  memcpy(result, fmt, strlen(fmt) + 1);
   for (cp = result; *cp; cp++) {
     if (saw_percent) {
       if (*cp == '%') {
@@ -142,7 +142,7 @@ static const char *makeFmtSafe(const char *fmt, int MAX) {
   }
   /* fixup format strings without enough %s in them */
   while (numstr < MAX) {
-    strcpy(cp, "%.s"); /* print using zero-length precision */
+    memcpy(cp, "%.s", 4); /* print using zero-length precision */
     cp += 3;
     numstr++;
   }
@@ -158,18 +158,7 @@ static void im_iprintf(pString *ps, const char *fmt, ...) {
   do {
     remaining = *(ps->alloc_size) - ps->string_len;
     va_start(ap, fmt);
-#if defined(HAVE_VSNPRINTF)
     n = vsnprintf((*(ps->string)) + ps->string_len, remaining, fmt, ap);
-#else
-    /* If vsnprintf() is not available then require a minimum
-     * of 512 bytes of free space to prevent a buffer overflow
-     * This is not fully bulletproof but should help, see bug 1613
-     */
-    if (remaining < 512)
-      n = -1;
-    else
-      n = vsprintf((*(ps->string)) + ps->string_len, fmt, ap);
-#endif
     va_end(ap);
     /* if that worked, we're done! */
     if (-1 < n && n < remaining) {
@@ -712,7 +701,7 @@ int msSaveImageIM(imageObj *img, const char *filename, outputFormatObj *format)
         iIndice += nSize - 1;
       }
       if (iIndice < size) {
-        sprintf(workbuffer, "%s", img->img.imagemap + iIndice);
+        snprintf(workbuffer, sizeof(workbuffer), "%s", img->img.imagemap + iIndice);
         msIO_fprintf(stream, "%s", workbuffer);
       }
     } else
