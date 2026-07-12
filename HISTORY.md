@@ -13,6 +13,11 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.6.6 development
+-----------------
+
+- security: shape smoothing: reject SMOOTHSIA() on point/degenerate shapes to prevent denial of service (GHSA-33h3-f4q2-pq5q)
+
 8.6.5 release (2026-07-10)
 --------------------------
 
