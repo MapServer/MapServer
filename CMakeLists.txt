@@ -72,6 +72,13 @@ else()
 endif()
 set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH "Installation directory for CMake files")
 
+# Keep a relative copy for install(EXPORT ...)
+if(IS_ABSOLUTE "${INSTALL_CMAKE_DIR}")
+  file(RELATIVE_PATH INSTALL_CMAKE_DIR_REL "${CMAKE_INSTALL_PREFIX}" "${INSTALL_CMAKE_DIR}")
+else()
+  set(INSTALL_CMAKE_DIR_REL "${INSTALL_CMAKE_DIR}")
+endif()
+
 # Make relative paths absolute (needed later on)
 foreach(p LIB BIN INCLUDE CMAKE)
   set(var INSTALL_${p}_DIR)
@@ -1144,12 +1151,12 @@ if(BUILD_DYNAMIC)
    # Install the mapserver-config.cmake and mapserver-config-version.cmake
    install(FILES "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/mapserver-config.cmake"
                  "${PROJECT_BINARY_DIR}/mapserver-config-version.cmake"
-           DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
+           DESTINATION "${INSTALL_CMAKE_DIR_REL}" COMPONENT dev
    )
 
    # Install the export set for use with the install-tree
    install(EXPORT mapserverTargets
-           DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
+           DESTINATION "${INSTALL_CMAKE_DIR_REL}" COMPONENT dev
    )
 endif(BUILD_DYNAMIC)
 
