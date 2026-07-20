@@ -4,8 +4,8 @@ set -eu
 export CC="ccache gcc"
 export CXX="ccache g++"
 
-# Turn CMake warnings as errors
-EXTRA_CMAKEFLAGS="-Werror=dev"
+# Turn CMake warnings as errors and ignore absolute paths in install() commands
+EXTRA_CMAKEFLAGS="-Werror=dev -Wno-error=install-absolute-destination"
 
 if [ "${WITH_ASAN:-}" = "true" ]; then
     # -DNDEBUG to avoid issues with cairo cleanup
