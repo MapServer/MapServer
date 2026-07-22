@@ -1,0 +1,82 @@
+#
+# Test GetStyles with more complex styling
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+# RUN_PARMS: wms_getstyles_point_outline.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=point_outline" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_point_x.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=point_x" > [RESULT_DEMIME]
+
+MAP
+    NAME TEST_SLD_COMPLEX
+    SIZE 300 300
+
+    PROJECTION
+        "epsg:4326"
+    END
+
+    WEB
+      METADATA
+        "wms_onlineresource"   "http://localhost/path/to/wms_simple?"
+        "ows_enable_request" "*"
+      END
+    END
+
+    SYMBOL
+        NAME "circle"
+        TYPE ELLIPSE
+        FILLED TRUE
+        POINTS
+            1 1
+        END
+    END
+
+    SYMBOL
+        NAME "x" # must be named "x" to match the SLD WellKnownName, and lower-case
+        TYPE VECTOR
+        FILLED FALSE
+        POINTS
+            0 0
+            1 1
+            -99 -99
+            0 1
+            1 0
+        END
+    END
+
+    LAYER
+        NAME "point_outline"
+        TYPE POINT
+        FEATURE
+            POINTS
+                0 0
+            END
+        END
+        CLASS
+            STYLE
+                SYMBOL "circle"
+                COLOR "#156082"
+                OUTLINECOLOR 255 0 0
+                SIZE 16
+            END
+        END
+    END
+
+    LAYER
+        NAME "point_x"
+        TYPE POINT
+        FEATURE
+            POINTS
+                0 0
+            END
+        END
+        CLASS
+            STYLE
+                SYMBOL "x"
+                COLOR 0 0 0
+                WIDTH 2
+                SIZE 10
+            END
+        END
+    END
+
+END

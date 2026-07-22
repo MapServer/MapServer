@@ -3579,14 +3579,28 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                      pszSymbolName, sNameSpace);
             msStringBufferAppend(sldString, szTmp);
 
+            // the WellKnownName cross and x have no interior to fill, so
+            // for these we use the outline instead
+            int isStrokeOnlyMark = (strcasecmp(pszSymbolName, "x") == 0 ||
+                                    strcasecmp(pszSymbolName, "cross") == 0);
+
             if (psStyle->color.red != -1 && psStyle->color.green != -1 &&
                 psStyle->color.blue != -1) {
-              sTmpFillColor.red = psStyle->color.red;
-              sTmpFillColor.green = psStyle->color.green;
-              sTmpFillColor.blue = psStyle->color.blue;
-              sTmpFillColor.alpha = psStyle->color.alpha;
-              hasFillColor = 1;
+              if (isStrokeOnlyMark) {
+                sTmpStrokeColor.red = psStyle->color.red;
+                sTmpStrokeColor.green = psStyle->color.green;
+                sTmpStrokeColor.blue = psStyle->color.blue;
+                sTmpStrokeColor.alpha = psStyle->color.alpha;
+                hasStrokeColor = 1;
+              } else {
+                sTmpFillColor.red = psStyle->color.red;
+                sTmpFillColor.green = psStyle->color.green;
+                sTmpFillColor.blue = psStyle->color.blue;
+                sTmpFillColor.alpha = psStyle->color.alpha;
+                hasFillColor = 1;
+              }
             }
+
             if (psStyle->outlinecolor.red != -1 &&
                 psStyle->outlinecolor.green != -1 &&
                 psStyle->outlinecolor.blue != -1) {
@@ -3595,19 +3609,21 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
               sTmpStrokeColor.blue = psStyle->outlinecolor.blue;
               sTmpStrokeColor.alpha = psStyle->outlinecolor.alpha;
               hasStrokeColor = 1;
-              // Make defaults implicit
-              if (sTmpStrokeColor.red == 0 && sTmpStrokeColor.green == 0 &&
-                  sTmpStrokeColor.blue == 0 && sTmpStrokeColor.alpha == 255 &&
-                  psStyle->width == 1) {
-                hasStrokeColor = 0;
-              }
             }
             if (!hasFillColor && !hasStrokeColor) {
-              sTmpFillColor.red = 128;
-              sTmpFillColor.green = 128;
-              sTmpFillColor.blue = 128;
-              sTmpFillColor.alpha = 255;
-              hasFillColor = 1;
+              if (isStrokeOnlyMark) {
+                sTmpStrokeColor.red = 128;
+                sTmpStrokeColor.green = 128;
+                sTmpStrokeColor.blue = 128;
+                sTmpStrokeColor.alpha = 255;
+                hasStrokeColor = 1;
+              } else {
+                sTmpFillColor.red = 128;
+                sTmpFillColor.green = 128;
+                sTmpFillColor.blue = 128;
+                sTmpFillColor.alpha = 255;
+                hasFillColor = 1;
+              }
             }
 
             if (hasFillColor) {
