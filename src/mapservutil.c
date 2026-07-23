@@ -357,7 +357,7 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config) {
 
   // apply any SLD files to layers - this has to be done after any
   // runtime substitutions have been applied to the mapfile
-  msApplyStyleItemToLayer(map);
+  msApplyStyleItemsToLayers(map);
 
   return map;
 }
