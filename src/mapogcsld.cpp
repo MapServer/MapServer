@@ -3726,9 +3726,9 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
         if (fabs(dfAngleMod - 90) < 22.5) {
           pszHatchShape = "shape://vertline";
         } else if (fabs(dfAngleMod - 135) < 22.5) {
-          pszHatchShape = "shape://slash";
-        } else if (fabs(dfAngleMod - 45) < 22.5) {
           pszHatchShape = "shape://backslash";
+        } else if (fabs(dfAngleMod - 45) < 22.5) {
+          pszHatchShape = "shape://slash";
         } else {
           pszHatchShape = "shape://horline";
         }
