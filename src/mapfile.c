@@ -6956,7 +6956,7 @@ static bool msGetCWD(char *szBuffer, size_t nBufferSize,
 /*
  * Apply any SLD styles referenced in a LAYER's STYLEITEM
  */
-static void msApplyStyleItemToLayer(mapObj *map) {
+void msApplyStyleItemToLayer(mapObj *map) {
 
   // applying SLD can create cloned layers so store the original layer count
   int layerCount = map->numlayers;
