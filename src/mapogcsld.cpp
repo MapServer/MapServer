@@ -3712,6 +3712,76 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
           }
         } else
           bGenerateDefaultSymbol = 1;
+      } else if (psSymbol->type == MS_SYMBOL_HATCH) {
+        /* map hatch symbols to one of the SLD "shape://" well-known names.
+           The angle is snapped to the nearest horizontal, vertical, slash or
+           backslash hatch, so no <Rotation> is required. We can't use rotation
+           as it produces gaps between GraphicFill tiles in some clients such as
+           OpenLayers */
+        const char *pszHatchShape;
+        double dfAngleMod = fmod(psStyle->angle, 180);
+        if (dfAngleMod < 0)
+          dfAngleMod += 180;
+
+        if (fabs(dfAngleMod - 90) < 22.5) {
+          pszHatchShape = "shape://vertline";
+        } else if (fabs(dfAngleMod - 135) < 22.5) {
+          pszHatchShape = "shape://slash";
+        } else if (fabs(dfAngleMod - 45) < 22.5) {
+          pszHatchShape = "shape://backslash";
+        } else {
+          pszHatchShape = "shape://horline";
+        }
+
+        snprintf(szTmp, sizeof(szTmp), "<%sGraphic>\n", sNameSpace);
+        msStringBufferAppend(sldString, szTmp);
+
+        snprintf(szTmp, sizeof(szTmp), "<%sMark>\n", sNameSpace);
+        msStringBufferAppend(sldString, szTmp);
+
+        snprintf(szTmp, sizeof(szTmp),
+                 "<%sWellKnownName>%s</%sWellKnownName>\n", sNameSpace,
+                 pszHatchShape, sNameSpace);
+        msStringBufferAppend(sldString, szTmp);
+
+        if (psStyle->color.red != -1 && psStyle->color.green != -1 &&
+            psStyle->color.blue != -1) {
+          snprintf(szTmp, sizeof(szTmp), "<%sStroke>\n", sNameSpace);
+          msStringBufferAppend(sldString, szTmp);
+          snprintf(szTmp, sizeof(szTmp),
+                   "<%s name=\"stroke\">#%02x%02x%02x</%s>\n", sCssParam,
+                   psStyle->color.red, psStyle->color.green,
+                   psStyle->color.blue, sCssParam);
+          msStringBufferAppend(sldString, szTmp);
+          if (psStyle->width > 0) {
+            snprintf(szTmp, sizeof(szTmp),
+                     "<%s name=\"stroke-width\">%g</%s>\n", sCssParam,
+                     psStyle->width, sCssParam);
+            msStringBufferAppend(sldString, szTmp);
+          }
+          if (psStyle->color.alpha != 255 && psStyle->color.alpha != -1) {
+            snprintf(szTmp, sizeof(szTmp),
+                     "<%s name=\"stroke-opacity\">%.2f</%s>\n", sCssParam,
+                     (float)psStyle->color.alpha / 255.0, sCssParam);
+            msStringBufferAppend(sldString, szTmp);
+          }
+          snprintf(szTmp, sizeof(szTmp), "</%sStroke>\n", sNameSpace);
+          msStringBufferAppend(sldString, szTmp);
+        }
+
+        snprintf(szTmp, sizeof(szTmp), "</%sMark>\n", sNameSpace);
+        msStringBufferAppend(sldString, szTmp);
+
+        // size does not space hatch lines, but spaces tiles in OpenLayers
+        // causing gaps, so do not add it to the output
+        // if (psStyle->size > 0) {
+        //  snprintf(szTmp, sizeof(szTmp), "<%sSize>%g</%sSize>\n", sNameSpace,
+        //           psStyle->size, sNameSpace);
+        //  msStringBufferAppend(sldString, szTmp);
+        //}
+
+        snprintf(szTmp, sizeof(szTmp), "</%sGraphic>\n", sNameSpace);
+        msStringBufferAppend(sldString, szTmp);
       } else if (psSymbol->type == MS_SYMBOL_PIXMAP ||
                  psSymbol->type == MS_SYMBOL_SVG) {
         if (psSymbol->name) {
@@ -4044,19 +4114,19 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer,
       pszSLD = msStringConcatenate(pszSLD, szTmp);
 
       free(pszGraphicSLD);
-    }
+    } else {
+      // only add a fill colour when there is no graphic pattern.
 
-    snprintf(szHexColor, sizeof(szHexColor), "%02x%02x%02x", psStyle->color.red,
-             psStyle->color.green, psStyle->color.blue);
-
-    snprintf(szTmp, sizeof(szTmp), "<%s name=\"fill\">#%s</%s>\n", sCssParam,
-             szHexColor, sCssParam);
-    pszSLD = msStringConcatenate(pszSLD, szTmp);
-
-    if (psStyle->color.alpha != 255 && psStyle->color.alpha != -1) {
-      snprintf(szTmp, sizeof(szTmp), "<%s name=\"fill-opacity\">%.2f</%s>\n",
-               sCssParam, (float)psStyle->color.alpha / 255, sCssParam);
+      snprintf(szHexColor, sizeof(szHexColor), "%02x%02x%02x",
+               psStyle->color.red, psStyle->color.green, psStyle->color.blue);
+      snprintf(szTmp, sizeof(szTmp), "<%s name=\"fill\">#%s</%s>\n", sCssParam,
+               szHexColor, sCssParam);
       pszSLD = msStringConcatenate(pszSLD, szTmp);
+      if (psStyle->color.alpha != 255 && psStyle->color.alpha != -1) {
+        snprintf(szTmp, sizeof(szTmp), "<%s name=\"fill-opacity\">%.2f</%s>\n",
+                 sCssParam, (float)psStyle->color.alpha / 255, sCssParam);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
+      }
     }
 
     snprintf(szTmp, sizeof(szTmp), "</%sFill>\n", sNameSpace);
