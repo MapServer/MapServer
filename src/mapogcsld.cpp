@@ -56,6 +56,8 @@ static inline void IGUR_sizet(size_t ignored) {
 #define SLD_MARK_SYMBOL_X "sld_mark_symbol_x"
 #define SLD_MARK_SYMBOL_X_FILLED "sld_mark_symbol_x_filled"
 
+// extended WellKnownNames
+
 /************************************************************************/
 /*                             msSLDApplySLDURL                         */
 /*                                                                      */
@@ -4220,6 +4222,9 @@ char *msSLDGeneratePointSLD(styleObj *psStyle, layerObj *psLayer,
   if (pszGraphicSLD) {
     pszSLD = msStringConcatenate(pszSLD, pszGraphicSLD);
     free(pszGraphicSLD);
+  } else {
+    snprintf(szTmp, sizeof(szTmp), "<!-- unsupported symbol for style -->\n");
+    pszSLD = msStringConcatenate(pszSLD, szTmp);
   }
 
   snprintf(szTmp, sizeof(szTmp), "</%sPointSymbolizer>\n", sNameSpace);
