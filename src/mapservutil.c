@@ -355,6 +355,10 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config) {
                       mapserv->request->httpcookiedata);
   }
 
+  // apply any SLD files to layers - this has to be done after any
+  // runtime substitutions have been applied to the mapfile
+  msApplyStyleItemToLayer(map);
+
   return map;
 }
 
