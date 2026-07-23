@@ -14,6 +14,8 @@
 
 # RUN_PARMS: wms_getstyles_pentagon.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=pentagon" > [RESULT_DEMIME]
 
+# RUN_PARMS: pentagon.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=-10,-10,10,10&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=pentagon_rendered&STYLES=" > [RESULT_DEMIME]
+
 MAP
     NAME TEST_SLD_COMPLEX
     SIZE 300 300
@@ -43,12 +45,12 @@ MAP
         TYPE VECTOR
         FILLED TRUE
         POINTS
-            0.206 0
-            0.794 0
-            1 0.588
-            0.5 1
-            0 0.588
-            0.206 0
+            0.5 0
+            1 0.38
+            0.81 1
+            0.19 1
+            0 0.38
+            0.5 0
         END
     END
 
@@ -237,6 +239,17 @@ MAP
                 SIZE 16
             END
         END
+    END
+
+    LAYER
+        NAME "pentagon_rendered"
+        TYPE POINT
+        FEATURE
+            POINTS
+                0 0
+            END
+        END
+        STYLEITEM "sld://data/pentagon.sld"
     END
 
 END

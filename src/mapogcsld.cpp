@@ -56,7 +56,9 @@ static inline void IGUR_sizet(size_t ignored) {
 #define SLD_MARK_SYMBOL_X "sld_mark_symbol_x"
 #define SLD_MARK_SYMBOL_X_FILLED "sld_mark_symbol_x_filled"
 
-// extended WellKnownNames
+// extended WellKnownNames not part of SLD 1.1.0
+#define SLD_MARK_SYMBOL_PENTAGON "sld_mark_symbol_pentagon"
+#define SLD_MARK_SYMBOL_PENTAGON_FILLED "sld_mark_symbol_pentagon_filled"
 
 /************************************************************************/
 /*                             msSLDApplySLDURL                         */
@@ -2141,6 +2143,13 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled) {
     else
       nSymbolId =
           msGetSymbolIndex(&map->symbolset, SLD_MARK_SYMBOL_X, MS_FALSE);
+  } else if (strcasecmp(pszSymbolName, "pentagon") == 0) {
+    if (bFilled)
+      nSymbolId = msGetSymbolIndex(&map->symbolset,
+                                   SLD_MARK_SYMBOL_PENTAGON_FILLED, MS_FALSE);
+    else
+      nSymbolId =
+          msGetSymbolIndex(&map->symbolset, SLD_MARK_SYMBOL_PENTAGON, MS_FALSE);
   } else {
     nSymbolId = msGetSymbolIndex(&map->symbolset, pszSymbolName, MS_FALSE);
   }
@@ -2309,6 +2318,34 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled) {
       psSymbol->points[psSymbol->numpoints].y = 1;
       psSymbol->numpoints++;
       psSymbol->points[psSymbol->numpoints].x = 1;
+      psSymbol->points[psSymbol->numpoints].y = 0;
+      psSymbol->numpoints++;
+    }
+    // extended WellKnownNames
+    else if (strcasecmp(pszSymbolName, "pentagon") == 0) {
+      if (bFilled)
+        psSymbol->name = msStrdup(SLD_MARK_SYMBOL_PENTAGON_FILLED);
+      else
+        psSymbol->name = msStrdup(SLD_MARK_SYMBOL_PENTAGON);
+      psSymbol->type = MS_SYMBOL_VECTOR;
+      if (bFilled)
+        psSymbol->filled = MS_TRUE;
+      psSymbol->points[psSymbol->numpoints].x = 0.5;
+      psSymbol->points[psSymbol->numpoints].y = 0;
+      psSymbol->numpoints++;
+      psSymbol->points[psSymbol->numpoints].x = 1;
+      psSymbol->points[psSymbol->numpoints].y = 0.38;
+      psSymbol->numpoints++;
+      psSymbol->points[psSymbol->numpoints].x = 0.81;
+      psSymbol->points[psSymbol->numpoints].y = 1;
+      psSymbol->numpoints++;
+      psSymbol->points[psSymbol->numpoints].x = 0.19;
+      psSymbol->points[psSymbol->numpoints].y = 1;
+      psSymbol->numpoints++;
+      psSymbol->points[psSymbol->numpoints].x = 0;
+      psSymbol->points[psSymbol->numpoints].y = 0.38;
+      psSymbol->numpoints++;
+      psSymbol->points[psSymbol->numpoints].x = 0.5;
       psSymbol->points[psSymbol->numpoints].y = 0;
       psSymbol->numpoints++;
     }
@@ -3545,7 +3582,8 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
               strcasecmp(psSymbol->name, "triangle") == 0 ||
               strcasecmp(psSymbol->name, "star") == 0 ||
               strcasecmp(psSymbol->name, "cross") == 0 ||
-              strcasecmp(psSymbol->name, "x") == 0)
+              strcasecmp(psSymbol->name, "x") == 0 ||
+              strcasecmp(psSymbol->name, "pentagon") == 0)
             pszSymbolName = msStrdup(psSymbol->name);
           else if (strncasecmp(psSymbol->name, "sld_mark_symbol_square", 22) ==
                    0)
@@ -3562,7 +3600,10 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                    0)
             pszSymbolName = msStrdup("cross");
           else if (strncasecmp(psSymbol->name, "sld_mark_symbol_x", 17) == 0)
-            pszSymbolName = msStrdup("X");
+            pszSymbolName = msStrdup("x");
+          else if (strncasecmp(psSymbol->name, "sld_mark_symbol_pentagon",
+                               24) == 0)
+            pszSymbolName = msStrdup("pentagon");
 
           if (pszSymbolName) {
             colorObj sTmpFillColor = {128, 128, 128, 255};
