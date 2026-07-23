@@ -357,7 +357,6 @@ MAP
         EXPRESSION ("[Property1]" = "Not Applicable")
         STYLE
             COLOR 0 0 255
-            SYMBOL "star"
         END
       END
       CLASS
@@ -365,7 +364,6 @@ MAP
         EXPRESSION ("[Property1]" = "With AND value")
         STYLE
             COLOR 0 255 0
-            SYMBOL "star"
         END
       END
       CLASS
@@ -373,7 +371,6 @@ MAP
         EXPRESSION ("[Property1]" = "With OR value")
         STYLE
             COLOR 255 0 0
-            SYMBOL "star"
         END
       END
     END
@@ -386,16 +383,14 @@ MAP
         EXPRESSION (("[Property1]" = "Not value") OR ("[Property1]" = "An Or value"))
         STYLE
             COLOR 0 0 255
-            SYMBOL "star"
         END
       END
       CLASS
-        # TODO - this test incorrectly output "An" to the filter rather than "An And value"
+        # TODO - this test incorrectly outputs "An" to the filter rather than "An And value"
         NAME "And Test"
         EXPRESSION (("[Property1]" = "An And value") AND ("[Property1]" = "A Not value"))
         STYLE
             COLOR 0 255 0
-            SYMBOL "star"
         END
       END
       CLASS
@@ -403,7 +398,6 @@ MAP
         EXPRESSION (NOT ("[Property1]" = "A Not value"))
         STYLE
             COLOR 255 0 0
-            SYMBOL "star"
         END
       END
     END
