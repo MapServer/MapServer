@@ -2713,7 +2713,7 @@ MS_DLL_EXPORT int msMapLoadOWSParameters(mapObj *map, cgiRequestObj *request,
 MS_DLL_EXPORT int msMapIgnoreMissingData(mapObj *map);
 
 /* mapfile.c */
-MS_DLL_EXPORT void msApplyStyleItemToLayer(mapObj *map);
+MS_DLL_EXPORT void msApplyStyleItemsToLayers(mapObj *map);
 MS_DLL_EXPORT int msValidateParameter(const char *value, const char *pattern1,
                                       const char *pattern2,
                                       const char *pattern3,
