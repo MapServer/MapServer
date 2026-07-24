@@ -44,6 +44,11 @@ typedef struct {
 } lineWindow;
 
 static void initLineWindow(lineWindow *lw, lineObj *line, int size) {
+  /* Clamp size to a positive value. A non-positive size would cast to
+   * a huge size_t in msSmallMalloc and trigger exit(1).
+   * (GHSA-33h3-f4q2-pq5q) */
+  if (size < 1)
+    size = 1;
   lw->pos = -1;
   lw->lineIsRing = MS_FALSE;
   lw->size = size;
@@ -227,12 +232,26 @@ shapeObj *msSmoothShapeSIA(shapeObj *shape, int ss, int si,
       lineObj newLine = {0, NULL};
       lineWindow lw;
 
+      /* Skip lines with too few points for smoothing. A line with
+       * fewer than 3 points cannot be smoothed meaningfully, and
+       * attempting it on a single-point line leads to ws == -1 which
+       * casts to a huge size_t in msSmallMalloc and triggers exit(1).
+       * (GHSA-33h3-f4q2-pq5q) */
+      if (shape->line[j].numpoints < 3) {
+        /* copy the original line verbatim */
+        msAddLine(newShape, &shape->line[j]);
+        continue;
+      }
+
       /* determine if we can use the ss for this line */
       ws = ss;
       if (ws >= shape->line[j].numpoints) {
         ws = shape->line[j].numpoints - 1;
       }
 
+      /* ensure ws is a positive odd number */
+      if (ws < 1)
+        ws = 1;
       if (ws % 2 == 0)
         ws -= 1;
 
