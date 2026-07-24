@@ -1416,8 +1416,12 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, int numRequests,
       } else {
         strlcpy(szBuf, "(Failed to open exception response)", sizeof(szBuf));
       }
+    } else if (pasReqInfo[iReq].result_data) {
+      int nSize = MS_MIN(pasReqInfo[iReq].result_size, MS_BUFFER_LENGTH - 1);
+      memcpy(szBuf, pasReqInfo[iReq].result_data, nSize);
+      szBuf[nSize] = '\0';
     } else {
-      strlcpy(szBuf, pasReqInfo[iReq].result_data, MS_BUFFER_LENGTH);
+      szBuf[0] = '\0';
     }
 
     if (lp->debug)
