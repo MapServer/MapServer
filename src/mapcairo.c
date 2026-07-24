@@ -368,8 +368,8 @@ int renderSVGSymbolCairo(imageObj *img, double x, double y, symbolObj *symbol,
     }
   }
 #else
-  RsvgRectangle viewport = {0, 0, symbol->sizex, symbol->sizey};
-  rsvg_handle_render_document(cache->svgc, r->cr, &viewport, NULL);
+  // scaling issues with rsvg_handle_render_document(), revert to legacy func.
+  rsvg_handle_render_cairo(cache->svgc, r->cr);
 #endif
 
   cairo_restore(r->cr);
@@ -1128,8 +1128,8 @@ int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y,
       return MS_FAILURE;
     }
 #else
-    RsvgRectangle viewport = {0, 0, width, height};
-    rsvg_handle_render_document(svg_cache->svgc, cr, &viewport, NULL);
+    // scaling issues with rsvg_handle_render_document(), revert to legacy func.
+    rsvg_handle_render_cairo(svg_cache->svgc, cr);
 #endif
     pb = cairo_image_surface_get_data(surface);
 
