@@ -32,6 +32,7 @@
 #include "mapows.h"
 #include "mapcopy.h"
 #include "cpl_string.h"
+#include <float.h>
 
 extern "C" {
 extern int yyparse(parseObj *);
@@ -3557,8 +3558,8 @@ static char *msSLDGenerateSVGFromEllipseSymbol(symbolObj *psSymbol,
   /* Pad the canvas for the stroke matching MapServer rendering */
   double dfRx = dfWidth / 2.0;
   double dfRy = dfHeight / 2.0;
-  double dfCanvasWidth = dfWidth + dfStrokeWidth;
-  double dfCanvasHeight = dfHeight + dfStrokeWidth;
+  double dfCanvasWidth = dfWidth + (dfStrokeWidth * 2.0);
+  double dfCanvasHeight = dfHeight + (dfStrokeWidth * 2.0);
 
   char szFillColor[8]; /* "#RRGGBB" or "none" */
   char szStrokeColor[8];
@@ -3648,11 +3649,11 @@ static char *msSLDGenerateSVGFromVectorSymbol(symbolObj *psSymbol,
   }
 
   double dfStrokeWidth = psStyle->width > 0 ? psStyle->width : 1.0;
-  /* Add space for the stroke since it extends outside the path,
+  /* Add padding for the stroke since it extends outside the path,
      matching MapServer rendering and avoiding clipped outlines. */
-  double dfCanvasWidth = dfOutWidth + dfStrokeWidth;
-  double dfCanvasHeight = dfOutHeight + dfStrokeWidth;
-  double dfOffset = dfStrokeWidth / 2.0;
+  double dfCanvasWidth = dfOutWidth + (dfStrokeWidth * 2.0);
+  double dfCanvasHeight = dfOutHeight + (dfStrokeWidth * 2.0);
+  double dfOffset = dfStrokeWidth;
 
   char szFillColor[8];
   char szStrokeColor[8];
