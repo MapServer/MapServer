@@ -3536,7 +3536,7 @@ static char *msSLDGenerateSVGFromEllipseSymbol(symbolObj *psSymbol,
     return NULL;
   }
 
-  char szTmp[256];
+  char szTmp[512];
 
   double dfRatioX = psSymbol->sizex > 0 ? psSymbol->sizex : 1.0;
   double dfRatioY = psSymbol->sizey > 0 ? psSymbol->sizey : 1.0;
@@ -3604,7 +3604,7 @@ static char *msSLDGenerateSVGFromVectorSymbol(symbolObj *psSymbol,
     return NULL;
   }
 
-  char szTmp[256];
+  char szTmp[512];
   int i;
   int bStartNewSubpath;
   double dfMinX = DBL_MAX, dfMinY = DBL_MAX;
