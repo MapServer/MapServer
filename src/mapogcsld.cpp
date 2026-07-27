@@ -3524,6 +3524,184 @@ char *msSLDGenerateSLD(mapObj *map, int iLayer, const char *pszVersion) {
 }
 
 /************************************************************************/
+/*       msSLDGenerateSVGFromEllipseSymbol                              */
+/*                                                                      */
+/*       Generate SVG for a MapServer ellipse symbol.                   */
+/************************************************************************/
+static char *msSLDGenerateSVGFromEllipseSymbol(symbolObj *psSymbol,
+                                               styleObj *psStyle) {
+  msStringBuffer *svgBuf = msStringBufferAlloc();
+
+  if (!svgBuf) {
+    return NULL;
+  }
+
+  char szTmp[256];
+
+  double dfRatioX = psSymbol->sizex > 0 ? psSymbol->sizex : 1.0;
+  double dfRatioY = psSymbol->sizey > 0 ? psSymbol->sizey : 1.0;
+
+  /* SIZE maps to height; width is derived from the sizex/sizey ratio,
+     matching msGetMarkerSize(). */
+  double dfWidth, dfHeight;
+  if (psStyle->size > 0) {
+    dfHeight = psStyle->size;
+    dfWidth = (psStyle->size / dfRatioY) * dfRatioX;
+  } else {
+    dfHeight = dfRatioY;
+    dfWidth = dfRatioX;
+  }
+
+  double dfStrokeWidth = psStyle->width > 0 ? psStyle->width : 1.0;
+
+  /* Pad the canvas for the stroke matching MapServer rendering */
+  double dfRx = dfWidth / 2.0;
+  double dfRy = dfHeight / 2.0;
+  double dfCanvasWidth = dfWidth + dfStrokeWidth;
+  double dfCanvasHeight = dfHeight + dfStrokeWidth;
+
+  char szFillColor[8]; /* "#RRGGBB" or "none" */
+  char szStrokeColor[8];
+
+  if (psStyle->color.red != -1) {
+    snprintf(szFillColor, sizeof(szFillColor), "#%02x%02x%02x",
+             psStyle->color.red, psStyle->color.green, psStyle->color.blue);
+  } else {
+    strcpy(szFillColor, "none"); /* transparent fill */
+  }
+
+  if (psStyle->outlinecolor.red != -1) {
+    snprintf(szStrokeColor, sizeof(szStrokeColor), "#%02x%02x%02x",
+             psStyle->outlinecolor.red, psStyle->outlinecolor.green,
+             psStyle->outlinecolor.blue);
+  } else {
+    strcpy(szStrokeColor, "none");
+  }
+
+  snprintf(szTmp, sizeof(szTmp),
+           "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%g\" "
+           "height=\"%g\" viewBox=\"0 0 %g %g\">\n"
+           "<ellipse cx=\"%g\" cy=\"%g\" rx=\"%g\" ry=\"%g\" "
+           "fill=\"%s\" stroke=\"%s\" stroke-width=\"%g\"/>\n</svg>\n",
+           dfCanvasWidth, dfCanvasHeight, dfCanvasWidth, dfCanvasHeight,
+           dfCanvasWidth / 2.0, dfCanvasHeight / 2.0, dfRx, dfRy, szFillColor,
+           szStrokeColor, dfStrokeWidth);
+  msStringBufferAppend(svgBuf, szTmp);
+
+  return msStringBufferReleaseStringAndFree(svgBuf);
+}
+
+/************************************************************************/
+/*       msSLDGenerateSVGFromVectorSymbol                               */
+/*                                                                      */
+/*       Generate SVG for a MapServer vector symbol.                    */
+/************************************************************************/
+static char *msSLDGenerateSVGFromVectorSymbol(symbolObj *psSymbol,
+                                              styleObj *psStyle) {
+  msStringBuffer *svgBuf = msStringBufferAlloc();
+
+  if (!svgBuf) {
+    return NULL;
+  }
+
+  char szTmp[256];
+  int i;
+  int bStartNewSubpath;
+  double dfMinX = DBL_MAX, dfMinY = DBL_MAX;
+  double dfMaxX = -DBL_MAX, dfMaxY = -DBL_MAX;
+
+  /* Compute the symbol's bounding box (ignoring the magic values -99 -99) */
+  for (i = 0; i < psSymbol->numpoints; i++) {
+    double x = psSymbol->points[i].x;
+    double y = psSymbol->points[i].y;
+    if (x == -99.0 && y == -99.0)
+      continue;
+    if (x < dfMinX)
+      dfMinX = x;
+    if (x > dfMaxX)
+      dfMaxX = x;
+    if (y < dfMinY)
+      dfMinY = y;
+    if (y > dfMaxY)
+      dfMaxY = y;
+  }
+
+  double dfBBoxWidth = dfMaxX - dfMinX;
+  double dfBBoxHeight = dfMaxY - dfMinY;
+  if (dfBBoxWidth <= 0 || dfBBoxHeight <= 0) {
+    msStringBufferFree(svgBuf);
+    return NULL;
+  }
+
+  /* Match MapServer marker sizing in msGetMarkerSize: SIZE defines the height,
+     and width is scaled from the symbol aspect ratio. */
+  double dfRenderScale;
+  double dfOutWidth, dfOutHeight;
+  if (psStyle->size > 0) {
+    dfOutHeight = psStyle->size;
+    dfRenderScale = dfOutHeight / dfBBoxHeight;
+    dfOutWidth = dfBBoxWidth * dfRenderScale;
+  } else {
+    dfOutWidth = dfBBoxWidth;
+    dfOutHeight = dfBBoxHeight;
+    dfRenderScale = 1.0;
+  }
+
+  double dfStrokeWidth = psStyle->width > 0 ? psStyle->width : 1.0;
+  /* Add space for the stroke since it extends outside the path,
+     matching MapServer rendering and avoiding clipped outlines. */
+  double dfCanvasWidth = dfOutWidth + dfStrokeWidth;
+  double dfCanvasHeight = dfOutHeight + dfStrokeWidth;
+  double dfOffset = dfStrokeWidth / 2.0;
+
+  char szFillColor[8];
+  char szStrokeColor[8];
+  if (psStyle->color.red != -1)
+    snprintf(szFillColor, sizeof(szFillColor), "#%02x%02x%02x",
+             psStyle->color.red, psStyle->color.green, psStyle->color.blue);
+  else
+    strcpy(szFillColor, "none");
+
+  if (psStyle->outlinecolor.red != -1)
+    snprintf(szStrokeColor, sizeof(szStrokeColor), "#%02x%02x%02x",
+             psStyle->outlinecolor.red, psStyle->outlinecolor.green,
+             psStyle->outlinecolor.blue);
+  else
+    strcpy(szStrokeColor, "none");
+
+  snprintf(szTmp, sizeof(szTmp),
+           "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%g\" "
+           "height=\"%g\" viewBox=\"0 0 %g %g\">\n<path d=\"",
+           dfCanvasWidth, dfCanvasHeight, dfCanvasWidth, dfCanvasHeight);
+  msStringBufferAppend(svgBuf, szTmp);
+
+  bStartNewSubpath = MS_TRUE;
+  for (i = 0; i < psSymbol->numpoints; i++) {
+    double x = psSymbol->points[i].x;
+    double y = psSymbol->points[i].y;
+
+    if (x == -99.0 && y == -99.0) {
+      bStartNewSubpath = MS_TRUE;
+      continue;
+    }
+
+    /* Translate into the 0-origin viewBox computed above. */
+    snprintf(szTmp, sizeof(szTmp), "%s%g,%g ", bStartNewSubpath ? "M " : "L ",
+             (x - dfMinX) * dfRenderScale + dfOffset,
+             (y - dfMinY) * dfRenderScale + dfOffset);
+    msStringBufferAppend(svgBuf, szTmp);
+    bStartNewSubpath = MS_FALSE;
+  }
+
+  snprintf(szTmp, sizeof(szTmp),
+           "Z\" fill=\"%s\" stroke=\"%s\" stroke-width=\"%g\"/>\n</svg>\n",
+           szFillColor, szStrokeColor, dfStrokeWidth);
+  msStringBufferAppend(svgBuf, szTmp);
+
+  return msStringBufferReleaseStringAndFree(svgBuf);
+}
+
+/************************************************************************/
 /*                            msSLDGetGraphicSLD                        */
 /*                                                                      */
 /*      Get an SLD for a style containing a symbol (Mark or external).  */
@@ -3574,9 +3752,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
       if (psSymbol->type == MS_SYMBOL_VECTOR ||
           psSymbol->type == MS_SYMBOL_ELLIPSE) {
         /* Mark symbol */
-        if (psSymbol->name)
-
-        {
+        if (psSymbol->name) {
           if (strcasecmp(psSymbol->name, "square") == 0 ||
               strcasecmp(psSymbol->name, "circle") == 0 ||
               strcasecmp(psSymbol->name, "triangle") == 0 ||
@@ -3752,9 +3928,62 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
 
             if (pszSymbolName)
               free(pszSymbolName);
+          } else {
+            /* No WellKnownName match — attempt to generate an ExternalGraphic
+               SVG instead of fall back to a default symbol. */
+            char *pszSVG =
+                // handle ELLIPSE as a special case
+                (psSymbol->type == MS_SYMBOL_ELLIPSE)
+                    ? msSLDGenerateSVGFromEllipseSymbol(psSymbol, psStyle)
+                    : msSLDGenerateSVGFromVectorSymbol(psSymbol, psStyle);
+            if (pszSVG) {
+              // encode as Base64 so it can be output to XML
+              char *pszBase64 =
+                  CPLBase64Encode(static_cast<int>(strlen(pszSVG)),
+                                  reinterpret_cast<const GByte *>(pszSVG));
+
+              snprintf(szTmp, sizeof(szTmp), "<%sGraphic>\n", sNameSpace);
+              msStringBufferAppend(sldString, szTmp);
+
+              snprintf(szTmp, sizeof(szTmp), "<%sExternalGraphic>\n",
+                       sNameSpace);
+              msStringBufferAppend(sldString, szTmp);
+
+              snprintf(szTmp, sizeof(szTmp),
+                       "<%sOnlineResource xlink:type=\"simple\" "
+                       "xlink:href=\"data:image/svg+xml;base64,",
+                       sNameSpace);
+
+              msStringBufferAppend(sldString, szTmp);
+              msStringBufferAppend(sldString, pszBase64);
+              msStringBufferAppend(sldString, "\"/>\n");
+              CPLFree(pszBase64);
+
+              snprintf(szTmp, sizeof(szTmp),
+                       "<%sFormat>image/svg+xml</%sFormat>\n", sNameSpace,
+                       sNameSpace);
+              msStringBufferAppend(sldString, szTmp);
+
+              snprintf(szTmp, sizeof(szTmp), "</%sExternalGraphic>\n",
+                       sNameSpace);
+              msStringBufferAppend(sldString, szTmp);
+
+              if (psStyle->size > 0) {
+                snprintf(szTmp, sizeof(szTmp), "<%sSize>%g</%sSize>\n",
+                         sNameSpace, psStyle->size, sNameSpace);
+                msStringBufferAppend(sldString, szTmp);
+              }
+
+              snprintf(szTmp, sizeof(szTmp), "</%sGraphic>\n", sNameSpace);
+              msStringBufferAppend(sldString, szTmp);
+
+              free(pszSVG);
+            } else {
+              // unable to generate SVG
+              bGenerateDefaultSymbol = 1;
+            }
           }
-        } else
-          bGenerateDefaultSymbol = 1;
+        }
       } else if (psSymbol->type == MS_SYMBOL_HATCH) {
         /* map hatch symbols to one of the SLD "shape://" well-known names.
            The angle is snapped to the nearest horizontal, vertical, slash or

@@ -11,6 +11,8 @@
 # RUN_PARMS: wms_getstyles_polygon_slash.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=polygon_slash" > [RESULT_DEMIME]
 # RUN_PARMS: wms_getstyles_polygon_vertline.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=polygon_vertline" > [RESULT_DEMIME]
 # RUN_PARMS: wms_getstyles_polygon_snap_to_backslash.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=polygon_snap_to_backslash" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_point_oval.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=point_oval" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_point_notched_rect.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=point_notched_rect" > [RESULT_DEMIME]
 
 # RUN_PARMS: wms_getstyles_pentagon.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=pentagon" > [RESULT_DEMIME]
 
@@ -51,6 +53,44 @@ MAP
             0.19 1
             0 0.38
             0.5 0
+        END
+    END
+
+    SYMBOL
+        NAME "oval"
+        TYPE ELLIPSE
+        FILLED TRUE
+        POINTS
+            2 1
+        END
+    END
+
+    SYMBOL
+        NAME "notched_rect"
+        TYPE VECTOR
+        FILLED TRUE
+        POINTS
+            16 0
+            64 0
+            65.22 6.12
+            68.69 11.31
+            73.88 14.78
+            80 16
+            80 44
+            73.88 45.22
+            68.69 48.69
+            65.22 53.88
+            64 60
+            16 60
+            14.78 53.88
+            11.31 48.69
+            6.12 45.22
+            0 44
+            0 16
+            6.12 14.78
+            11.31 11.31
+            14.78 6.12
+            16 0
         END
     END
 
@@ -219,6 +259,42 @@ MAP
                 ANGLE 30
                 WIDTH 0.5
                 SIZE 6 # this won't be output to the SLD
+            END
+        END
+    END
+
+    LAYER
+        NAME "point_oval"
+        TYPE POINT
+        FEATURE
+            POINTS
+                0 0
+            END
+        END
+        CLASS
+            STYLE
+                SYMBOL "oval"
+                COLOR "#8FC1FF"
+                OUTLINECOLOR "#B5B7B8"
+                SIZE 10
+            END
+        END
+    END
+
+    LAYER
+        NAME "point_notched_rect"
+        TYPE POINT
+        FEATURE
+            POINTS
+                0 0
+            END
+        END
+        CLASS
+            STYLE
+                SYMBOL "notched_rect"
+                COLOR "#8FC1FF"
+                OUTLINECOLOR "#B5B7B8"
+                SIZE 10
             END
         END
     END
