@@ -15,8 +15,10 @@
 # RUN_PARMS: wms_getstyles_point_notched_rect.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=point_notched_rect" > [RESULT_DEMIME]
 
 # RUN_PARMS: wms_getstyles_pentagon.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=pentagon" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_hexagon.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=hexagon" > [RESULT_DEMIME]
 
 # RUN_PARMS: pentagon.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=-10,-10,10,10&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=pentagon_rendered&STYLES=" > [RESULT_DEMIME]
+# RUN_PARMS: hexagon.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=-10,-10,10,10&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=hexagon_rendered&STYLES=" > [RESULT_DEMIME]
 
 MAP
     NAME TEST_SLD_COMPLEX
@@ -53,6 +55,21 @@ MAP
             0.19 1
             0 0.38
             0.5 0
+        END
+    END
+
+    SYMBOL
+        NAME "hexagon"
+        TYPE VECTOR
+        FILLED TRUE
+        POINTS
+            93.3 75
+            93.3 25
+            50 0
+            6.7 25
+            6.7 75
+            50 100
+            93.3 75
         END
     END
 
@@ -326,6 +343,35 @@ MAP
             END
         END
         STYLEITEM "sld://data/pentagon.sld"
+    END
+
+    LAYER
+        NAME "hexagon"
+        TYPE POINT
+        FEATURE
+            POINTS
+                0 0
+            END
+        END
+        CLASS
+            STYLE
+                SYMBOL "hexagon"
+                COLOR "#156082"
+                OUTLINECOLOR 255 0 0
+                SIZE 16
+            END
+        END
+    END
+
+    LAYER
+        NAME "hexagon_rendered"
+        TYPE POINT
+        FEATURE
+            POINTS
+                0 0
+            END
+        END
+        STYLEITEM "sld://data/hexagon.sld"
     END
 
 END
