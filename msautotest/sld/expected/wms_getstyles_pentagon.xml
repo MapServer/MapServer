@@ -6,16 +6,10 @@
 <se:Rule>
 <se:PointSymbolizer>
 <se:Graphic>
-<se:Mark>
-<se:WellKnownName>pentagon</se:WellKnownName>
-<se:Fill>
-<se:SvgParameter name="fill">#156082</se:SvgParameter>
-</se:Fill>
-<se:Stroke>
-<se:SvgParameter name="stroke">#ff0000</se:SvgParameter>
-<se:SvgParameter name="stroke-width">1</se:SvgParameter>
-</se:Stroke>
-</se:Mark>
+<se:ExternalGraphic>
+<se:OnlineResource xlink:type="simple" xlink:href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgdmlld0JveD0iMCAwIDE4IDE4Ij4KPHBhdGggZD0iTSA5LDEgTCAxNyw3LjA4IEwgMTMuOTYsMTcgTCA0LjA0LDE3IEwgMSw3LjA4IEwgOSwxIFoiIGZpbGw9IiMxNTYwODIiIHN0cm9rZT0iI2ZmMDAwMCIgc3Ryb2tlLXdpZHRoPSIxIi8+Cjwvc3ZnPgo="/>
+<se:Format>image/svg+xml</se:Format>
+</se:ExternalGraphic>
 <se:Size>16</se:Size>
 </se:Graphic>
 </se:PointSymbolizer>
