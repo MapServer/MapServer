@@ -1,0 +1,48 @@
+#
+# Polygons whose edges repeatedly cut across the corners of the clipping
+# rectangle. An edge like that contributes three points to the clipped ring
+# (the corner, the entry intersection and the exit point), so the clipped ring
+# ends up longer than the 2 * numpoints the clipper used to size its output
+# buffer for: these two rings clip to 14 and 16 points from 6 and 7.
+#
+# REQUIRES: OUTPUT=PNG
+#
+MAP
+
+  EXTENT 0 0 100 100
+  SIZE 100 100
+  IMAGETYPE png
+
+  LAYER
+    NAME "corner_crossing_polygons"
+    STATUS DEFAULT
+    TYPE POLYGON
+    FEATURE
+      POINTS
+        129 139
+        -41 -48
+        158 146
+        -5 -16
+        93 34
+        129 139
+      END
+    END
+    FEATURE
+      POINTS
+        -51 91
+        189 -54
+        -14 178
+        109 -8
+        23 237
+        198 -27
+        -51 91
+      END
+    END
+    CLASS
+      STYLE
+        COLOR 255 0 0
+      END
+    END
+  END
+
+END
