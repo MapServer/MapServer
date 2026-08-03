@@ -13,6 +13,11 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.6.6 development
+-----------------
+
+- security: WCS 2.0 GetCoverage: reject non-positive RESOLUTION values to prevent denial of service (GHSA-6jr5-rc9c-p3cj)
+
 8.6.5 release (2026-07-10)
 --------------------------
 
