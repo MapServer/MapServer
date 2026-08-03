@@ -593,6 +593,19 @@ static int msWCSParseResolutionString20(char *string, char *outAxis,
     return MS_FAILURE;
   }
 
+  /* Reject non-finite or non-positive resolution values to prevent
+   * denial-of-service via negative/zero/nan resolution that would
+   * produce non-positive image dimensions and trigger exit(1) in
+   * msSmallMalloc/msSmallCalloc. */
+  if (!std::isfinite(*outResolution) || *outResolution <= 0.0) {
+    *outResolution = MS_WCS20_UNBOUNDED;
+    msSetError(MS_WCSERR,
+               "Invalid resolution parameter value : %s. "
+               "Resolution must be a positive number.",
+               "msWCSParseSize20()", number);
+    return MS_FAILURE;
+  }
+
   return MS_SUCCESS;
 }
 
@@ -4818,6 +4831,16 @@ this request. Check wcs/ows_enable_request settings.",
   map->height = params->height;
 
   /* Are we exceeding the MAXSIZE limit on result size? */
+  if (map->width <= 0 || map->height <= 0) {
+    msWCSClearCoverageMetadata20(&cm);
+    msSetError(MS_WCSERR,
+               "Raster size out of range, width and height of "
+               "resulting coverage must be positive.",
+               "msWCSGetCoverage20()");
+
+    return msWCSException(map, "InvalidParameterValue", "size",
+                          params->version);
+  }
   if (map->width > map->maxsize || map->height > map->maxsize) {
     msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR,
