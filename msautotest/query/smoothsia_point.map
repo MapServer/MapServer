@@ -1,0 +1,45 @@
+#
+# Test SMOOTHSIA on point shapes (denial-of-service prevention,
+# GHSA-33h3-f4q2-pq5q)
+#
+# REQUIRES: INPUT=OGR
+#
+# Test that SMOOTHSIA on a point shape does not crash (was exit(1))
+# RUN_PARMS: smoothsia_point_test001.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=itemnquery&qlayer=pts&qstring=(AREA(BUFFER(SMOOTHSIA([shape],3,1),1))%20%3E%200)" > [RESULT_DEMIME]
+#
+MAP
+  NAME 'smoothsia_point'
+  EXTENT 0 0 10 10
+  UNITS METERS
+  SIZE 100 100
+
+  WEB
+    QUERYFORMAT "csv"
+  END
+
+  OUTPUTFORMAT
+    NAME "CSV"
+    DRIVER "OGR/CSV"
+    MIMETYPE "text/csv"
+    FORMATOPTION "LCO:STRING_QUOTING=IF_NEEDED"
+    FORMATOPTION "STORAGE=memory"
+    FORMATOPTION "FORM=simple"
+    FORMATOPTION "FILENAME=result.csv"
+  END
+
+  LAYER
+    NAME 'pts'
+    CONNECTIONTYPE OGR
+    CONNECTION 'data/point.geojson'
+    TYPE POINT
+    STATUS OFF
+    TEMPLATE 'void'
+    VALIDATION
+      qstring "."
+    END
+    METADATA
+      "gml_include_items" "name"
+    END
+  END
+
+END
