@@ -72,6 +72,16 @@ else()
 endif()
 set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH "Installation directory for CMake files")
 
+# Keep a relative copy for install() DESTINATION arguments
+foreach(p LIB BIN INCLUDE CMAKE)
+  set(var INSTALL_${p}_DIR)
+  if(IS_ABSOLUTE "${${var}}")
+    file(RELATIVE_PATH ${var}_REL "${CMAKE_INSTALL_PREFIX}" "${${var}}")
+  else()
+    set(${var}_REL "${${var}}")
+  endif()
+endforeach()
+
 # Make relative paths absolute (needed later on)
 foreach(p LIB BIN INCLUDE CMAKE)
   set(var INSTALL_${p}_DIR)
@@ -1087,11 +1097,11 @@ add_definitions(-D_USE_MATH_DEFINES)
 
 #INSTALL(FILES mapserver-api.h ${PROJECT_BINARY_DIR}/mapserver-version.h DESTINATION include)
 if(USE_ORACLE_PLUGIN)
-   INSTALL(TARGETS msplugin_oracle DESTINATION ${INSTALL_LIB_DIR})
+   INSTALL(TARGETS msplugin_oracle DESTINATION ${INSTALL_LIB_DIR_REL})
 endif(USE_ORACLE_PLUGIN)
 
 if(USE_MSSQL2008)
-   INSTALL(TARGETS msplugin_mssql2008 DESTINATION ${INSTALL_LIB_DIR})
+   INSTALL(TARGETS msplugin_mssql2008 DESTINATION ${INSTALL_LIB_DIR_REL})
 endif(USE_MSSQL2008)
 
 if(NOT FUZZER)
@@ -1102,14 +1112,14 @@ endif()
 
 if(BUILD_STATIC)
    INSTALL(TARGETS mapserver_static
-           DESTINATION ${INSTALL_LIB_DIR} COMPONENT staticlib
+           DESTINATION ${INSTALL_LIB_DIR_REL} COMPONENT staticlib
    )
 endif(BUILD_STATIC)
 if(BUILD_DYNAMIC)
    INSTALL(TARGETS mapserver
            EXPORT mapserverTargets
-           ARCHIVE DESTINATION ${INSTALL_LIB_DIR} COMPONENT shlib
-           LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT shlib
+           ARCHIVE DESTINATION ${INSTALL_LIB_DIR_REL} COMPONENT shlib
+           LIBRARY DESTINATION ${INSTALL_LIB_DIR_REL} COMPONENT shlib
            PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR}/mapserver COMPONENT dev
    )
 
@@ -1144,12 +1154,12 @@ if(BUILD_DYNAMIC)
    # Install the mapserver-config.cmake and mapserver-config-version.cmake
    install(FILES "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/mapserver-config.cmake"
                  "${PROJECT_BINARY_DIR}/mapserver-config-version.cmake"
-           DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
+           DESTINATION "${INSTALL_CMAKE_DIR_REL}" COMPONENT dev
    )
 
    # Install the export set for use with the install-tree
    install(EXPORT mapserverTargets
-           DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
+           DESTINATION "${INSTALL_CMAKE_DIR_REL}" COMPONENT dev
    )
 endif(BUILD_DYNAMIC)
 

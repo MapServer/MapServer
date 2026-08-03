@@ -264,6 +264,11 @@
 # Generate error if requested coverage exceeds maxsize
 # RUN_PARMS: wcs_20_exception_exceed_maxsize.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&size=x(5001)&size=y(5001)&FORMAT=image/tiff&COVERAGEID=grey" > [RESULT_DEMIME]
 #
+# Reject negative RESOLUTION (denial-of-service prevention, GHSA-6jr5-rc9c-p3cj)
+# RUN_PARMS: wcs_20_exception_neg_resolution.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&RESOLUTION=x(-1)&RESOLUTION=y(-1)" > [RESULT_DEMIME]
+# Reject zero RESOLUTION (denial-of-service prevention, GHSA-6jr5-rc9c-p3cj)
+# RUN_PARMS: wcs_20_exception_zero_resolution.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&RESOLUTION=x(0)&RESOLUTION=y(0)" > [RESULT_DEMIME]
+#
 MAP
 
 NAME TEST

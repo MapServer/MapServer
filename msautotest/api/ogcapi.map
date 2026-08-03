@@ -230,6 +230,7 @@ MAP
     END
     PROJECTION "+init=epsg:32615" END
     TEMPLATE VOID
+    TOLERANCE 10000 # this should have no effect on OGC Features item requests with a bbox
   END
 
   LAYER
