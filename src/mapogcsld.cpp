@@ -3522,22 +3522,17 @@ static char *msSLDGenerateSVGFromEllipseSymbol(symbolObj *psSymbol,
   double dfCanvasWidth = dfWidth + (dfStrokeWidth * 2.0);
   double dfCanvasHeight = dfHeight + (dfStrokeWidth * 2.0);
 
-  char szFillColor[8]; /* "#RRGGBB" or "none" */
-  char szStrokeColor[8];
+  char szFillColor[8] = "none"; /* "#RRGGBB" or "none" */
+  char szStrokeColor[8] = "none";
 
   if (psStyle->color.red != -1) {
     snprintf(szFillColor, sizeof(szFillColor), "#%02x%02x%02x",
              psStyle->color.red, psStyle->color.green, psStyle->color.blue);
-  } else {
-    strcpy(szFillColor, "none"); /* transparent fill */
   }
-
   if (psStyle->outlinecolor.red != -1) {
     snprintf(szStrokeColor, sizeof(szStrokeColor), "#%02x%02x%02x",
              psStyle->outlinecolor.red, psStyle->outlinecolor.green,
              psStyle->outlinecolor.blue);
-  } else {
-    strcpy(szStrokeColor, "none");
   }
 
   snprintf(szTmp, sizeof(szTmp),
@@ -3619,31 +3614,25 @@ static char *msSLDGenerateSVGFromVectorSymbol(symbolObj *psSymbol,
   double dfCanvasHeight = dfOutHeight + (dfPadding * 2.0);
   double dfOffset = dfPadding;
 
-  char szFillColor[8];
-  char szStrokeColor[8];
+  char szFillColor[8] = "none";
+  char szStrokeColor[8] = "none";
 
   /* When using line fills in a polygon COLOR is used for the stroke color
     otherwise COLOR is used for the fill */
   if (!psSymbol->filled) {
-    if (psStyle->color.red != -1)
+    if (psStyle->color.red != -1) {
       snprintf(szStrokeColor, sizeof(szStrokeColor), "#%02x%02x%02x",
                psStyle->color.red, psStyle->color.green, psStyle->color.blue);
-    else {
-      strcpy(szStrokeColor, "none");
     }
   } else {
     if (psStyle->color.red != -1) {
       snprintf(szFillColor, sizeof(szFillColor), "#%02x%02x%02x",
                psStyle->color.red, psStyle->color.green, psStyle->color.blue);
-    } else {
-      strcpy(szFillColor, "none");
     }
     if (psStyle->outlinecolor.red != -1) {
       snprintf(szStrokeColor, sizeof(szStrokeColor), "#%02x%02x%02x",
                psStyle->outlinecolor.red, psStyle->outlinecolor.green,
                psStyle->outlinecolor.blue);
-    } else {
-      strcpy(szStrokeColor, "none");
     }
   }
 
