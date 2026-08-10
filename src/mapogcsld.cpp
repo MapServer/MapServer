@@ -3559,7 +3559,8 @@ static char *msSLDGenerateSVGFromEllipseSymbol(symbolObj *psSymbol,
 /*       Generate SVG for a MapServer vector symbol.                    */
 /************************************************************************/
 static char *msSLDGenerateSVGFromVectorSymbol(symbolObj *psSymbol,
-                                              styleObj *psStyle) {
+                                              styleObj *psStyle,
+                                              layerObj *psLayer) {
   msStringBuffer *svgBuf = msStringBufferAlloc();
 
   if (!svgBuf) {
@@ -3612,24 +3613,39 @@ static char *msSLDGenerateSVGFromVectorSymbol(symbolObj *psSymbol,
   double dfStrokeWidth = psStyle->width > 0 ? psStyle->width : 1.0;
   /* Add padding for the stroke since it extends outside the path,
      matching MapServer rendering and avoiding clipped outlines. */
-  double dfCanvasWidth = dfOutWidth + (dfStrokeWidth * 2.0);
-  double dfCanvasHeight = dfOutHeight + (dfStrokeWidth * 2.0);
-  double dfOffset = dfStrokeWidth;
+
+  double dfPadding = (psLayer->type == MS_LAYER_POLYGON) ? 0.0 : dfStrokeWidth;
+  double dfCanvasWidth = dfOutWidth + (dfPadding * 2.0);
+  double dfCanvasHeight = dfOutHeight + (dfPadding * 2.0);
+  double dfOffset = dfPadding;
 
   char szFillColor[8];
   char szStrokeColor[8];
-  if (psStyle->color.red != -1)
-    snprintf(szFillColor, sizeof(szFillColor), "#%02x%02x%02x",
-             psStyle->color.red, psStyle->color.green, psStyle->color.blue);
-  else
-    strcpy(szFillColor, "none");
 
-  if (psStyle->outlinecolor.red != -1)
-    snprintf(szStrokeColor, sizeof(szStrokeColor), "#%02x%02x%02x",
-             psStyle->outlinecolor.red, psStyle->outlinecolor.green,
-             psStyle->outlinecolor.blue);
-  else
-    strcpy(szStrokeColor, "none");
+  /* When using line fills in a polygon COLOR is used for the stroke color
+    otherwise COLOR is used for the fill */
+  if (!psSymbol->filled) {
+    if (psStyle->color.red != -1)
+      snprintf(szStrokeColor, sizeof(szStrokeColor), "#%02x%02x%02x",
+               psStyle->color.red, psStyle->color.green, psStyle->color.blue);
+    else {
+      strcpy(szStrokeColor, "none");
+    }
+  } else {
+    if (psStyle->color.red != -1) {
+      snprintf(szFillColor, sizeof(szFillColor), "#%02x%02x%02x",
+               psStyle->color.red, psStyle->color.green, psStyle->color.blue);
+    } else {
+      strcpy(szFillColor, "none");
+    }
+    if (psStyle->outlinecolor.red != -1) {
+      snprintf(szStrokeColor, sizeof(szStrokeColor), "#%02x%02x%02x",
+               psStyle->outlinecolor.red, psStyle->outlinecolor.green,
+               psStyle->outlinecolor.blue);
+    } else {
+      strcpy(szStrokeColor, "none");
+    }
+  }
 
   snprintf(szTmp, sizeof(szTmp),
            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%g\" "
@@ -3656,8 +3672,9 @@ static char *msSLDGenerateSVGFromVectorSymbol(symbolObj *psSymbol,
   }
 
   snprintf(szTmp, sizeof(szTmp),
-           "Z\" fill=\"%s\" stroke=\"%s\" stroke-width=\"%g\"/>\n</svg>\n",
-           szFillColor, szStrokeColor, dfStrokeWidth);
+           "%s\" fill=\"%s\" stroke=\"%s\" stroke-width=\"%g\"/>\n</svg>\n",
+           psSymbol->filled ? "Z" : "", szFillColor, szStrokeColor,
+           dfStrokeWidth);
   msStringBufferAppend(svgBuf, szTmp);
 
   return msStringBufferReleaseStringAndFree(svgBuf);
@@ -3894,7 +3911,8 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                 // handle ELLIPSE as a special case
                 (psSymbol->type == MS_SYMBOL_ELLIPSE)
                     ? msSLDGenerateSVGFromEllipseSymbol(psSymbol, psStyle)
-                    : msSLDGenerateSVGFromVectorSymbol(psSymbol, psStyle);
+                    : msSLDGenerateSVGFromVectorSymbol(psSymbol, psStyle,
+                                                       psLayer);
             if (pszSVG) {
               // encode as Base64 so it can be output to XML
               char *pszBase64 =
