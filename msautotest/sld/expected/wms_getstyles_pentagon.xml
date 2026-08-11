@@ -7,7 +7,7 @@
 <se:PointSymbolizer>
 <se:Graphic>
 <se:ExternalGraphic>
-<se:OnlineResource xlink:type="simple" xlink:href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgdmlld0JveD0iMCAwIDE4IDE4Ij4KPHBhdGggZD0iTSA5LDEgTCAxNyw3LjA4IEwgMTMuOTYsMTcgTCA0LjA0LDE3IEwgMSw3LjA4IEwgOSwxIFoiIGZpbGw9IiMxNTYwODIiIHN0cm9rZT0iI2ZmMDAwMCIgc3Ryb2tlLXdpZHRoPSIxIi8+Cjwvc3ZnPgo="/>
+<se:OnlineResource xlink:type="simple" xlink:href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNyIgaGVpZ2h0PSIxNyIgdmlld0JveD0iMCAwIDE3IDE3Ij4KPHBhdGggZD0iTSA4LjUsMC41IEwgMTYuNSw2LjU4IEwgMTMuNDYsMTYuNSBMIDMuNTQsMTYuNSBMIDAuNSw2LjU4IEwgOC41LDAuNSBaIiBmaWxsPSIjMTU2MDgyIiBzdHJva2U9IiNmZjAwMDAiIHN0cm9rZS13aWR0aD0iMSIvPgo8L3N2Zz4K"/>
 <se:Format>image/svg+xml</se:Format>
 </se:ExternalGraphic>
 <se:Size>16</se:Size>

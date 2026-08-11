@@ -7,7 +7,7 @@
 <se:PointSymbolizer>
 <se:Graphic>
 <se:ExternalGraphic>
-<se:OnlineResource xlink:type="simple" xlink:href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDE2Ij4KPHBhdGggZD0iTSAyLDE0IEwgOCwyIEwgMTQsMTQgIiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4K"/>
+<se:OnlineResource xlink:type="simple" xlink:href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDE0IDE0Ij4KPHBhdGggZD0iTSAxLDEzIEwgNywxIEwgMTMsMTMgIiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4K"/>
 <se:Format>image/svg+xml</se:Format>
 </se:ExternalGraphic>
 <se:Size>12</se:Size>
