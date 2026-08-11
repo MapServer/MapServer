@@ -1,0 +1,25 @@
+<StyledLayerDescriptor version="1.1.0" xsi:schemaLocation="http://www.opengis.net/sld http://schemas.opengis.net/sld/1.1.0/StyledLayerDescriptor.xsd" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc" xmlns:se="http://www.opengis.net/se" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<NamedLayer>
+<se:Name>point_notched_rect_offset</se:Name>
+<UserStyle>
+<se:FeatureTypeStyle>
+<se:Rule>
+<se:PointSymbolizer>
+<se:Graphic>
+<se:ExternalGraphic>
+<se:OnlineResource xlink:type="simple" xlink:href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNS4zMzMzIiBoZWlnaHQ9IjEyIiB2aWV3Qm94PSIwIDAgMTUuMzMzMyAxMiI+CjxwYXRoIGQ9Ik0gMy42NjY2NywxIEwgMTEuNjY2NywxIEwgMTEuODcsMi4wMiBMIDEyLjQ0ODMsMi44ODUgTCAxMy4zMTMzLDMuNDYzMzMgTCAxNC4zMzMzLDMuNjY2NjcgTCAxNC4zMzMzLDguMzMzMzMgTCAxMy4zMTMzLDguNTM2NjcgTCAxMi40NDgzLDkuMTE1IEwgMTEuODcsOS45OCBMIDExLjY2NjcsMTEgTCAzLjY2NjY3LDExIEwgMy40NjMzMyw5Ljk4IEwgMi44ODUsOS4xMTUgTCAyLjAyLDguNTM2NjcgTCAxLDguMzMzMzMgTCAxLDMuNjY2NjcgTCAyLjAyLDMuNDYzMzMgTCAyLjg4NSwyLjg4NSBMIDMuNDYzMzMsMi4wMiBMIDMuNjY2NjcsMSBaIiBmaWxsPSIjOGZjMWZmIiBzdHJva2U9IiNiNWI3YjgiIHN0cm9rZS13aWR0aD0iMSIvPgo8L3N2Zz4K"/>
+<se:Format>image/svg+xml</se:Format>
+</se:ExternalGraphic>
+<se:Size>10</se:Size>
+<se:Displacement>
+<se:DisplacementX>5</se:DisplacementX>
+<se:DisplacementY>-3</se:DisplacementY>
+</se:Displacement>
+</se:Graphic>
+</se:PointSymbolizer>
+</se:Rule>
+</se:FeatureTypeStyle>
+</UserStyle>
+</NamedLayer>
+</StyledLayerDescriptor>
+

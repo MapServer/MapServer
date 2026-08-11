@@ -16,6 +16,14 @@
 # RUN_PARMS: wms_getstyles_pentagon.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=pentagon" > [RESULT_DEMIME]
 # RUN_PARMS: wms_getstyles_hexagon.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=hexagon" > [RESULT_DEMIME]
 # RUN_PARMS: wms_getstyles_wave.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=wave" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_polygon_square_spaced.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=polygon_square_spaced" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_point_notched_rect_rotated.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=point_notched_rect_rotated" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_point_notched_rect_offset.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=point_notched_rect_offset" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_point_notched_rect_opacity.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=point_notched_rect_opacity" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_point_chevron.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=point_chevron" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_point_circle_no_outline.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=point_circle_no_outline" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_point_oval_rotated.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=point_oval_rotated" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_point_oval_opacity.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=point_oval_opacity" > [RESULT_DEMIME]
 
 MAP
     NAME TEST_SLD_COMPLEX
@@ -147,6 +155,30 @@ MAP
         END
     END
 
+    SYMBOL
+        NAME "square_spaced"
+        TYPE VECTOR
+        FILLED TRUE
+        POINTS
+            0.375 0.375
+            0.625 0.375
+            0.625 0.625
+            0.375 0.625
+            0.375 0.375
+        END
+    END
+
+    SYMBOL
+        NAME "chevron"
+        TYPE VECTOR
+        FILLED FALSE
+        POINTS
+            0 1
+            0.5 0
+            1 1
+        END
+    END
+
     LAYER
         NAME "point_outline"
         TYPE POINT
@@ -201,7 +233,7 @@ MAP
                 SYMBOL "hatch"
                 ANGLE -45
                 WIDTH 0.5
-                SIZE 6 # this won't be output to the SLD
+                SIZE 6 # not output to the SLD
             END
         END
     END
@@ -224,7 +256,7 @@ MAP
                 SYMBOL "hatch"
                 ANGLE 0
                 WIDTH 0.5
-                SIZE 6 # this won't be output to the SLD
+                SIZE 6 # not output to the SLD
             END
         END
     END
@@ -247,7 +279,7 @@ MAP
                 SYMBOL "hatch"
                 ANGLE 45
                 WIDTH 0.5
-                SIZE 6 # this won't be output to the SLD
+                SIZE 6 # not output to the SLD
             END
         END
     END
@@ -270,7 +302,7 @@ MAP
                 SYMBOL "hatch"
                 ANGLE 90
                 WIDTH 0.5
-                SIZE 6 # this won't be output to the SLD
+                SIZE 6 # not output to the SLD
             END
         END
     END
@@ -293,7 +325,7 @@ MAP
                 SYMBOL "hatch"
                 ANGLE 30
                 WIDTH 0.5
-                SIZE 6 # this won't be output to the SLD
+                SIZE 6 # not output to the SLD
             END
         END
     END
@@ -391,5 +423,157 @@ MAP
             END
         END
     END
+
+    LAYER
+        NAME "polygon_square_spaced"
+        TYPE POLYGON
+        FEATURE
+            POINTS
+                0 0
+                0 10
+                10 10
+                10 0
+                0 0
+            END
+        END
+        CLASS
+            STYLE
+                SYMBOL "square_spaced"
+                COLOR "#FFC000"
+                SIZE 5
+            END
+        END
+    END
+
+    LAYER
+        NAME "point_notched_rect_rotated"
+        TYPE POINT
+        FEATURE
+            POINTS
+                0 0
+            END
+        END
+        CLASS
+            STYLE
+                SYMBOL "notched_rect"
+                COLOR "#8FC1FF"
+                OUTLINECOLOR "#B5B7B8"
+                SIZE 10
+                ANGLE 45
+            END
+        END
+    END
+
+    LAYER
+        NAME "point_notched_rect_offset"
+        TYPE POINT
+        FEATURE
+            POINTS
+                0 0
+            END
+        END
+        CLASS
+            STYLE
+                SYMBOL "notched_rect"
+                COLOR "#8FC1FF"
+                OUTLINECOLOR "#B5B7B8"
+                SIZE 10
+                OFFSET 5 -3
+            END
+        END
+    END
+
+    LAYER
+        NAME "point_notched_rect_opacity"
+        TYPE POINT
+        FEATURE
+            POINTS
+                0 0
+            END
+        END
+        CLASS
+            STYLE
+                SYMBOL "notched_rect"
+                COLOR "#8FC1FF"
+                OUTLINECOLOR "#B5B7B8"
+                SIZE 10
+                OPACITY 50
+            END
+        END
+    END
+
+    LAYER
+        NAME "point_chevron"
+        TYPE POINT
+        FEATURE
+            POINTS
+                0 0
+            END
+        END
+        CLASS
+            STYLE
+                SYMBOL "chevron"
+                COLOR "#000000"
+                WIDTH 2
+                SIZE 12
+            END
+        END
+    END
+
+    LAYER
+        NAME "point_circle_no_outline"
+        TYPE POINT
+        FEATURE
+            POINTS
+                0 0
+            END
+        END
+        CLASS
+            STYLE
+                SYMBOL "circle"
+                COLOR "#156082"
+                SIZE 16
+            END
+        END
+    END
+
+    LAYER
+        NAME "point_oval_rotated"
+        TYPE POINT
+        FEATURE
+            POINTS
+                0 0
+            END
+        END
+        CLASS
+            STYLE
+                SYMBOL "oval"
+                COLOR "#8FC1FF"
+                OUTLINECOLOR "#B5B7B8"
+                SIZE 10
+                ANGLE 45
+            END
+        END
+    END
+
+    LAYER
+        NAME "point_oval_opacity"
+        TYPE POINT
+        FEATURE
+            POINTS
+                0 0
+            END
+        END
+        CLASS
+            STYLE
+                SYMBOL "oval"
+                COLOR "#8FC1FF"
+                OUTLINECOLOR "#B5B7B8"
+                SIZE 10
+                OPACITY 40
+            END
+        END
+    END
+
 
 END
