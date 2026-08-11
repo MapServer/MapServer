@@ -1,0 +1,34 @@
+# RUN_PARMS: scalebar_geodesic_no_projection.txt [MAP2IMG] -conf ../config/empty2.conf -m [MAPFILE] -i png -o result/scalebar_geodesic_no_projection.png 2> [RESULT_DEVERSION] [ASAN_SKIP_LOG]
+#
+# Test geodesic scalebar failure without a usable map projection.
+#
+# REQUIRES: OUTPUT=PNG
+#
+MAP
+
+EXTENT 0 0 1000000 1000000
+SIZE 220 80
+UNITS METERS
+IMAGECOLOR 255 255 255
+FONTSET "../misc/fonts.lst"
+IMAGETYPE png
+
+SCALEBAR
+  MEASURE GEODESIC
+  TRANSPARENT OFF
+  LABEL
+    COLOR 0 0 0
+    SIZE 9
+    TYPE TRUETYPE
+    FONT "default"
+  END
+  SIZE 180 4
+  COLOR 0 0 0
+  BACKGROUNDCOLOR 255 255 255
+  OUTLINECOLOR 0 0 0
+  UNITS KILOMETERS
+  INTERVALS 4
+  STATUS EMBED
+END
+
+END

@@ -243,6 +243,34 @@ class MapSizeTestCase(MapTestCase):
         assert self.map.height == 480
 
 
+class MapScalebarTestCase(unittest.TestCase):
+    def testScalebarMeasureConstants(self):
+        assert mapscript.MS_SCALEBAR_MEASURE_CARTESIAN == 0
+        assert mapscript.MS_SCALEBAR_MEASURE_GEODESIC == 1
+
+    def testScalebarMeasureProperty(self):
+        test_map = mapscript.mapObj()
+        assert test_map.scalebar.measure == mapscript.MS_SCALEBAR_MEASURE_CARTESIAN
+
+        test_map.scalebar.measure = mapscript.MS_SCALEBAR_MEASURE_GEODESIC
+        assert test_map.scalebar.measure == mapscript.MS_SCALEBAR_MEASURE_GEODESIC
+
+    def testScalebarMeasureFromString(self):
+        test_map = mapscript.fromstring(
+            """
+MAP
+  NAME "scalebar_measure"
+  SIZE 100 100
+  EXTENT 0 0 1 1
+  SCALEBAR
+    MEASURE GEODESIC
+  END
+END
+            """
+        )
+        assert test_map.scalebar.measure == mapscript.MS_SCALEBAR_MEASURE_GEODESIC
+
+
 class MapSetWKTTestCase(MapTestCase):
     def testOGCWKT(self):
         self.map.setWKTProjection(
