@@ -1594,8 +1594,11 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
       exprBindings[binding].type = MS_EXPRESSION;
       (*nexprbindings)++;
       status = MS_SUCCESS;
-    } else if (strstr(ops, psRoot->pszValue) && psRoot->psChild &&
-               psRoot->psChild->psNext) {
+    } else if (psRoot->psChild && psRoot->psChild->psNext &&
+               (strcmp(psRoot->pszValue, "Add") == 0 ||
+                strcmp(psRoot->pszValue, "Sub") == 0 ||
+                strcmp(psRoot->pszValue, "Mul") == 0 ||
+                strcmp(psRoot->pszValue, "Div") == 0)) {
       // Parse an arithmetic element <ogc:Add>, <ogc:Sub>, <ogc:Mul>, <ogc:Div>
       const char op[2] = {*(strstr(ops, psRoot->pszValue) + 3), '\0'};
       msStringBuffer *expression = msStringBufferAlloc();
