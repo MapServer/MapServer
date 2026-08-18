@@ -1412,7 +1412,6 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle, mapObj *map,
 int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
                             enum objType objtype) {
   int status = MS_FAILURE;
-  const char *ops = "Add+Sub-Mul*Div/";
   styleObj *psStyle = static_cast<styleObj *>(psObj);
   labelObj *psLabel = static_cast<labelObj *>(psObj);
   int lbinding;
@@ -1595,12 +1594,16 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
       (*nexprbindings)++;
       status = MS_SUCCESS;
     } else if (psRoot->psChild && psRoot->psChild->psNext &&
-               (strcmp(psRoot->pszValue, "Add") == 0 ||
-                strcmp(psRoot->pszValue, "Sub") == 0 ||
-                strcmp(psRoot->pszValue, "Mul") == 0 ||
-                strcmp(psRoot->pszValue, "Div") == 0)) {
+               (strcasecmp(psRoot->pszValue, "Add") == 0 ||
+                strcasecmp(psRoot->pszValue, "Sub") == 0 ||
+                strcasecmp(psRoot->pszValue, "Mul") == 0 ||
+                strcasecmp(psRoot->pszValue, "Div") == 0)) {
       // Parse an arithmetic element <ogc:Add>, <ogc:Sub>, <ogc:Mul>, <ogc:Div>
-      const char op[2] = {*(strstr(ops, psRoot->pszValue) + 3), '\0'};
+      const char op[2] = {strcasecmp(psRoot->pszValue, "Add") == 0   ? '+'
+                          : strcasecmp(psRoot->pszValue, "Sub") == 0 ? '-'
+                          : strcasecmp(psRoot->pszValue, "Mul") == 0 ? '*'
+                                                                     : '/',
+                          '\0'};
       msStringBuffer *expression = msStringBufferAlloc();
 
       // Parse first operand
