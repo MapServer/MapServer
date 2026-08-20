@@ -1556,6 +1556,9 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
   std::string query_kvp;
   if (!queryableItems.empty()) {
     for (int i = 0; i < request->NumParams; i++) {
+      if (request->ParamSources[i] ==
+          MS_PARAM_SOURCE_COOKIE) // skip cookie parameters
+        continue;
       if (std::find(queryableItems.begin(), queryableItems.end(),
                     request->ParamNames[i]) != queryableItems.end()) {
 
