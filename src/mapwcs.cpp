@@ -607,6 +607,7 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
         if (tokens == NULL || n != 4) {
           msSetError(MS_WCSERR, "Wrong number of arguments for BBOX.",
                      "msWCSParseRequest()");
+          msFreeCharArray(tokens, n);
           return msWCSException(map, "InvalidParameterValue", "bbox",
                                 params->version);
         }
