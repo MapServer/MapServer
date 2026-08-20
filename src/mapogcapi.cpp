@@ -137,11 +137,13 @@ static int includeLayer(mapObj *map, layerObj *layer) {
 
 /*
 ** Returns the value associated with an item from the request's query string and
-*NULL if the item was not found.
+*NULL if the item was not found. Any cookie parameters are ignored.
 */
 static const char *getRequestParameter(const cgiRequestObj *request,
                                        const char *item) {
   for (int i = 0; i < request->NumParams; i++) {
+    if (request->ParamSources[i] == MS_PARAM_SOURCE_COOKIE)
+      continue;
     if (strcmp(item, request->ParamNames[i]) == 0)
       return request->ParamValues[i];
   }
@@ -245,6 +247,9 @@ msOOGCAPICheckQueryParameters(const mapObj *map, const cgiRequestObj *request,
                               const std::set<std::string> &allowedParameters) {
   if (msOGCAPIComplianceMode(map)) {
     for (int j = 0; j < request->NumParams; j++) {
+      if (request->ParamSources[j] ==
+          MS_PARAM_SOURCE_COOKIE) // skip cookie parameters
+        continue;
       const char *paramName = request->ParamNames[j];
       if (allowedParameters.find(paramName) == allowedParameters.end()) {
         msOGCAPIOutputError(
@@ -1280,6 +1285,9 @@ static void outputResponse(
 
     // parameters (optional)
     for (int i = 0; i < request->NumParams; i++) {
+      if (request->ParamSources[i] ==
+          MS_PARAM_SOURCE_COOKIE) // skip cookie params
+        continue;
       if (request->ParamValues[i] &&
           strlen(request->ParamValues[i]) > 0) { // skip empty params
         j["template"]["params"].update(
@@ -1557,7 +1565,7 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
   if (!queryableItems.empty()) {
     for (int i = 0; i < request->NumParams; i++) {
       if (request->ParamSources[i] ==
-          MS_PARAM_SOURCE_COOKIE) // skip cookie parameters
+          MS_PARAM_SOURCE_COOKIE) // ignore cookie parameters
         continue;
       if (std::find(queryableItems.begin(), queryableItems.end(),
                     request->ParamNames[i]) != queryableItems.end()) {
@@ -3056,7 +3064,11 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request) {
   }
 
   for (int i = 0; i < request->NumParams; i++) {
+    if (request->ParamSources[i] == MS_PARAM_SOURCE_COOKIE)
+      continue; // ignore cookie parameters
     for (int j = i + 1; j < request->NumParams; j++) {
+      if (request->ParamSources[j] == MS_PARAM_SOURCE_COOKIE)
+        continue;
       if (strcmp(request->ParamNames[i], request->ParamNames[j]) == 0) {
         std::string errorMsg("Query parameter ");
         errorMsg += request->ParamNames[i];
