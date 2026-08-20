@@ -1,5 +1,14 @@
 # RUN_PARMS: index_wms.json [MAPSERV] -conf index.conf "PATH_INFO=/WMS_MAP/" QUERY_STRING="f=json" > [RESULT_DEMIME]
 
+# a request with a querystring that returns empty requests errors will default to returning the index JSON
+# RUN_PARMS: index_wms.json [MAPSERV] -conf index.conf "PATH_INFO=/WMS_MAP/" QUERY_STRING="param1=val1&param2=val2&f=json" > [RESULT_DEMIME]
+
+# reutrn index page (in HTML) when previously Web application error. Traditional BROWSE mode requires a TEMPLATE in the WEB section, but none was provided would be returned
+# RUN_PARMS: index_wms.html [MAPSERV] -conf index.conf "PATH_INFO=/WMS_MAP/" QUERY_STRING="?version=1.3.0&request=GetCapabilities&service=" > [RESULT_DEMIME]
+
+# any requests that throw a different error should return the error
+# RUN_PARAMS: index_wms_error.txt [MAPSERV] -conf index.conf "PATH_INFO=/WMS_MAP/" QUERY_STRING="?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=-90,0,90,180&CRS=EPSG:4326&WIDTH=372&HEIGHT=372&LAYERS=missing&STYLES=&FORMAT=image/png" >  [RESULT_DEMIME]
+
 MAP
     NAME "WMSMAP"
     IMAGETYPE "png"
@@ -14,8 +23,6 @@ MAP
             "wms_srs" "EPSG:4326"
             "ows_title" "MapServer WMS Demo Map"
         END
-        # required if using &mode=browse&template=openlayers
-        IMAGEPATH "/tmp/"
     END
 
     LAYER

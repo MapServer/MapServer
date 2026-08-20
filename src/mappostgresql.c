@@ -266,6 +266,19 @@ int msPOSTGRESQLJoinPrepare(joinObj *join, shapeObj *shape) {
   return MS_SUCCESS;
 }
 
+static char *msPOSTGRESQLEscapeSQLParam(PGconn *conn, const char *pszString) {
+
+  size_t nSrcLen = strlen(pszString);
+  char *pszEscapedStr = (char *)msSmallMalloc(2 * nSrcLen + 1);
+  int nError = 0;
+  PQescapeStringConn(conn, pszEscapedStr, pszString, nSrcLen, &nError);
+  if (nError != 0) {
+    free(pszEscapedStr);
+    pszEscapedStr = NULL;
+  }
+  return pszEscapedStr;
+}
+
 /************************************************************************/
 /*                       msPOSTGRESQLJoinNext()                         */
 /*                                                                      */
@@ -306,7 +319,8 @@ int msPOSTGRESQLJoinNext(joinObj *join) {
     /* Write the list of column names. */
     length = 0;
     for (i = 0; i < join->numitems; i++) {
-      length += 8 + strlen(join->items[i]) + 2;
+      length += strlen("::text") + strlen("\"\"") + strlen(join->items[i]) * 2 +
+                strlen(", ");
     }
     if (length > 1024 * 1024) {
       msSetError(MS_MEMERR, "Too many joins.\n", "msPOSTGRESQLJoinNext()");
@@ -321,24 +335,33 @@ int msPOSTGRESQLJoinNext(joinObj *join) {
 
     columns[0] = 0;
     for (i = 0; i < join->numitems; i++) {
-      strcat(columns, "\"");
-      strcat(columns, join->items[i]);
-      strcat(columns, "\"::text");
+      char *stresc = msDefaultEscapePropertyName(join->items[i]);
+      strcat(columns, stresc);
+      msFree(stresc);
+      strcat(columns, "::text");
       if (i != join->numitems - 1) {
         strcat(columns, ", ");
       }
     }
 
     /* Create the query string. */
-    const size_t nSize = 26 + strlen(columns) + strlen(join->table) +
-                         strlen(join->to) + strlen(joininfo->from_value);
-    sql = (char *)malloc(nSize);
-    if (!sql) {
-      msSetError(MS_MEMERR, "Failure to malloc.\n", "msPOSTGRESQLJoinNext()");
+    char *pszEscapedFrom =
+        msPOSTGRESQLEscapeSQLParam(joininfo->conn, joininfo->from_value);
+    if (!pszEscapedFrom) {
+      free(columns);
       return MS_FAILURE;
     }
+    char *pszEscapedTable = msDefaultEscapePropertyName(join->table);
+    char *pszEscapedTo = msDefaultEscapePropertyName(join->to);
+    const size_t nSize = strlen("SELECT  FROM  WHERE  = ''") + strlen(columns) +
+                         strlen(pszEscapedTable) + strlen(pszEscapedTo) +
+                         strlen(pszEscapedFrom) + 1;
+    sql = (char *)msSmallMalloc(nSize);
     snprintf(sql, nSize, "SELECT %s FROM %s WHERE %s = '%s'", columns,
-             join->table, join->to, joininfo->from_value);
+             pszEscapedTable, pszEscapedTo, pszEscapedFrom);
+    msFree(pszEscapedTable);
+    msFree(pszEscapedTo);
+    msFree(pszEscapedFrom);
     if (joininfo->layer_debug) {
       msDebug("msPOSTGRESQLJoinNext(): executing %s.\n", sql);
     }

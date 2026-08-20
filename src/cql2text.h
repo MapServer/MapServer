@@ -15,6 +15,7 @@
 
 #include "cql2.h"
 
+#include <memory>
 #include <string>
 
 struct cql2text_parse_context {
@@ -34,7 +35,8 @@ int cql2textparse(cql2text_parse_context *context);
 int cql2textlex(cql2_expr_node **ppNode, cql2text_parse_context *context);
 void cql2texterror(cql2text_parse_context *context, const char *msg);
 
-cql2_expr_node *cql2_create_and_or_or(cql2_op op, cql2_expr_node *left,
-                                      cql2_expr_node *right);
+cql2_expr_node *cql2_create_and_or_or(cql2_op op,
+                                      std::unique_ptr<cql2_expr_node> left,
+                                      std::unique_ptr<cql2_expr_node> right);
 
 #endif

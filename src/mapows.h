@@ -40,6 +40,13 @@
  */
 #define OWS_DEFAULT_SCHEMAS_LOCATION "http://schemas.opengis.net"
 
+/* Likewise, this is the URL to the official INSPIRE Schema Repository. Used by
+ * default for INSPIRE services (i.e. services that define
+ * ows_inspire_capabilities) unless the inspire_schemas_location web
+ * metadata is set in the mapfile.
+ */
+#define INSPIRE_DEFAULT_SCHEMAS_LOCATION "https://inspire.ec.europa.eu/schemas"
+
 #if defined USE_LIBXML2 && defined USE_WFS_SVR
 #include <libxml/tree.h>
 #endif

@@ -1,0 +1,47 @@
+Content-Type: application/gml+xml; version=3.2; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<schema
+   targetNamespace="http://mapserver.gis.umn.edu/mapserver" 
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver" 
+   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+   xmlns="http://www.w3.org/2001/XMLSchema"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   elementFormDefault="qualified" version="0.1" >
+
+  <import namespace="http://www.opengis.net/gml/3.2"
+          schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd" />
+
+  <element name="popplace_gpkg" 
+           type="ms:popplace_gpkgType" 
+           substitutionGroup="gml:AbstractFeature" />
+
+  <complexType name="popplace_gpkgType">
+    <complexContent>
+      <extension base="gml:AbstractFeatureType">
+        <sequence>
+          <element name="msGeometry" type="gml:GeometryPropertyType" minOccurs="0" maxOccurs="1"/>
+          <element name="AREA" minOccurs="0" type="double"/>
+          <element name="PERIMETER" minOccurs="0" type="double"/>
+          <element name="POPPLACE_" minOccurs="0" type="long"/>
+          <element name="POPPLACE_I" minOccurs="0" type="long"/>
+          <element name="UNIQUE_KEY" minOccurs="0" type="string"/>
+          <element name="NAME" minOccurs="0" type="string"/>
+          <element name="NAME_E" minOccurs="0" type="string"/>
+          <element name="NAME_F" minOccurs="0" type="string"/>
+          <element name="UNIQUE_K_1" minOccurs="0" type="string"/>
+          <element name="UNIQUE_K_2" minOccurs="0" type="string"/>
+          <element name="REG_CODE" minOccurs="0" type="integer"/>
+          <element name="NTS50" minOccurs="0" type="string"/>
+          <element name="LAT" minOccurs="0" type="string"/>
+          <element name="LONG" minOccurs="0" type="string"/>
+          <element name="SGC_CODE" minOccurs="0" type="integer"/>
+          <element name="CAPITAL" minOccurs="0" type="integer"/>
+          <element name="POP_RANGE" minOccurs="0" type="integer"/>
+          <element name="fid" minOccurs="0" type="long"/>
+        </sequence>
+      </extension>
+    </complexContent>
+  </complexType>
+
+</schema>

@@ -1597,7 +1597,7 @@ yyreduce:
 
   case 4: /* boolean_expr: boolean_expr "AND" boolean_expr  */
         {
-            yyval = cql2_create_and_or_or( CQL2_AND, yyvsp[-2], yyvsp[0] );
+            yyval = cql2_create_and_or_or( CQL2_AND, std::unique_ptr<cql2_expr_node>(yyvsp[-2]), std::unique_ptr<cql2_expr_node>(yyvsp[0]) );
             if( yyval->HasReachedMaxDepth() )
             {
                 yyerror (context, "Maximum expression depth reached");
@@ -1609,7 +1609,7 @@ yyreduce:
 
   case 5: /* boolean_expr: boolean_expr "OR" boolean_expr  */
         {
-            yyval = cql2_create_and_or_or( CQL2_OR, yyvsp[-2], yyvsp[0] );
+            yyval = cql2_create_and_or_or( CQL2_OR, std::unique_ptr<cql2_expr_node>(yyvsp[-2]), std::unique_ptr<cql2_expr_node>(yyvsp[0]) );
             if( yyval->HasReachedMaxDepth() )
             {
                 yyerror (context, "Maximum expression depth reached");

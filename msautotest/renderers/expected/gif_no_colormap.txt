@@ -1,0 +1,8 @@
+Content-Type: text/html
+
+<HTML>
+<HEAD><TITLE>MapServer Message</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF">
+msDrawMap(): Image handling error. Failed to draw layer named &#39;nocmap&#39;.
+readGIF(): General error message. gif image has no color map
+</BODY></HTML>

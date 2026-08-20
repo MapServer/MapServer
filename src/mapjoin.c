@@ -808,8 +808,22 @@ int msMySQLJoinNext(joinObj *join) {
   /* if(strcmp(joininfo->target, msMySQLReadStringAttribute(joininfo->conn, i,
    * joininfo->toindex)) == 0) break; */
   /* }   */
-  snprintf(qbuf, sizeof(qbuf), "SELECT * FROM %s WHERE %s = %s", join->table,
-           joininfo->tocolumn, joininfo->target);
+
+  char *endptr = NULL;
+  (void)strtoll(joininfo->target, &endptr, 10);
+  if (endptr != joininfo->target + strlen(joininfo->target)) {
+    msSetError(MS_JOINERR,
+               "Non-numeric value in MySQL JOIN colunn not supported.",
+               "msMySQLJoinNext()");
+    return (MS_FAILURE);
+  }
+
+  char *escapedTableName = msReplaceSubstring(join->table, "`", "``");
+  char *escapedToColumn = msReplaceSubstring(joininfo->tocolumn, "`", "``");
+  snprintf(qbuf, sizeof(qbuf), "SELECT * FROM `%s` WHERE `%s` = %s",
+           escapedTableName, escapedToColumn, joininfo->target);
+  msFree(escapedTableName);
+  msFree(escapedToColumn);
   MYDEBUG printf("%s<BR>\n", qbuf);
   if ((joininfo->qresult =
            msMySQLQuery(qbuf, joininfo->conn))) { /* There were some rows found,

@@ -92,7 +92,7 @@ boolean_expr:
 
     boolean_expr CQL2_TOK_AND boolean_expr
         {
-            $$ = cql2_create_and_or_or( CQL2_AND, $1, $3 );
+            $$ = cql2_create_and_or_or( CQL2_AND, std::unique_ptr<cql2_expr_node>($1), std::unique_ptr<cql2_expr_node>($3) );
             if( $$->HasReachedMaxDepth() )
             {
                 yyerror (context, "Maximum expression depth reached");
@@ -103,7 +103,7 @@ boolean_expr:
 
     | boolean_expr CQL2_TOK_OR boolean_expr
         {
-            $$ = cql2_create_and_or_or( CQL2_OR, $1, $3 );
+            $$ = cql2_create_and_or_or( CQL2_OR, std::unique_ptr<cql2_expr_node>($1), std::unique_ptr<cql2_expr_node>($3) );
             if( $$->HasReachedMaxDepth() )
             {
                 yyerror (context, "Maximum expression depth reached");

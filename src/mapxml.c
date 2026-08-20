@@ -55,7 +55,7 @@ int msTransformXmlMapfile(const char *stylesheet, const char *xmlMapfile,
     goto done;
   }
 
-  doc = xmlReadFile(xmlMapfile, NULL, XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
+  doc = xmlReadFile(xmlMapfile, NULL, 0);
   if (doc == NULL) {
     msSetError(MS_MISCERR, "Failed to load xml mapfile",
                "msTransformXmlMapfile()");

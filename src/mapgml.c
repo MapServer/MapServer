@@ -2408,7 +2408,7 @@ gmlItemListObj *msGMLGetItems(layerObj *layer,
                                    "default_items")) != NULL)
     defaultitems = msStringSplit(value, ',', &numdefaultitems);
 
-  /* allocate memory and iinitialize the item collection */
+  /* allocate memory and initialize the item collection */
   itemList = (gmlItemListObj *)malloc(sizeof(gmlItemListObj));
   if (itemList == NULL) {
     msSetError(MS_MEMERR, "Error allocating a collection GML item structures.",

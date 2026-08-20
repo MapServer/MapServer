@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MapServer Simple Viewer</title>
+    <link rel="stylesheet" href="//mapserver.org/lib/10.5.0/ol-mapserver.css">
+    <link rel="shortcut icon" type="image/x-icon" href="//mapserver.org/_static/mapserver.ico" />
+    <style>
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script src="//mapserver.org/lib/10.5.0/ol-mapserver.js"></script>
+    <script>
+        if (!ol.proj.get('EPSG:4326')) {
+            ol.proj.addProjection(new ol.proj.Projection({ code: 'EPSG:4326' }));
+        }
+        const mslayer = new ol.layer.Image({
+            source: new ol.source.Image({
+                loader: ol.source.wms.createLoader({
+                    url: 'http://\u003c/script\u003e\u003cscript\u003ealert(document.domain)\u003c/script\u003e/mapserv?map=',
+                    params: {
+                        LAYERS: 'road',
+                        VERSION: '1.1.0',
+                        FORMAT: 'image/png'
+                    },
+                    projection: 'EPSG:4326',
+                    ratio: 1
+                })
+            })
+        });
+        const map = new ol.Map({
+            layers: [mslayer],
+            target: 'map',
+            view: new ol.View({
+                projection: 'EPSG:4326',
+                minResolution: 3.20978e-08,
+                maxResolution: 0.033657
+            })
+        });
+        map.getView().fit([-67.558092, 42.382704, -58.941908, 48.115596], { size: map.getSize() });
+    </script>
+</body>
+</html>

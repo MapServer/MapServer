@@ -57,6 +57,16 @@ symbol
     type pixmap
     image "../misc/data/gdalicon_interlaced.gif"
 end
+symbol
+    name "gifpaletteoob"
+    type pixmap
+    image "../misc/data/gif_palette_oob.gif"
+end
+symbol
+    name "gifnocolormap"
+    type pixmap
+    image "../misc/data/gif_no_colormap.gif"
+end
 
 
 end

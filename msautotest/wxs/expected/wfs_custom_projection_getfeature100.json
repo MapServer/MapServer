@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "cities",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::3857" } },
+"xy_coordinate_resolution": 0.001,
+"features": [
+{ "type": "Feature", "properties": { "name": "Vatican City" }, "geometry": { "type": "Point", "coordinates": [ 1386304.644, 5146502.579 ] } }
+]
+}

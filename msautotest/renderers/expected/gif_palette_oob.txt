@@ -1,0 +1,8 @@
+Content-Type: text/html
+
+<HTML>
+<HEAD><TITLE>MapServer Message</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF">
+msDrawMap(): Image handling error. Failed to draw layer named &#39;oob&#39;.
+readGIF(): General error message. corrupted gif image, img size exceeds screen size
+</BODY></HTML>

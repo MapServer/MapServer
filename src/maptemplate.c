@@ -43,6 +43,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <math.h>
 
 static inline void IGUR_sizet(size_t ignored) {
   (void)ignored;
@@ -82,11 +83,19 @@ static const char *const olTemplate =
     "    <script "
     "src=\"[openlayers_js_url]\"></script>\n"
     "    <script>\n"
+    "        if (!ol.proj.get('[openlayers_projection]')) {\n"
+    "            ol.proj.addProjection(new ol.proj.Projection({ code: "
+    "'[openlayers_projection]' }));\n"
+    "        }\n"
     "        [openlayers_layer]\n"
     "        const map = new ol.Map({\n"
     "            layers: [mslayer],\n"
     "            target: 'map',\n"
-    "            view: new ol.View()\n"
+    "            view: new ol.View({\n"
+    "                projection: '[openlayers_projection]',\n"
+    "                minResolution: [ol_minresolution],\n"
+    "                maxResolution: [ol_maxresolution]\n"
+    "            })\n"
     "        });\n"
     "        map.getView().fit([[minx], [miny], [maxx], [maxy]], { size: "
     "map.getSize() });\n"
@@ -108,11 +117,7 @@ static const char *const olLayerMapServerTag =
     "        });";
 
 static const char *const olLayerWMSTag =
-    "if (!ol.proj.get('[openlayers_projection]')) {\n"
-    "            ol.proj.addProjection(new ol.proj.Projection({ code : "
-    "'[openlayers_projection]' }));\n"
-    "        }\n"
-    "        const mslayer = new ol.layer.Image({\n"
+    "const mslayer = new ol.layer.Image({\n"
     "            source: new ol.source.Image({\n"
     "                loader: ol.source.wms.createLoader({\n"
     "                    url: '[mapserv_onlineresource]',\n"
@@ -4097,7 +4102,27 @@ static char *processLine(mapservObj *mapserv, const char *instr, FILE *stream,
 #else
     ol = msBuildOnlineResource(mapserv->map, mapserv->request);
 #endif
-    outstr = msReplaceSubstring(outstr, "[mapserv_onlineresource]", ol);
+
+    if (strstr(outstr, "'[mapserv_onlineresource]'")) {
+      // Fix
+      // https://github.com/MapServer/MapServer/security/advisories/GHSA-xqj6-vjqr-33vv
+      // The value is inside a single-quoted JS string in a <script> element.
+      // Escaping the quote is not enough: a literal "</script>" in the value
+      // still closes the element. Encode '<' and '>' as JS unicode escapes so
+      // they cannot break out of the script block.
+      char *pszEscaped = msEscapeJSonLikeString(ol, '\'');
+      pszEscaped = msReplaceSubstring(pszEscaped, "<", "\\u003c");
+      pszEscaped = msReplaceSubstring(pszEscaped, ">", "\\u003e");
+      const size_t nLen = 1 + strlen(pszEscaped) + 1 + 1;
+      char *pszEscapedWithSingleQuotes = (char *)msSmallMalloc(nLen);
+      snprintf(pszEscapedWithSingleQuotes, nLen, "'%s'", pszEscaped);
+      outstr = msReplaceSubstring(outstr, "'[mapserv_onlineresource]'",
+                                  pszEscapedWithSingleQuotes);
+      msFree(pszEscapedWithSingleQuotes);
+      msFree(pszEscaped);
+    } else {
+      outstr = msReplaceSubstring(outstr, "[mapserv_onlineresource]", ol);
+    }
     msFree(ol);
   }
 
@@ -5001,21 +5026,46 @@ int msReturnOpenLayersPage(mapservObj *mapserv) {
   char *format = NULL;
 
   /* 2 CGI parameters are used in the template. we need to transform them
-   * to be sure the case match during the template processing. We also
-   * need to search the SRS/CRS parameter to get the projection info. OGC
-   * services version >= 1.3.0 uses CRS rather than SRS */
+   * to be sure the case matches during the template processing.*/
+
+  const char *version = NULL;
   for (i = 0; i < mapserv->request->NumParams; i++) {
-    if ((strcasecmp(mapserv->request->ParamNames[i], "SRS") == 0) ||
-        (strcasecmp(mapserv->request->ParamNames[i], "CRS") == 0)) {
-      projection = mapserv->request->ParamValues[i];
-    } else if (strcasecmp(mapserv->request->ParamNames[i], "LAYERS") == 0) {
+    if (strcasecmp(mapserv->request->ParamNames[i], "LAYERS") == 0) {
       free(mapserv->request->ParamNames[i]);
       mapserv->request->ParamNames[i] = msStrdup("LAYERS");
     } else if (strcasecmp(mapserv->request->ParamNames[i], "VERSION") == 0) {
       free(mapserv->request->ParamNames[i]);
       mapserv->request->ParamNames[i] = msStrdup("VERSION");
+      version = mapserv->request->ParamValues[i];
     }
   }
+
+  /* Determine whether this is a 1.3.0 request.
+   * CRS is used for VERSION 1.3.0, SRS for earlier versions. */
+
+  if (mapserv->Mode != BROWSE) {
+    const int use_crs = (version != NULL && strcmp(version, "1.3.0") >= 0);
+    const char *proj_param = use_crs ? "CRS" : "SRS";
+
+    /* get the correct projection parameter */
+    for (i = 0; i < mapserv->request->NumParams; i++) {
+      if (strcasecmp(mapserv->request->ParamNames[i], proj_param) == 0) {
+        projection = msEncodeHTMLEntities(mapserv->request->ParamValues[i]);
+        break;
+      }
+    }
+  }
+
+  if (mapserv->Mode == BROWSE) {
+    char *epsgCode = NULL;
+    msOWSGetEPSGProj(&(mapserv->map->projection), NULL, NULL, MS_TRUE,
+                     &epsgCode);
+    if (epsgCode) {
+      // Transfers ownership of epsgCode to projection
+      projection = epsgCode;
+    }
+  }
+
   if (mapserv->map->outputformat->mimetype &&
       *mapserv->map->outputformat->mimetype) {
     format = mapserv->map->outputformat->mimetype;
@@ -5046,15 +5096,40 @@ int msReturnOpenLayersPage(mapservObj *mapserv) {
   buffer = msReplaceSubstring(buffer, "[openlayers_js_url]", openlayersUrl);
   buffer = msReplaceSubstring(buffer, "[openlayers_css_url]", openlayersCssUrl);
   buffer = msReplaceSubstring(buffer, "[openlayers_layer]", layer);
-  if (projection)
-    buffer = msReplaceSubstring(buffer, "[openlayers_projection]", projection);
-  if (format)
+  if (!projection) {
+    // if no projection can be found then use the default OL projection
+    projection = msStrdup("EPSG:3857");
+  }
+  buffer = msReplaceSubstring(buffer, "[openlayers_projection]", projection);
+  if (format) {
     buffer = msReplaceSubstring(buffer, "[openlayers_format]", format);
-  else
+  } else {
     buffer = msReplaceSubstring(buffer, "[openlayers_format]", "image/png");
+  }
+
+  double extentWidth = mapserv->map->extent.maxx - mapserv->map->extent.minx;
+  double extentHeight = mapserv->map->extent.maxy - mapserv->map->extent.miny;
+  // assume default tile size and zoom-levels
+  int zoomLevels = 20;
+  double maxResolution = MS_MAX(extentWidth, extentHeight) / 256.0;
+
+  if (maxResolution <= 0) {
+    maxResolution = 1; // fallback to avoid any divide by zero
+  }
+
+  double minResolution = maxResolution / pow(2.0, zoomLevels);
+  char olMinRes[64], olMaxRes[64];
+
+  snprintf(olMaxRes, sizeof(olMaxRes), "%g", maxResolution);
+  snprintf(olMinRes, sizeof(olMinRes), "%g", minResolution);
+
+  buffer = msReplaceSubstring(buffer, "[ol_maxresolution]", olMaxRes);
+  buffer = msReplaceSubstring(buffer, "[ol_minresolution]", olMinRes);
+
   msIO_fwrite(buffer, strlen(buffer), 1, stdout);
   free(layer);
   free(buffer);
+  free(projection);
 
   return MS_SUCCESS;
 }

@@ -725,7 +725,8 @@ void msDrawRasterLayerLowCloseDataset(layerObj *layer, void *hDS) {
 int msDrawRasterLayerLowCheckIfMustDraw(mapObj *map, layerObj *layer) {
   if (!layer->data && !layer->tileindex &&
       !(layer->connectiontype == MS_KERNELDENSITY ||
-        layer->connectiontype == MS_IDW)) {
+        layer->connectiontype == MS_IDW ||
+        layer->connectiontype == MS_KRIGING)) {
     if (layer->debug)
       msDebug("msDrawRasterLayerLow(%s): layer data and tileindex NULL ... "
               "doing nothing.",
@@ -863,7 +864,8 @@ int msDrawRasterLayerLowWithDataset(mapObj *map, layerObj *layer,
     }
 
     if (layer->connectiontype == MS_KERNELDENSITY ||
-        layer->connectiontype == MS_IDW) {
+        layer->connectiontype == MS_IDW ||
+        layer->connectiontype == MS_KRIGING) {
       msAcquireLock(TLOCK_GDAL);
       status = msInterpolationDataset(map, image, layer, &hDS,
                                       &kernel_density_cleanup_ptr);
@@ -965,7 +967,8 @@ int msDrawRasterLayerLowWithDataset(mapObj *map, layerObj *layer,
     ** to closing for tile indexes
     */
     if (layer->connectiontype == MS_KERNELDENSITY ||
-        layer->connectiontype == MS_IDW) {
+        layer->connectiontype == MS_IDW ||
+        layer->connectiontype == MS_KRIGING) {
       /*
       ** Fix issue #5330
       ** The in-memory kernel density heatmap gdal dataset handle (hDS) gets

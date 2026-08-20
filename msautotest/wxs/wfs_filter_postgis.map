@@ -156,6 +156,9 @@
 #
 # No default EXTENT
 # RUN_PARMS: wfs_filter_postgis_filter_item_hits_no_extent.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=province_with_filter_item_no_extent&RESULTTYPE=hits" > [RESULT_DEVERSION]
+#
+# No default EXTENT + NATIVE_FILTER
+# RUN_PARMS: wfs_filter_postgis_native_filter_hits_no_extent.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=province_with_native_filter_no_extent&RESULTTYPE=hits" > [RESULT_DEVERSION]
 
 MAP
 #CONFIG "MS_ERRORFILE" "stderr"
@@ -300,6 +303,26 @@ LAYER
   METADATA
     "wfs_title"         "province_with_filter_item_no_extent"
     "wfs_description"   "province_with_filter_item_no_extent"
+    "wfs_use_default_extent_for_getfeature" "false"
+    "gml_include_items" "all"
+  END
+  TYPE POLYGON
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+
+END # Layer
+
+
+LAYER
+  NAME province_with_native_filter_no_extent
+  INCLUDE "postgis.include"
+  DATA "the_geom from (select * from province order by gid) as foo using srid=3978 using unique gid"
+  PROCESSING "NATIVE_FILTER=island_e='Cape Breton Island'"
+  METADATA
+    "wfs_title"         "province_with_native_filter_no_extent"
+    "wfs_description"   "province_with_native_filter_no_extent"
     "wfs_use_default_extent_for_getfeature" "false"
     "gml_include_items" "all"
   END

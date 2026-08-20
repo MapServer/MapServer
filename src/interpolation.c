@@ -49,6 +49,15 @@ void msIdw(float *xyz, int width, int height, int npoints,
 void msIdwProcessing(layerObj *layer,
                      interpolationProcessingParams *interpParams);
 
+/******************************************************************************
+ * kriging (NNGP).
+ ******************************************************************************/
+void msKriging(float *xyz, int width, int height, int npoints,
+               interpolationProcessingParams *interpParams,
+               unsigned char *iMean, unsigned char *iSD);
+void msKrigingProcessing(layerObj *layer,
+                         interpolationProcessingParams *interpParams);
+
 //---------------------------------------------------------------------------//
 int msInterpolationDataset(mapObj *map, imageObj *image,
                            layerObj *interpolation_layer, void **hDSvoid,
@@ -68,7 +77,8 @@ int msInterpolationDataset(mapObj *map, imageObj *image,
   memset(&interpParams, 0, sizeof(interpParams));
 
   assert(interpolation_layer->connectiontype == MS_KERNELDENSITY ||
-         interpolation_layer->connectiontype == MS_IDW);
+         interpolation_layer->connectiontype == MS_IDW ||
+         interpolation_layer->connectiontype == MS_KRIGING);
   *cleanup_ptr = NULL;
 
   if (!interpolation_layer->connection || !*interpolation_layer->connection) {
@@ -81,6 +91,8 @@ int msInterpolationDataset(mapObj *map, imageObj *image,
     msKernelDensityProcessing(interpolation_layer, &interpParams);
   } else if (interpolation_layer->connectiontype == MS_IDW) {
     msIdwProcessing(interpolation_layer, &interpParams);
+  } else if (interpolation_layer->connectiontype == MS_KRIGING) {
+    msKrigingProcessing(interpolation_layer, &interpParams);
   }
 
   layer_idx = msGetLayerIndex(map, interpolation_layer->connection);
@@ -235,12 +247,16 @@ int msInterpolationDataset(mapObj *map, imageObj *image,
   msLayerClose(layer);
   status = MS_SUCCESS;
 
+  /* kriging emits two bands (1 = mean, 2 = predictive std dev); the others one.
+   * All bands live in a single allocation so a single free() cleans up. */
+  const size_t bandsize = (size_t)image->width * image->height;
+  const int nbands =
+      (interpolation_layer->connectiontype == MS_KRIGING) ? 2 : 1;
+
   if (npoints > 0 && interpParams.expand_searchrect) {
-    iValues =
-        msSmallMalloc(sizeof(unsigned char) * image->width * image->height);
+    iValues = msSmallMalloc(sizeof(unsigned char) * bandsize * nbands);
   } else {
-    iValues =
-        msSmallCalloc(1, sizeof(unsigned char) * image->width * image->height);
+    iValues = msSmallCalloc(nbands, sizeof(unsigned char) * bandsize);
   }
 
   if (npoints >
@@ -251,6 +267,9 @@ int msInterpolationDataset(mapObj *map, imageObj *image,
     } else if (interpolation_layer->connectiontype == MS_IDW) {
       msIdw(xyz_values, image->width, image->height, npoints, &interpParams,
             iValues);
+    } else if (interpolation_layer->connectiontype == MS_KRIGING) {
+      msKriging(xyz_values, image->width, image->height, npoints, &interpParams,
+                iValues, iValues + bandsize);
     }
   }
 
@@ -273,19 +292,21 @@ int msInterpolationDataset(mapObj *map, imageObj *image,
     return MS_FAILURE;
   }
 
-  char pointer[64];
-  memset(pointer, 0, sizeof(pointer));
-  CPLPrintPointer(pointer, iValues, sizeof(pointer));
+  for (int b = 0; b < nbands; b++) {
+    char pointer[64];
+    memset(pointer, 0, sizeof(pointer));
+    CPLPrintPointer(pointer, iValues + (size_t)b * bandsize, sizeof(pointer));
 
-  char **papszOptions = CSLSetNameValue(NULL, "DATAPOINTER", pointer);
-  CPLErr eErr = GDALAddBand(hDS, GDT_Byte, papszOptions);
-  CSLDestroy(papszOptions);
-  if (eErr != CE_None) {
-    msSetError(MS_IMGERR, "Unable to add band to GDAL Memory dataset.",
-               "msInterpolationDataset()");
-    free(iValues);
-    GDALClose(hDS);
-    return MS_FAILURE;
+    char **papszOptions = CSLSetNameValue(NULL, "DATAPOINTER", pointer);
+    CPLErr eErr = GDALAddBand(hDS, GDT_Byte, papszOptions);
+    CSLDestroy(papszOptions);
+    if (eErr != CE_None) {
+      msSetError(MS_IMGERR, "Unable to add band to GDAL Memory dataset.",
+                 "msInterpolationDataset()");
+      free(iValues);
+      GDALClose(hDS);
+      return MS_FAILURE;
+    }
   }
 
   double adfGeoTransform[6];

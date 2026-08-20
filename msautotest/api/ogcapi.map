@@ -17,6 +17,7 @@
 # RUN_PARMS: ogcapi_collections_mn_counties_items_limit_1.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&limit=1" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_limit_1_offset_2.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&limit=1&offset=2" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_limit_bbox_empty_result.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&bbox=2,49,3,50" > [RESULT_DEMIME]
+# RUN_PARMS: ogcapi_collections_mn_counties_items_offset_xss.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=html&bbox=2,49,3,50&offset=%3C%2Fscript%3E%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E" > [RESULT]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_by_id.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items/35" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_counties_items_by_id_not_found.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items/12345678" "QUERY_STRING=f=json" > [RESULT_DEMIME]
 # RUN_PARMS: ogcapi_collections_mn_population_centers_items_by_id_no_extent.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_population_centers/items/2710700172" "QUERY_STRING=f=json" > [RESULT_DEMIME]
@@ -86,6 +87,7 @@
 # RUN_PARMS: ogcapi_cql2_text_ge.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=CTYONLY_>=117" > [RESULT]
 # RUN_PARMS: ogcapi_cql2_text_not.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=NOT Name<>'Rice'" > [RESULT]
 # RUN_PARMS: ogcapi_cql2_text_and_true.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=Name='Rice' AND 1=1" > [RESULT]
+# RUN_PARMS: ogcapi_cql2_text_and_issue_GHSA_v4x2_j2g2_rxwp.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=1=1 AND (1=1 AND 1=0)" > [RESULT]
 # RUN_PARMS: ogcapi_cql2_text_four_and.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=Name='Rice' AND 1=1 AND 1=1 AND 1=1" > [RESULT]
 # RUN_PARMS: ogcapi_cql2_text_and_false.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=Name='Rice' AND 1=0" > [RESULT]
 # RUN_PARMS: ogcapi_cql2_text_or_true.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&filter=Name='Rice' OR 1=1" > [RESULT]
@@ -151,6 +153,7 @@
 
 # RUN_PARMS: ogcapi_cql2_json_timestamp.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" 'QUERY_STRING=f=json&filter={"op":"=","args":[{"property":"LASTMOD"},{"timestamp":"2003-01-01T01:10:00Z"}]}&filter-lang=cql2-json' > [RESULT]
 # RUN_PARMS: ogcapi_cql2_json_date.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" 'QUERY_STRING=f=json&filter={"op":"=","args":[{"property":"LASTMOD"},{"date":"2003-01-01"}]}&filter-lang=cql2-json' > [RESULT]
+# RUN_PARMS: ogcapi_cql2_json_timestamp_with_backtick.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" 'QUERY_STRING=f=json&filter={"op":"=","args":[{"property":"LASTMOD"},{"timestamp":"with`backtick"}]}&filter-lang=cql2-json' > [RESULT]
 
 # RUN_PARMS: ogcapi_cql2_json_s_intersects_bbox.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" 'QUERY_STRING=f=json&filter={"op":"s_intersects","args":[{"property":"geom"},{"bbox":[-180,-90,180,90]}]}&filter-lang=cql2-json&limit=1' > [RESULT]
 # RUN_PARMS: ogcapi_cql2_json_s_intersects_bbox_3D.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" 'QUERY_STRING=f=json&filter={"op":"s_intersects","args":[{"property":"geom"},{"bbox":[-90,-180,-1000,90,180,1000]}]}&filter-lang=cql2-json&filter-crs=http://www.opengis.net/def/crs/EPSG/0/4326&limit=1' > [RESULT]
@@ -219,14 +222,15 @@ MAP
       "gml_CTYONLY__type" "Integer"
       "gml_LASTMOD_type" "DateTime"
       "oga_featureid" "coun"
-      "oga_queryable_items" "CTY_NAME,AREA,CTYONLY_,LASTMOD"
-      "oga_sortable_items" "LASTMOD"
+      "oga_queryable_items" "cty_name,AREA,CTYONLY_,LASTMOD"
+      "oga_sortable_items" "lastmod"
     END
     VALIDATION
       "coun" "^[0-9]{1,2}$" # 1 or 2-digit number
     END
     PROJECTION "+init=epsg:32615" END
     TEMPLATE VOID
+    TOLERANCE 10000 # this should have no effect on OGC Features item requests with a bbox
   END
 
   LAYER

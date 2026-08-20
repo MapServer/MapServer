@@ -3,6 +3,8 @@
 #RUN_PARMS: heatmap-r20-noborder-fixednorm-rgb-expression.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&LAYERS=heatmap&BBOX=-85.719105577136,-42.859552788568,85.719105577136,42.859552788568&WIDTH=200&HEIGHT=100&VERSION=1.1.1&FORMAT=image%2Fpng&SERVICE=WMS&REQUEST=GetMap&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&SRS=EPSG%3A4326" > [RESULT_DEMIME]
 #RUN_PARMS: heatmap-reproj.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&LAYERS=heatmap&BBOX=-7760000,-600000,240000,3400000&WIDTH=200&HEIGHT=100&VERSION=1.1.1&FORMAT=image%2Fpng&SERVICE=WMS&REQUEST=GetMap&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&SRS=EPSG%3A3857" > [RESULT_DEMIME]
 
+#RUN_PARMS: heatmap-getfeatureinfo.html [MAPSERV] QUERY_STRING="map=[MAPFILE]&LAYERS=heatmap&BBOX=-82.544323889094,-41.272161944547,82.544323889094,41.272161944547&WIDTH=200&HEIGHT=100&VERSION=1.1.1&FORMAT=image%2Fpng&SERVICE=WMS&REQUEST=GetFeatureInfo&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&SRS=EPSG%3A4326&QUERY_LAYERS=heatmap&INFO_FORMAT=text/html&X=100&Y=50" > [RESULT_DEMIME]
+
 #no overlap because outside of shape extents
 #RUN_PARMS: heatmap-no-overlap.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&LAYERS=heatmap&BBOX=200,200,201,201&WIDTH=10&HEIGHT=10&VERSION=1.1.1&FORMAT=image%2Fpng&SERVICE=WMS&REQUEST=GetMap&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&SRS=EPSG%3A4326" > [RESULT_DEMIME]
 
@@ -21,6 +23,7 @@ map
     metadata
       "ows_srs" "epsg:4326  epsg:3857 epsg:900913"
       "ows_enable_request" "*"
+      "wms_getfeatureinfo_formatlist" "text/html"
     end
   end
 
@@ -68,6 +71,7 @@ map
         "255000000" "RGB"
       END
     END
+    TEMPLATE "heatmap_query.html"
     class
       style
         COLORRANGE  "#0000ff00"  "#0000ffff"

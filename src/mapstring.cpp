@@ -1205,18 +1205,18 @@ char *msEncodeUrlExcept(const char *data, const char except) {
 /*                            msEscapeJSonString()                      */
 /************************************************************************/
 
-/* The input (and output) string are not supposed to start/end with double */
-/* quote characters. It is the responsibility of the caller to do that. */
-char *msEscapeJSonString(const char *pszJSonString) {
+/* The input (and output) string are not supposed to start/end with chQuote
+ * characters. It is the responsibility of the caller to do that. */
+char *msEscapeJSonLikeString(const char *pszString, char chQuote) {
   /* Worst case is one character to become \uABCD so 6 characters */
   char *pszRet;
   int i = 0, j = 0;
   static const char *pszHex = "0123456789ABCDEF";
 
-  pszRet = (char *)msSmallMalloc(strlen(pszJSonString) * 6 + 1);
+  pszRet = (char *)msSmallMalloc(strlen(pszString) * 6 + 1);
   /* From http://www.json.org/ */
-  for (i = 0; pszJSonString[i] != '\0'; i++) {
-    unsigned char ch = pszJSonString[i];
+  for (i = 0; pszString[i] != '\0'; i++) {
+    unsigned char ch = pszString[i];
     if (ch == '\b') {
       pszRet[j++] = '\\';
       pszRet[j++] = 'b';
@@ -1239,9 +1239,9 @@ char *msEscapeJSonString(const char *pszJSonString) {
       pszRet[j++] = '0';
       pszRet[j++] = pszHex[ch / 16];
       pszRet[j++] = pszHex[ch % 16];
-    } else if (ch == '"') {
+    } else if (ch == chQuote) {
       pszRet[j++] = '\\';
-      pszRet[j++] = '"';
+      pszRet[j++] = chQuote;
     } else if (ch == '\\') {
       pszRet[j++] = '\\';
       pszRet[j++] = '\\';
@@ -1251,6 +1251,12 @@ char *msEscapeJSonString(const char *pszJSonString) {
   }
   pszRet[j] = '\0';
   return pszRet;
+}
+
+/* The input (and output) string are not supposed to start/end with double
+ * quote characters. It is the responsibility of the caller to do that. */
+char *msEscapeJSonString(const char *pszString) {
+  return msEscapeJSonLikeString(pszString, '"');
 }
 
 /* msEncodeHTMLEntities()

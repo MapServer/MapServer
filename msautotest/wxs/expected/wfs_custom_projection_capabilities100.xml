@@ -1,0 +1,104 @@
+<?xml version='1.0' encoding="UTF-8" ?>
+<WFS_Capabilities 
+   version="1.0.0" 
+   updateSequence="0" 
+   xmlns="http://www.opengis.net/wfs" 
+   xmlns:ogc="http://www.opengis.net/ogc" 
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-capabilities.xsd">
+<Service>
+  <Name>MapServer WFS</Name>
+<!-- WARNING: Mandatory metadata "wfs_title" or "ows_title" was missing in this context. -->
+  <Title>cities</Title>
+  <OnlineResource>http://localhost/path/to/wfs_custom_projection?</OnlineResource>
+</Service>
+
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/path/to/wfs_custom_projection?" />
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post onlineResource="http://localhost/path/to/wfs_custom_projection?" />
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <DescribeFeatureType>
+      <SchemaDescriptionLanguage>
+        <XMLSCHEMA/>
+      </SchemaDescriptionLanguage>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/path/to/wfs_custom_projection?" />
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post onlineResource="http://localhost/path/to/wfs_custom_projection?" />
+        </HTTP>
+      </DCPType>
+    </DescribeFeatureType>
+    <GetFeature>
+      <ResultFormat>
+        <GML2/>
+        <geojson/>
+      </ResultFormat>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/path/to/wfs_custom_projection?" />
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post onlineResource="http://localhost/path/to/wfs_custom_projection?" />
+        </HTTP>
+      </DCPType>
+    </GetFeature>
+  </Request>
+</Capability>
+
+<FeatureTypeList>
+  <Operations>
+    <Query/>
+  </Operations>
+    <FeatureType>
+        <Name>cities</Name>
+<!-- WARNING: Mandatory metadata "wfs_title" or "ows_title" was missing in this context. -->
+        <Title>cities</Title>
+        <SRS>EPSG:3857</SRS>
+        <LatLongBoundingBox minx="-18251381.874146" miny="-4553759.173087" maxx="20037508.333283" maxy="8436297.654917" />
+        <MetadataURL type="TC211" format="text/xml">http://localhost/path/to/wfs_custom_projection?request=GetMetadata&amp;layer=cities</MetadataURL>
+<!-- WARNING: Required Feature Id attribute (fid) not specified for this feature type. Make sure you set one of wfs_featureid, ows_featureid or gml_featureid metadata. -->
+    </FeatureType>
+</FeatureTypeList>
+
+<ogc:Filter_Capabilities>
+  <ogc:Spatial_Capabilities>
+    <ogc:Spatial_Operators>
+      <ogc:Equals/>
+      <ogc:Disjoint/>
+      <ogc:Touches/>
+      <ogc:Within/>
+      <ogc:Overlaps/>
+      <ogc:Crosses/>
+      <ogc:Intersect/>
+      <ogc:Contains/>
+      <ogc:DWithin/>
+      <ogc:BBOX/>
+    </ogc:Spatial_Operators>
+  </ogc:Spatial_Capabilities>
+  <ogc:Scalar_Capabilities>
+    <ogc:Logical_Operators />
+    <ogc:Comparison_Operators>
+      <ogc:Simple_Comparisons />
+      <ogc:Like />
+      <ogc:Between />
+    </ogc:Comparison_Operators>
+  </ogc:Scalar_Capabilities>
+</ogc:Filter_Capabilities>
+
+</WFS_Capabilities>

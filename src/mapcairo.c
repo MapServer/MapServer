@@ -1133,7 +1133,7 @@ int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y,
     }
 #else
 #if LIBRSVG_CHECK_VERSION(2, 46, 0)
-    RsvgRectangle viewport = {0, 0, width, height};
+    RsvgRectangle viewport = {0, 0, symbol->sizex, symbol->sizey};
     rsvg_handle_render_document(svg_cache->svgc, cr, &viewport, NULL);
 #else
     rsvg_handle_render_cairo(svg_cache->svgc, cr);

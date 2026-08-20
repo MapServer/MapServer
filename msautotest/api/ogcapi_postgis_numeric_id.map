@@ -1,0 +1,55 @@
+# REQUIRES: POSTGIS
+#
+# RUN_PARMS: ogcapi_postgis_numeric_id_invalid_id.json [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/test/invalid_id" "QUERY_STRING=f=json" > [RESULT_DEMIME] 
+
+MAP
+  EXTENT -67.5725 42 -58.9275 48.5
+
+  WEB
+    METADATA
+      "oga_html_template_directory" "../../share/ogcapi/templates/html-plain/"
+      "oga_title"          "OGC API Test" ## REQUIRED (or just recommended?)
+      "oga_description"	   "This is a test OGC API server description set via oga_description."
+      "oga_contactperson"  "Contact person"
+      "oga_contacturl"     "http://example.com/contact"
+      "oga_contactelectronicmailaddress" "email@example.com"
+      "oga_termsofservice" "Terms of Service"
+      "oga_keywords"       "keyword1,keyword2"
+      "oga_html_tags"      "debug,sample"
+      "oga_tag_debug"	   "true"
+      "oga_tag_sample"	   "sample tag"
+      "oga_onlineresource" "http://localhost/cgi-bin/mapserv/OGCAPI_TEST/ogcapi" ## REQUIRED
+      "oga_server_description" "Server description"
+      "oga_links"	   "link1,link2"
+      "oga_link1_href"     "https://mapserver.org"
+      "oga_link1_title"	   "MapServer project website"
+      "oga_link2_href"	   "https://ogcapi.ogc.org"
+      "oga_link2_title"    "OCG API website"
+      "oga_enable_request" "OGCAPI" ## REQUIRED
+      "oga_max_limit"      "15"
+      "oga_default_limit"  "9"
+      "oga_geometry_precision" "4"
+    END
+  END
+
+LAYER
+  NAME test
+  INCLUDE "../wxs/postgis.include"
+  DATA "the_geom from (select * from province order by gid) as foo using srid=3978 using unique gid"
+  METADATA
+      "oga_title" "test"
+      "oga_description" "province"
+      "oga_srs" "EPSG:3978 EPSG:4326" # storageCrs is first in the list
+      "oga_featureid" "gid"
+      "gml_include_items" "all"
+      "gml_gid_type" "Integer"
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+    TEMPLATE VOID
+END # Layer
+
+END

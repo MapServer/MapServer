@@ -14,6 +14,7 @@
 
 <div class="row">
   <div class="col-sm">
+    <ul>
     {% for key, value in response.properties %}
       <li>{{ key }}:
       {% if existsIn(value, "type") %}
@@ -27,6 +28,7 @@
       {% endif %}
       </li>
     {% endfor %}
+    </ul>
   </div>
 </div>
 

@@ -155,14 +155,14 @@ void cql2_expr_node::RebalanceAndOr() {
 /*                        cql2_create_and_or_or()                        */
 /************************************************************************/
 
-cql2_expr_node *cql2_create_and_or_or(cql2_op op, cql2_expr_node *left,
-                                      cql2_expr_node *right) {
-  auto poNode = new cql2_expr_node(op);
+cql2_expr_node *cql2_create_and_or_or(cql2_op op,
+                                      std::unique_ptr<cql2_expr_node> left,
+                                      std::unique_ptr<cql2_expr_node> right) {
+  auto poNode = std::make_unique<cql2_expr_node>(op);
   poNode->m_field_type = CQL2_BOOLEAN;
 
   if (left->m_node_type == CQL2_NT_OPERATION && left->m_op == op) {
     poNode->m_apoChildren = std::move(left->m_apoChildren);
-    delete left;
 
     // Temporary non-binary formulation
     if (right->m_node_type == CQL2_NT_OPERATION && right->m_op == op) {
@@ -170,23 +170,20 @@ cql2_expr_node *cql2_create_and_or_or(cql2_op op, cql2_expr_node *left,
           poNode->m_apoChildren.end(),
           std::make_move_iterator(right->m_apoChildren.begin()),
           std::make_move_iterator(right->m_apoChildren.end()));
-      delete right;
     } else {
-      poNode->m_apoChildren.push_back(std::unique_ptr<cql2_expr_node>(right));
+      poNode->m_apoChildren.push_back(std::move(right));
     }
   } else if (right->m_node_type == CQL2_NT_OPERATION && right->m_op == op) {
     // Temporary non-binary formulation
     poNode->m_apoChildren = std::move(right->m_apoChildren);
-    delete right;
 
-    poNode->m_apoChildren.push_back(std::unique_ptr<cql2_expr_node>(left));
-    delete left;
+    poNode->m_apoChildren.push_back(std::move(left));
   } else {
-    poNode->m_apoChildren.push_back(std::unique_ptr<cql2_expr_node>(left));
-    poNode->m_apoChildren.push_back(std::unique_ptr<cql2_expr_node>(right));
+    poNode->m_apoChildren.push_back(std::move(left));
+    poNode->m_apoChildren.push_back(std::move(right));
   }
 
-  return poNode;
+  return poNode.release();
 }
 
 /************************************************************************/
@@ -605,9 +602,13 @@ std::string cql2_expr_node::ToMapServerFilter(
       if (m_osVal == "TIMESTAMP" || m_osVal == "DATE") {
         if (m_apoChildren.size() == 1 &&
             m_apoChildren[0]->m_field_type == CQL2_STRING) {
-          return std::string("`")
-              .append(msStdStringEscape(m_apoChildren[0]->m_osVal.c_str()))
-              .append("`");
+          const std::string &val = m_apoChildren[0]->m_osVal;
+          // Reject anything that isn't a valid RFC 3339 timestamp/date
+          if (val.find_first_of("`'\"\\") != std::string::npos) {
+            errorMsg = "Invalid characters in " + m_osVal + "() argument";
+            break;
+          }
+          return std::string("`").append(val).append("`");
         } else {
           errorMsg = "Unhandled syntax for function ";
           errorMsg += m_osVal;

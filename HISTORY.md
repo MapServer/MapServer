@@ -13,6 +13,52 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
+8.6.6 development
+-----------------
+
+- security: shape smoothing: reject SMOOTHSIA() on point/degenerate shapes to prevent denial of service (GHSA-33h3-f4q2-pq5q)
+- security: WCS 2.0 GetCoverage: reject non-positive RESOLUTION values to prevent denial of service (GHSA-6jr5-rc9c-p3cj)
+
+8.6.5 release (2026-07-10)
+--------------------------
+
+- security: OGC API Features: validate offset before rendering to fix reflected XSS (#7573)
+
+- security: WCS POST: NULL-Dereference Denial of Service When `BoundingBox` Omits `crs` (#7556)
+
+- security: Reflected XSS in WMS OpenLayers output via the `X-Forwarded-Host` header (#7544)
+
+- security: Heap buffer overflow in WMS GetLegendGraphic via repeated LAYER parameters (#7555)
+
+- security: msMySQLJoinNext(): prevent SQL injection (#7547)
+
+- security: msPOSTGRESQLJoinNext(): avoid potential SQL injection (#7546)
+
+8.6.4 release (2026-06-01)
+--------------------------
+
+- security: properly escape mapserv_onlineresource in OpenLayers viewer with WMS (#7517)
+
+- security: PostGIS: make sure identifier value is numeric when the declared type is numeric too (#7516)
+
+8.6.3 release (2026-05-07)
+--------------------------
+
+- security: fix out of bounds access on SLD with only a Rule with a ElseFilter but without a symbolizer (#7497)
+
+- Oracle: revert change regarding case insensitive ogc filters (#7493)
+
+- Oracle: revert change regarding adding subquery to apply sortBy before rownum paging (#7491)
+
+8.6.2 release (2026-04-19)
+--------------------------
+
+- security: only allow SRS or CRS parameters for OpenLayers template (#7480)
+
+- fix segmentation fault in PHP MapScriptNG (#7471)
+
+see detailed changelog for other fixes
+
 8.6.1 release (2026-03-23)
 --------------------------
 

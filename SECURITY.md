@@ -10,6 +10,13 @@ option link at the top of this page, or send your report to the email address:
 Please follow the general guidelines for bug 
 submissions, when describing the vulnerability (see https://mapserver.org/development/bugs.html).
 
+## Note about use of AI/LLM/automated scanners
+
+While reporters are free to use any tool of their choice to detect issues, they
+must *manually* confirm the findings of those tools with an actual reproducing
+test case, not just a theoretical analysis.
+The report must also be humanly checked and be kept as succint as possible.
+
 ## Supported Versions
 
 The MapServer PSC (Project Steering Committee) will release patches for security vulnerabilities 

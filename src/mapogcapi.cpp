@@ -290,6 +290,14 @@ static const char *getGeometryFormat(const layerObj *layer) {
   return geometryFormat;
 }
 
+namespace {
+struct CaseInsensitiveComparator {
+  bool operator()(const std::string &a, const std::string &b) const {
+    return strcasecmp(a.c_str(), b.c_str()) < 0;
+  }
+};
+} // namespace
+
 /** Return the list of queryable items */
 static std::vector<std::string> msOOGCAPIGetLayerQueryables(
     layerObj *layer, const std::set<std::string> &reservedParams, bool &error) {
@@ -312,7 +320,7 @@ static std::vector<std::string> msOOGCAPIGetLayerQueryables(
           }
         }
       } else {
-        std::set<std::string> validItems;
+        std::set<std::string, CaseInsensitiveComparator> validItems;
         for (int i = 0; i < layer->numitems; ++i) {
           validItems.insert(layer->items[i]);
         }
@@ -363,7 +371,7 @@ static std::vector<std::string> msOOGCAPIGetLayerSortables(
           }
         }
       } else {
-        std::set<std::string> validItems;
+        std::set<std::string, CaseInsensitiveComparator> validItems;
         for (int i = 0; i < layer->numitems; ++i) {
           validItems.insert(layer->items[i]);
         }
@@ -1462,6 +1470,10 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
   layerObj *layer = map->layers[iLayer];
   layer->status = MS_ON; // force on (do we need to save and reset?)
 
+  /* No reason to handle tolerances feature queries, same as WFS GetFeature
+   * requests */
+  layer->tolerance = 0;
+
   if (!includeLayer(map, layer)) {
     msOGCAPIOutputError(OGCAPI_NOT_FOUND_ERROR, "Invalid collection.");
     return MS_SUCCESS;
@@ -1694,8 +1706,10 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
         items.emplace_back(msStrdup(item.c_str()));
       }
       prop.item = items.back().get();
-      if (std::find(sortables.begin(), sortables.end(), prop.item) ==
-          sortables.end()) {
+      if (std::find_if(sortables.begin(), sortables.end(),
+                       [&prop](const std::string &s) {
+                         return strcasecmp(prop.item, s.c_str()) == 0;
+                       }) == sortables.end()) {
         msOGCAPIOutputError(OGCAPI_PARAM_ERROR, (std::string("'") + prop.item +
                                                  "' is not a sortable item")
                                                     .c_str());
@@ -1818,6 +1832,18 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
       return MS_SUCCESS;
     }
   } else { // bbox query
+    const char *offsetStr = getRequestParameter(request, "offset");
+    if (offsetStr) {
+      if (msStringToInt(offsetStr, &offset, 10) != MS_SUCCESS) {
+        msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Bad value for offset.");
+        return MS_SUCCESS;
+      }
+      if (offset < 0) {
+        msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Offset out of range.");
+        return MS_SUCCESS;
+      }
+    }
+
     map->query.type = MS_QUERY_BY_RECT;
     map->query.mode = MS_QUERY_MULTIPLE;
     map->query.layer = iLayer;
@@ -1852,14 +1878,8 @@ static int processCollectionItemsRequest(mapObj *map, cgiRequestObj *request,
 
       msOWSSetShapeCache(map, "AO");
 
-      const char *offsetStr = getRequestParameter(request, "offset");
       if (offsetStr) {
-        if (msStringToInt(offsetStr, &offset, 10) != MS_SUCCESS) {
-          msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Bad value for offset.");
-          return MS_SUCCESS;
-        }
-
-        if (offset < 0 || offset >= numberMatched) {
+        if (offset >= numberMatched) {
           msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Offset out of range.");
           return MS_SUCCESS;
         }
@@ -3013,9 +3033,6 @@ OGCAPIFormat msOGCAPIGetOutputFormat(const cgiRequestObj *request) {
                    strstr(p, OGCAPI_MIMETYPE_HTML) != nullptr)) {
     format = OGCAPIFormat::HTML;
   } else if (p) {
-    std::string errorMsg("Unsupported format requested: ");
-    errorMsg += p;
-    msOGCAPIOutputError(OGCAPI_PARAM_ERROR, errorMsg.c_str());
     format = OGCAPIFormat::Invalid;
   } else {
     format = OGCAPIFormat::HTML; // default for now
@@ -3050,6 +3067,7 @@ int msOGCAPIDispatchRequest(mapObj *map, cgiRequestObj *request) {
   const OGCAPIFormat format = msOGCAPIGetOutputFormat(request);
 
   if (format == OGCAPIFormat::Invalid) {
+    msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
     return MS_SUCCESS; // avoid any downstream MapServer processing
   }
 

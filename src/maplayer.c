@@ -2241,31 +2241,39 @@ char *LayerDefaultEscapeSQLParam(layerObj *layer, const char *pszString) {
 /*                                                                      */
 /*      Return the property name in a properly escaped and quoted form. */
 /************************************************************************/
-char *LayerDefaultEscapePropertyName(layerObj *layer, const char *pszString) {
+
+char *msDefaultEscapePropertyName(const char *pszString) {
   char *pszEscapedStr = NULL;
   int i, j = 0;
 
-  if (layer && pszString && strlen(pszString) > 0) {
-    int nLength = strlen(pszString);
+  int nLength = strlen(pszString);
 
-    pszEscapedStr = (char *)msSmallMalloc(1 + 2 * nLength + 1 + 1);
-    pszEscapedStr[j++] = '"';
+  pszEscapedStr = (char *)msSmallMalloc(1 + 2 * nLength + 1 + 1);
+  pszEscapedStr[j++] = '"';
 
-    for (i = 0; i < nLength; i++) {
-      char c = pszString[i];
-      if (c == '"') {
-        pszEscapedStr[j++] = '"';
-        pszEscapedStr[j++] = '"';
-      } else if (c == '\\') {
-        pszEscapedStr[j++] = '\\';
-        pszEscapedStr[j++] = '\\';
-      } else
-        pszEscapedStr[j++] = c;
-    }
-    pszEscapedStr[j++] = '"';
-    pszEscapedStr[j++] = 0;
+  for (i = 0; i < nLength; i++) {
+    char c = pszString[i];
+    if (c == '"') {
+      pszEscapedStr[j++] = '"';
+      pszEscapedStr[j++] = '"';
+    } else if (c == '\\') {
+      pszEscapedStr[j++] = '\\';
+      pszEscapedStr[j++] = '\\';
+    } else
+      pszEscapedStr[j++] = c;
   }
+  pszEscapedStr[j++] = '"';
+  pszEscapedStr[j++] = 0;
+
   return pszEscapedStr;
+}
+
+static char *LayerDefaultEscapePropertyName(layerObj *layer,
+                                            const char *pszString) {
+  if (layer && pszString && strlen(pszString) > 0) {
+    return msDefaultEscapePropertyName(pszString);
+  }
+  return NULL;
 }
 
 /*

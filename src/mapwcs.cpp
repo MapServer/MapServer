@@ -357,6 +357,23 @@ void msWCSSetDefaultBandsRangeSetInfo(wcsParamsObj *params,
 }
 
 /************************************************************************/
+/*                             msWCSSetParam                            */
+/************************************************************************/
+
+static int msWCSSetParam(char **ppszOut, cgiRequestObj *request, int i,
+                         const char *pszExpectedParamName) {
+  if (strcasecmp(request->ParamNames[i], pszExpectedParamName) == 0) {
+    /* Keep the first value supplied and ignore later duplicates. This avoids
+       leaking the previously allocated value when the same parameter appears
+       multiple times in a request (consistent with msWFSSetParam()). */
+    if (*ppszOut == NULL)
+      *ppszOut = msStrdup(request->ParamValues[i]);
+    return 1;
+  }
+  return 0;
+}
+
+/************************************************************************/
 /*                         msWCSParseRequest()                          */
 /************************************************************************/
 
@@ -434,6 +451,15 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
           if (EQUAL((char *)tmpNode->name, "BoundingBox")) {
             xmlNodePtr cornerNode = NULL;
             params->crs = (char *)xmlGetProp(tmpNode, BAD_CAST "crs");
+            if (!params->crs) {
+              msSetError(MS_WCSERR, "Required parameter CRS was not supplied.",
+                         "msWCSGetCoverage()");
+              msWCSException(map, "MissingParameterValue", "crs",
+                             params->version);
+              xmlFreeDoc(doc);
+              xmlCleanupParser();
+              return MS_DONE;
+            }
             if (strncasecmp(params->crs, "urn:ogc:def:crs:", 16) == 0 &&
                 strncasecmp(params->crs + strlen(params->crs) - 8, "imageCRS",
                             8) == 0)
@@ -447,8 +473,13 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
                   msSetError(MS_WCSERR,
                              "Wrong number of arguments for LowerCorner",
                              "msWCSParseRequest()");
-                  return msWCSException(map, "InvalidParameterValue",
-                                        "LowerCorner", params->version);
+                  msWCSException(map, "InvalidParameterValue", "LowerCorner",
+                                 params->version);
+                  msFreeCharArray(tokens, n);
+                  xmlFree(value);
+                  xmlFreeDoc(doc);
+                  xmlCleanupParser();
+                  return MS_DONE;
                 }
                 params->bbox.minx = atof(tokens[0]);
                 params->bbox.miny = atof(tokens[1]);
@@ -462,8 +493,13 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
                   msSetError(MS_WCSERR,
                              "Wrong number of arguments for UpperCorner",
                              "msWCSParseRequest()");
-                  return msWCSException(map, "InvalidParameterValue",
-                                        "UpperCorner", params->version);
+                  msWCSException(map, "InvalidParameterValue", "UpperCorner",
+                                 params->version);
+                  msFreeCharArray(tokens, n);
+                  xmlFree(value);
+                  xmlFreeDoc(doc);
+                  xmlCleanupParser();
+                  return MS_DONE;
                 }
                 params->bbox.maxx = atof(tokens[0]);
                 params->bbox.maxy = atof(tokens[1]);
@@ -493,8 +529,13 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
                   msSetError(MS_WCSERR,
                              "Wrong number of arguments for GridOrigin",
                              "msWCSParseRequest()");
-                  return msWCSException(map, "InvalidParameterValue",
-                                        "GridOffsets", params->version);
+                  msWCSException(map, "InvalidParameterValue", "GridOffsets",
+                                 params->version);
+                  msFreeCharArray(tokens, n);
+                  xmlFree(value);
+                  xmlFreeDoc(doc);
+                  xmlCleanupParser();
+                  return MS_DONE;
                 }
                 params->originx = atof(tokens[0]);
                 params->originy = atof(tokens[1]);
@@ -507,8 +548,13 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
                   msSetError(MS_WCSERR,
                              "Wrong number of arguments for GridOffsets",
                              "msWCSParseRequest()");
-                  return msWCSException(map, "InvalidParameterValue",
-                                        "GridOffsets", params->version);
+                  msWCSException(map, "InvalidParameterValue", "GridOffsets",
+                                 params->version);
+                  msFreeCharArray(tokens, n);
+                  xmlFree(value);
+                  xmlFreeDoc(doc);
+                  xmlCleanupParser();
+                  return MS_DONE;
                 }
                 /* take absolute values to convert to positive RESX/RESY style
                 WCS 1.0 behavior.  *but* this does break some possibilities! */
@@ -540,22 +586,20 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
   if (request->NumParams > 0) {
     for (i = 0; i < request->NumParams; i++) {
 
-      if (strcasecmp(request->ParamNames[i], "VERSION") == 0)
-        params->version = msStrdup(request->ParamValues[i]);
-      if (strcasecmp(request->ParamNames[i], "UPDATESEQUENCE") == 0)
-        params->updatesequence = msStrdup(request->ParamValues[i]);
-      else if (strcasecmp(request->ParamNames[i], "REQUEST") == 0)
-        params->request = msStrdup(request->ParamValues[i]);
-      else if (strcasecmp(request->ParamNames[i], "INTERPOLATION") == 0)
-        params->interpolation = msStrdup(request->ParamValues[i]);
-      else if (strcasecmp(request->ParamNames[i], "SERVICE") == 0)
-        params->service = msStrdup(request->ParamValues[i]);
-      else if (strcasecmp(request->ParamNames[i], "SECTION") == 0) /* 1.0 */
-        params->section =
-            msStrdup(request->ParamValues[i]); /* TODO: validate value here */
-      else if (strcasecmp(request->ParamNames[i], "SECTIONS") == 0) /* 1.1 */
-        params->section =
-            msStrdup(request->ParamValues[i]); /* TODO: validate value here */
+      if (msWCSSetParam(&(params->version), request, i, "VERSION")) {
+      } else if (msWCSSetParam(&(params->updatesequence), request, i,
+                               "UPDATESEQUENCE")) {
+      } else if (msWCSSetParam(&(params->request), request, i, "REQUEST")) {
+      } else if (msWCSSetParam(&(params->interpolation), request, i,
+                               "INTERPOLATION")) {
+      } else if (msWCSSetParam(&(params->service), request, i, "SERVICE")) {
+      } else if (msWCSSetParam(&(params->section), request, i,
+                               "SECTION")) { /* 1.0 */
+        /* TODO: validate value here */
+      } else if (msWCSSetParam(&(params->section), request, i,
+                               "SECTIONS")) { /* 1.1 */
+        /* TODO: validate value here */
+      }
 
       /* GetCoverage parameters. */
       else if (strcasecmp(request->ParamNames[i], "BBOX") == 0) {
@@ -583,14 +627,12 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
       else if (strcasecmp(request->ParamNames[i], "COVERAGE") == 0)
         params->coverages =
             CSLAddString(params->coverages, request->ParamValues[i]);
-      else if (strcasecmp(request->ParamNames[i], "TIME") == 0)
-        params->time = msStrdup(request->ParamValues[i]);
-      else if (strcasecmp(request->ParamNames[i], "FORMAT") == 0)
-        params->format = msStrdup(request->ParamValues[i]);
-      else if (strcasecmp(request->ParamNames[i], "CRS") == 0)
-        params->crs = msStrdup(request->ParamValues[i]);
-      else if (strcasecmp(request->ParamNames[i], "RESPONSE_CRS") == 0)
-        params->response_crs = msStrdup(request->ParamValues[i]);
+      else if (msWCSSetParam(&(params->time), request, i, "TIME")) {
+      } else if (msWCSSetParam(&(params->format), request, i, "FORMAT")) {
+      } else if (msWCSSetParam(&(params->crs), request, i, "CRS")) {
+      } else if (msWCSSetParam(&(params->response_crs), request, i,
+                               "RESPONSE_CRS")) {
+      }
 
       /* WCS 1.1 DescribeCoverage and GetCoverage ... */
       else if (strcasecmp(request->ParamNames[i], "IDENTIFIER") == 0 ||
@@ -606,8 +648,10 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
         if (tokens == NULL || n < 5) {
           msSetError(MS_WCSERR, "Wrong number of arguments for BOUNDINGBOX.",
                      "msWCSParseRequest()");
-          return msWCSException(map, "InvalidParameterValue", "boundingbox",
-                                params->version);
+          msWCSException(map, "InvalidParameterValue", "boundingbox",
+                         params->version);
+          msFreeCharArray(tokens, n);
+          return MS_DONE;
         }
 
         /* NOTE: WCS 1.1 boundingbox is center of pixel oriented, not edge
@@ -618,6 +662,7 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
         params->bbox.maxx = atof(tokens[2]);
         params->bbox.maxy = atof(tokens[3]);
 
+        msFree(params->crs);
         params->crs = msStrdup(tokens[4]);
         msFreeCharArray(tokens, n);
         /* normalize imageCRS urns to simply "imageCRS" */
@@ -630,8 +675,10 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
         if (tokens == NULL || n < 2) {
           msSetError(MS_WCSERR, "Wrong number of arguments for GridOffsets",
                      "msWCSParseRequest()");
-          return msWCSException(map, "InvalidParameterValue", "GridOffsets",
-                                params->version);
+          msWCSException(map, "InvalidParameterValue", "GridOffsets",
+                         params->version);
+          msFreeCharArray(tokens, n);
+          return MS_DONE;
         }
         /* take absolute values to convert to positive RESX/RESY style
            WCS 1.0 behavior.  *but* this does break some possibilities! */
@@ -643,8 +690,10 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params,
         if (tokens == NULL || n < 2) {
           msSetError(MS_WCSERR, "Wrong number of arguments for GridOrigin",
                      "msWCSParseRequest()");
-          return msWCSException(map, "InvalidParameterValue", "GridOffsets",
-                                params->version);
+          msWCSException(map, "InvalidParameterValue", "GridOffsets",
+                         params->version);
+          msFreeCharArray(tokens, n);
+          return MS_DONE;
         }
         params->originx = atof(tokens[0]);
         params->originy = atof(tokens[1]);
@@ -2478,24 +2527,32 @@ this request. Check wcs/ows_enable_request settings.",
   if (params->response_crs || params->crs) {
     int iUnits;
     const char *crs_to_use = params->response_crs;
-
     if (crs_to_use == NULL)
       crs_to_use = params->crs;
 
-    if (strncasecmp(crs_to_use, "EPSG:", 5) == 0 ||
-        strncasecmp(crs_to_use, "urn:ogc:def:crs:", 16) == 0) {
-      if (msLoadProjectionString(&(map->projection), (char *)crs_to_use) != 0)
-        return msWCSException(map, NULL, NULL, params->version);
-    } else if (strcasecmp(crs_to_use, "imageCRS") == 0) {
+    if (strcasecmp(crs_to_use, "imageCRS") == 0) {
       /* use layer native CRS, and rework bounding box accordingly */
       if (msWCSGetCoverage_ImageCRSSetup(map, params, &cm, lp) != MS_SUCCESS) {
         msWCSFreeCoverageMetadata(&cm);
         return MS_FAILURE;
       }
-    } else { /* should we support WMS style AUTO: projections? (not for now) */
-      msSetError(MS_WCSERR,
-                 "Unsupported SRS namespace (only EPSG currently supported).",
-                 "msWCSGetCoverage()");
+    } else if (strncasecmp(crs_to_use, "urn:ogc:def:crs:", 16) == 0 ||
+               strncasecmp(crs_to_use, "http://www.opengis.net/def/crs/", 31) ==
+                   0 ||
+               strchr(crs_to_use, ':') != NULL) {
+      /* Handles URNs, OGC URIs, and any AUTHORITY:CODE pattern
+      ** e.g. EPSG:4326, ESRI:54052, CRS:84, IAU_2015:30100 */
+      if (msLoadProjectionString(&(map->projection), (char *)crs_to_use) != 0) {
+        msSetError(MS_WCSERR, "Unsupported or unknown CRS '%s'.",
+                   "msWCSGetCoverage()", crs_to_use);
+        return msWCSException(map, "InvalidParameterValue", "srs",
+                              params->version);
+      }
+    } else {
+      msSetError(
+          MS_WCSERR,
+          "Unsupported SRS format '%s' (expected AUTHORITY:CODE, URN, or URI).",
+          "msWCSGetCoverage()", crs_to_use);
       return msWCSException(map, "InvalidParameterValue", "srs",
                             params->version);
     }
@@ -2630,6 +2687,7 @@ this request. Check wcs/ows_enable_request settings.",
     msInitProjection(&tmp_proj);
     msProjectionInheritContextFrom(&tmp_proj, &(map->projection));
     if (msLoadProjectionString(&tmp_proj, (char *)params->crs) != 0) {
+      msFreeProjection(&tmp_proj);
       msWCSFreeCoverageMetadata(&cm);
       return msWCSException(map, NULL, NULL, params->version);
     }
@@ -3163,6 +3221,11 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request,
       strcmp(ows_request->version, "1.1.2") == 0) {
     auto paramsTmp = msWCSCreateParams();
     status = msWCSParseRequest(request, paramsTmp, map);
+    if (status == MS_DONE) {
+      msWCSFreeParams(paramsTmp);
+      free(paramsTmp);
+      return MS_FAILURE;
+    }
     if (status == MS_FAILURE) {
       msWCSFreeParams(paramsTmp);
       free(paramsTmp);
@@ -3566,8 +3629,10 @@ int msWCSGetCoverageMetadata(layerObj *layer, coverageMetadataObj *cm) {
 
     snprintf(projstring, sizeof(projstring), "init=epsg:%.20s",
              cm->srs_epsg + 5);
-    if (msLoadProjectionString(&proj, projstring) != 0)
+    if (msLoadProjectionString(&proj, projstring) != 0) {
+      msFreeProjection(&proj);
       return MS_FAILURE;
+    }
     msProjectRect(&proj, NULL, &(cm->llextent));
   }
 

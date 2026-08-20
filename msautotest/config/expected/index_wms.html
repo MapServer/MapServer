@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>MapServer Landing Page</title>
+    <meta charset="utf-8" />
+</head>
+  <body>
+<h1>MapServer Mapfile Landing Page</h1>
+<ul>
+    <li><b>Title:</b> MapServer WMS Demo Map</li>
+    <li><b>Layer Count:</b> 1</li>
+    <li><b>Map Name:</b> WMSMAP</li>
+</ul>
+<p>
+    Below are all the services available for this Mapfile.
+</p>
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Type</th>
+            <th>Service</th>
+            <th>Title</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>1</td>
+            <td>CGI</td>
+            <td><a href="./?template=openlayers&mode=browse&layers=all">OpenLayers Viewer</a></td>
+            <td>WMSMAP</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>WMS</td>
+            <td><a href="./?version=1.0.0&request=GetCapabilities&service=WMS">WMS GetCapabilities URL (version 1.0.0)</a></td>
+            <td>MapServer WMS Demo Map</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>WMS</td>
+            <td><a href="./?version=1.1.0&request=GetCapabilities&service=WMS">WMS GetCapabilities URL (version 1.1.0)</a></td>
+            <td>MapServer WMS Demo Map</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td>WMS</td>
+            <td><a href="./?version=1.1.1&request=GetCapabilities&service=WMS">WMS GetCapabilities URL (version 1.1.1)</a></td>
+            <td>MapServer WMS Demo Map</td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td>WMS</td>
+            <td><a href="./?version=1.3.0&request=GetCapabilities&service=WMS">WMS GetCapabilities URL (version 1.3.0)</a></td>
+            <td>MapServer WMS Demo Map</td>
+        </tr>
+        </tbody>
+</table>
+</body>
+</html>

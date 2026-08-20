@@ -25,6 +25,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  ****************************************************************************/
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "mapserver.h"
 #include "mapogcapi.h"
 #include "mapserv-index.h"
@@ -425,7 +429,7 @@ static int createHTMLOutput(json response, const char *templateName) {
 int msOGCAPIDispatchMapIndexRequest(mapservObj *mapserv, configObj *config) {
 #ifdef USE_OGCAPI_SVR
   if (!mapserv || !config)
-    return -1; // Handle null pointers
+    return MS_FAILURE; // Handle null pointers
 
   cgiRequestObj *request = mapserv->request;
 
@@ -437,6 +441,12 @@ int msOGCAPIDispatchMapIndexRequest(mapservObj *mapserv, configObj *config) {
   }
 
   OGCAPIFormat format = msOGCAPIGetOutputFormat(request);
+
+  if (format == OGCAPIFormat::Invalid) {
+    msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
+    return MS_FAILURE;
+  }
+
   const char *key = request->api_path[0];
 
   mapObj *map = getMapFromConfig(config, key);
@@ -479,21 +489,35 @@ int msOGCAPIDispatchMapIndexRequest(mapservObj *mapserv, configObj *config) {
 int msOGCAPIDispatchIndexRequest(mapservObj *mapserv, configObj *config) {
 #ifdef USE_OGCAPI_SVR
   if (!mapserv || !config)
-    return -1; // Handle null pointers
+    return MS_FAILURE; // Handle null pointers
 
   cgiRequestObj *request = mapserv->request;
   const OGCAPIFormat format = msOGCAPIGetOutputFormat(request);
 
-  const char *key = NULL;
-  json links = json::array();
+  if (format == OGCAPIFormat::Invalid) {
+    msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
+    return MS_FAILURE;
+  }
 
+  // Collect keys and sort alphabetically (case-insensitive)
+  std::vector<std::string> keys;
+  const char *key = NULL;
   while ((key = msNextKeyFromHashTable(&config->maps, key)) != NULL) {
-    if (mapObj *map = getMapFromConfig(config, key)) {
-      links.push_back(createMapSummary(map, key, request));
+    keys.push_back(key);
+  }
+  std::sort(keys.begin(), keys.end(),
+            [](const std::string &a, const std::string &b) {
+              return strcasecmp(a.c_str(), b.c_str()) < 0;
+            });
+
+  json links = json::array();
+  for (const auto &k : keys) {
+    if (mapObj *map = getMapFromConfig(config, k.c_str())) {
+      links.push_back(createMapSummary(map, k.c_str(), request));
       msFreeMap(map);
     } else {
       // there was a problem loading the map
-      links.push_back(createMapError(key));
+      links.push_back(createMapError(k.c_str()));
     }
   }
 
@@ -504,7 +528,7 @@ int msOGCAPIDispatchIndexRequest(mapservObj *mapserv, configObj *config) {
   } else if (format == OGCAPIFormat::HTML) {
     createHTMLOutput(response, TEMPLATE_HTML_INDEX);
   } else {
-    msOGCAPIOutputError(OGCAPI_PARAM_ERROR, "Unsupported format requested.");
+    assert(false && "Unhandled OGCAPIFormat value");
   }
 
   return MS_SUCCESS;

@@ -1,0 +1,52 @@
+#
+# Test FlatGeobuf property bounds validation (RFC 137)
+#
+# data/flatgeobuf-invalid.fgb is a one-feature file whose string property
+# claims a length larger than the property blob that holds it. The decoder
+# must reject the feature instead of reading past the buffer.
+#
+# REQUIRES: INPUT=FLATGEOBUF SUPPORTS=WFS
+#
+# RUN_PARMS: flatgeobuf-invalid-wfs-get-feature.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=invalid" > [RESULT]
+#
+MAP
+  NAME "fgb-invalid-test"
+  STATUS ON
+  SIZE 400 300
+  EXTENT 0 0 30 30
+  UNITS DD
+  IMAGECOLOR 255 255 255
+  IMAGETYPE png
+
+  WEB
+    METADATA
+      "wfs_title"          "Test FlatGeobuf invalid property"
+      "wfs_onlineresource" "http://localhost/path/to/flatgeobuf-invalid?"
+      "wfs_srs"            "EPSG:4326"
+      "wfs_enable_request" "*"
+    END
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END
+
+  LAYER
+    NAME "invalid"
+    METADATA
+      "wfs_title"         "Invalid property feature"
+      "wfs_srs"           "EPSG:4326"
+      "gml_include_items" "all"
+      "gml_featureid"     "name"
+      "wfs_enable_request" "*"
+    END
+    TYPE POINT
+    STATUS ON
+    CONNECTIONTYPE flatgeobuf
+    DATA "data/flatgeobuf-invalid.fgb"
+    PROJECTION
+      "init=epsg:4326"
+    END
+  END # layer
+
+END # map

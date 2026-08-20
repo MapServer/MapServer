@@ -644,6 +644,11 @@ layerObj *msSLDParseSLD(mapObj *map, const char *psSLDXML, int *pnLayers) {
     msSetError(MS_WMSERR, "Invalid SLD document : %s", "", psSLDXML);
     return NULL;
   }
+  if (!msCheckDepthLessThan(psRoot, 256)) {
+    msSetError(MS_WMSERR, "Invalid SLD document : too deep nesting", "");
+    CPLDestroyXMLNode(psRoot);
+    return NULL;
+  }
 
   /* strip namespaces ogc and sld and gml */
   CPLStripXMLNamespace(psRoot, "ogc", 1);
@@ -930,9 +935,17 @@ static void msSLDParseUserStyle(CPLXMLNode *psUserStyle, layerObj *psLayer) {
     LOOP_ON_CHILD_ELEMENT(psFeatureTypeStyle, psRule, "Rule") {
       CPLXMLNode *psElseFilter = CPLGetXMLNode(psRule, "ElseFilter");
       if (psElseFilter) {
+        const int nNumClassesBeforeRule = psLayer->numclasses;
         msSLDParseRule(psRule, psLayer, pszUserStyleName);
-        _SLDApplyRuleValues(psRule, psLayer, 1);
-        psLayer->_class[psLayer->numclasses - 1]->isfallback = TRUE;
+        const int nNumClassesAfterRule = psLayer->numclasses;
+        const int nNumClassesAdded =
+            nNumClassesAfterRule - nNumClassesBeforeRule;
+        if (nNumClassesAdded > 0) {
+          _SLDApplyRuleValues(psRule, psLayer, nNumClassesAdded);
+          for (int i = 0; i < nNumClassesAdded; ++i) {
+            psLayer->_class[psLayer->numclasses - 1 - i]->isfallback = TRUE;
+          }
+        }
       }
     }
   }
@@ -1399,7 +1412,6 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle, mapObj *map,
 int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
                             enum objType objtype) {
   int status = MS_FAILURE;
-  const char *ops = "Add+Sub-Mul*Div/";
   styleObj *psStyle = static_cast<styleObj *>(psObj);
   labelObj *psLabel = static_cast<labelObj *>(psObj);
   int lbinding;
@@ -1581,10 +1593,17 @@ int msSLDParseOgcExpression(CPLXMLNode *psRoot, void *psObj, int binding,
       exprBindings[binding].type = MS_EXPRESSION;
       (*nexprbindings)++;
       status = MS_SUCCESS;
-    } else if (strstr(ops, psRoot->pszValue) && psRoot->psChild &&
-               psRoot->psChild->psNext) {
+    } else if (psRoot->psChild && psRoot->psChild->psNext &&
+               (strcasecmp(psRoot->pszValue, "Add") == 0 ||
+                strcasecmp(psRoot->pszValue, "Sub") == 0 ||
+                strcasecmp(psRoot->pszValue, "Mul") == 0 ||
+                strcasecmp(psRoot->pszValue, "Div") == 0)) {
       // Parse an arithmetic element <ogc:Add>, <ogc:Sub>, <ogc:Mul>, <ogc:Div>
-      const char op[2] = {*(strstr(ops, psRoot->pszValue) + 3), '\0'};
+      const char op[2] = {strcasecmp(psRoot->pszValue, "Add") == 0   ? '+'
+                          : strcasecmp(psRoot->pszValue, "Sub") == 0 ? '-'
+                          : strcasecmp(psRoot->pszValue, "Mul") == 0 ? '*'
+                                                                     : '/',
+                          '\0'};
       msStringBuffer *expression = msStringBufferAlloc();
 
       // Parse first operand
@@ -4973,9 +4992,11 @@ static char *msSLDGetAttributeNameOrValue(const char *pszExpression,
     iValue = 0;
     for (int i = 0; i < nLength; i++) {
       // Check for comparison operator
-      if ((i + 1 < nLength && EQUALN(&pszExpression[i], szCompare, 2)) ||
-          (i + 1 < nLength && EQUALN(&pszExpression[i], szCompare2, 2)) ||
-          (i + 1 < nLength && EQUALN(&pszExpression[i], szCompare3, 2))) {
+      if ((i + 1 < nLength && EQUALN(&pszExpression[i], szCompare2, 2)) ||
+          (i + 1 < nLength && EQUALN(&pszExpression[i], szCompare3, 2)) ||
+          (i + 1 < nLength && EQUALN(&pszExpression[i], szCompare, 2) &&
+           (i == 0 || pszExpression[i - 1] == ' ') &&
+           (i + 2 >= nLength || pszExpression[i + 2] == ' '))) {
         // Extract value after the operator
         int offset = 2; // All operators are 2 characters long
         pszAttributeValue = msStrdup(&pszExpression[i + offset]);

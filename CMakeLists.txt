@@ -72,6 +72,16 @@ else()
 endif()
 set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH "Installation directory for CMake files")
 
+# Keep a relative copy for install() DESTINATION arguments
+foreach(p LIB BIN INCLUDE CMAKE)
+  set(var INSTALL_${p}_DIR)
+  if(IS_ABSOLUTE "${${var}}")
+    file(RELATIVE_PATH ${var}_REL "${CMAKE_INSTALL_PREFIX}" "${${var}}")
+  else()
+    set(${var}_REL "${${var}}")
+  endif()
+endforeach()
+
 # Make relative paths absolute (needed later on)
 foreach(p LIB BIN INCLUDE CMAKE)
   set(var INSTALL_${p}_DIR)
@@ -343,7 +353,7 @@ src/mapresample.c src/mapwfs.cpp src/mapgdal.cpp src/mapogcsos.c src/mapscale.c 
 src/mapgeomtransform.c src/mapogroutput.cpp src/mapwfslayer.c src/mapagg.cpp src/mapkml.cpp
 src/mapgeomutil.cpp src/mapkmlrenderer.cpp src/fontcache.c src/textlayout.c src/maputfgrid.cpp
 src/mapogr.cpp src/mapcontour.c src/mapsmoothing.c src/mapv8.cpp ${REGEX_SOURCES} src/kerneldensity.c
-src/idw.c src/interpolation.c src/mapflatgeobuf.c src/mapcompositingfilter.c src/mapmvt.c src/mapiconv.c
+src/idw.c src/kriging.c src/interpolation.c src/mapflatgeobuf.c src/mapcompositingfilter.c src/mapmvt.c src/mapiconv.c
 src/mapgraph.cpp src/mapserv-config.cpp src/maprasterlabel.cpp src/mapserv-index.cpp
 src/cql2.cpp src/cql2json.cpp src/cql2text.cpp src/cql2textparser.cpp)
 
@@ -1053,7 +1063,7 @@ add_custom_target(check_cql2text_parser_md5 ALL
                   COMMAND ${CMAKE_COMMAND}
                       "-DIN_FILE=cql2textparser.y"
                       "-DTARGET=generate_cql2text_parser"
-                      "-DEXPECTED_MD5SUM=5772933b81f74a3a9e25b85b94221764"
+                      "-DEXPECTED_MD5SUM=dadf2802080f36becdca009199acfa36"
                       "-DFILENAME_CMAKE=${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
                       -P "${PROJECT_SOURCE_DIR}/src/check_md5sum.cmake"
                   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src"
@@ -1087,11 +1097,11 @@ add_definitions(-D_USE_MATH_DEFINES)
 
 #INSTALL(FILES mapserver-api.h ${PROJECT_BINARY_DIR}/mapserver-version.h DESTINATION include)
 if(USE_ORACLE_PLUGIN)
-   INSTALL(TARGETS msplugin_oracle DESTINATION ${INSTALL_LIB_DIR})
+   INSTALL(TARGETS msplugin_oracle DESTINATION ${INSTALL_LIB_DIR_REL})
 endif(USE_ORACLE_PLUGIN)
 
 if(USE_MSSQL2008)
-   INSTALL(TARGETS msplugin_mssql2008 DESTINATION ${INSTALL_LIB_DIR})
+   INSTALL(TARGETS msplugin_mssql2008 DESTINATION ${INSTALL_LIB_DIR_REL})
 endif(USE_MSSQL2008)
 
 if(NOT FUZZER)
@@ -1102,14 +1112,14 @@ endif()
 
 if(BUILD_STATIC)
    INSTALL(TARGETS mapserver_static
-           DESTINATION ${INSTALL_LIB_DIR} COMPONENT staticlib
+           DESTINATION ${INSTALL_LIB_DIR_REL} COMPONENT staticlib
    )
 endif(BUILD_STATIC)
 if(BUILD_DYNAMIC)
    INSTALL(TARGETS mapserver
            EXPORT mapserverTargets
-           ARCHIVE DESTINATION ${INSTALL_LIB_DIR} COMPONENT shlib
-           LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT shlib
+           ARCHIVE DESTINATION ${INSTALL_LIB_DIR_REL} COMPONENT shlib
+           LIBRARY DESTINATION ${INSTALL_LIB_DIR_REL} COMPONENT shlib
            PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR}/mapserver COMPONENT dev
    )
 
@@ -1144,12 +1154,12 @@ if(BUILD_DYNAMIC)
    # Install the mapserver-config.cmake and mapserver-config-version.cmake
    install(FILES "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/mapserver-config.cmake"
                  "${PROJECT_BINARY_DIR}/mapserver-config-version.cmake"
-           DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
+           DESTINATION "${INSTALL_CMAKE_DIR_REL}" COMPONENT dev
    )
 
    # Install the export set for use with the install-tree
    install(EXPORT mapserverTargets
-           DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
+           DESTINATION "${INSTALL_CMAKE_DIR_REL}" COMPONENT dev
    )
 endif(BUILD_DYNAMIC)
 

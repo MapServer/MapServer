@@ -1458,40 +1458,39 @@ int msLoadProjectionStringEPSG(projectionObj *p, const char *value) {
   return msLoadProjectionString(p, value);
 }
 
-int msLoadProjectionCodeString(projectionObj *p, const char *value) {
-
-  int num_params = 0;
-
-  // exit if init= is already at the start of the string e.g. from
-  // msOGRSpatialRef2ProjectionObj
-  if (strncasecmp(value, "init=", 5) == 0) {
+/* Extract AUTHORITY<sep>version<sep>CODE from a string, to
+** create AUTHORITY:CODE and pas this to msLoadProjectionString().
+** For example:
+**   ESRI/0/53009 to ESRI:53009
+**   ESRI::53009  to ESRI:53009
+** sep_char is '/' for URIs and ':' for URNs.
+** Returns 0 on success, -1 if the string could not be parsed. */
+static int msLoadProjectionStringGenericCRS(projectionObj *p,
+                                            const char *p_auth, char sep_char) {
+  const char *sep = strchr(p_auth, sep_char);
+  if (sep == NULL)
     return -1;
-  }
 
-  if (!strchr(value, ':')) {
+  char auth[64] = {0};
+  size_t authlen = sep - p_auth;
+  if (authlen == 0 || authlen >= sizeof(auth))
     return -1;
-  }
 
-  char **papszList = msStringSplit(value, ':', &(num_params));
+  strlcpy(auth, p_auth, authlen + 1);
 
-  if (num_params != 2) {
-    msFreeCharArray(papszList, num_params);
+  /* skip version field (as it may be empty, e.g. ESRI::53009 or ESRI/0/53009)
+   */
+  const char *p_code = sep + 1;
+  sep = strchr(p_code, sep_char);
+  if (sep != NULL)
+    p_code = sep + 1;
+
+  if (*p_code == '\0')
     return -1;
-  }
 
-  const size_t buffer_size = 5 + strlen(value) + 1;
-  char *init_string = (char *)msSmallMalloc(buffer_size);
-
-  /* translate into PROJ format. */
-  snprintf(init_string, buffer_size, "init=%s:%s", papszList[0], papszList[1]);
-
-  p->args = (char **)msSmallMalloc(sizeof(char *));
-  p->args[0] = init_string;
-  p->numargs = 1;
-
-  msFreeCharArray(papszList, num_params);
-
-  return 0;
+  char authcode[128] = {0};
+  snprintf(authcode, sizeof(authcode), "%s:%s", auth, p_code);
+  return msLoadProjectionString(p, authcode);
 }
 
 int msLoadProjectionString(projectionObj *p, const char *value) {
@@ -1500,13 +1499,14 @@ int msLoadProjectionString(projectionObj *p, const char *value) {
 
   msFreeProjectionExceptContext(p);
 
-  /*
-   * Handle new style definitions, the same as they would be given to
-   * the proj program.
-   * eg.
-   *    "+proj=utm +zone=11 +ellps=WGS84"
-   */
+  /* Known OGC/ISO authorities that PROJ 6+ supports directly without
+  ** init= prefix. Anything not in this list (e.g. custom init files
+  ** like epsg2, nad27) will use the init= prefix instead. */
+  static const char *const validAuthorities[] = {
+      "EPSG", "ESRI", "IAU_2015", "IGNF", "NKG", "OGC", NULL};
+
   if (value[0] == '+') {
+    /* Handle new style definitions e.g. "+proj=utm +zone=11 +ellps=WGS84" */
     char *trimmed;
     int i, i_out = 0;
 
@@ -1522,7 +1522,7 @@ int msLoadProjectionString(projectionObj *p, const char *value) {
   } else if (strncasecmp(value, "AUTO:", 5) == 0 ||
              strncasecmp(value, "AUTO2:", 6) == 0) {
     /* WMS/WFS AUTO projection: "AUTO:proj_id,units_id,lon0,lat0" */
-    /* WMS 1.3.0 projection: "AUTO2:auto_crs_id,factor,lon0,lat0"*/
+    /* WMS 1.3.0 projection: "AUTO2:auto_crs_id,factor,lon0,lat0" */
     /* Keep the projection defn into a single token for writeProjection() */
     /* to work fine. */
     p->args = (char **)msSmallMalloc(sizeof(char *));
@@ -1546,23 +1546,69 @@ int msLoadProjectionString(projectionObj *p, const char *value) {
   } else if (msLoadProjectionStringEPSGLike(
                  p, value, "http://www.opengis.net/def/crs/EPSG/", MS_TRUE) ==
              0) {
-    /* URI projection support */
+    /* URI projection support. Kept separate from the generic URI handler
+    ** below because MS_TRUE enforces correct EPSG axis ordering. */
   } else if (msLoadProjectionStringCRSLike(
                  p, value, "http://www.opengis.net/def/crs/OGC/") == 0) {
     /* Mandatory support for this URI format specified in WFS1.1 (also in 1.0?)
      */
+  } else if (strncasecmp(value, "http://www.opengis.net/def/crs/", 31) == 0) {
+    /* Generic URI handler for non-EPSG/OGC authorities
+    ** in the format http://www.opengis.net/def/crs/AUTHORITY/version/CODE
+    ** e.g. http://www.opengis.net/def/crs/ESRI/0/53009
+    ** EPSG and OGC are handled above due to axis order and CRS identifier
+    ** special cases.
+    */
+    return msLoadProjectionStringGenericCRS(p, value + 31, '/');
   } else if (msLoadProjectionStringEPSGLike(
                  p, value, "http://www.opengis.net/gml/srs/epsg.xml#",
                  MS_FALSE) == 0) {
-    /* We assume always long/lat ordering, as that is what GeoServer does... */
+    /* We assume always long/lat ordering, as that is what GeoServer does...  */
   } else if (msLoadProjectionStringCRSLike(p, value, "CRS:") == 0) {
-  } else if (msLoadProjectionCodeString(p, value) == 0) {
-    /* allow strings in the form AUTH:XXXX */
-  }
-  /*
-   * Handle old style comma delimited.  eg. "proj=utm,zone=11,ellps=WGS84".
-   */
-  else {
+  } else if (strncasecmp(value, "urn:ogc:def:crs:", 16) == 0) {
+    /* Generic URN handler for non-EPSG/OGC authorities e.g.
+     *urn:ogc:def:crs:ESRI::53009
+     ** Format is urn:ogc:def:crs:AUTHORITY:version:CODE where version may be
+     *empty
+     */
+    return msLoadProjectionStringGenericCRS(p, value + 16, ':');
+  } else if (strchr(value, ':') != NULL &&
+             strncasecmp(value, "init=", 5) != 0) {
+    /* Handle AUTHORITY:CODE pattern e.g. ESRI:54030, IAU:2015:30100,
+    ** epsg2:42304. Check if authority is in the known list - if so pass
+    ** directly to PROJ 6+, otherwise prepend init= for file-based
+    ** references and legacy PROJ 4. */
+    const char *sep = strchr(value, ':');
+    char authUpper[64] = {0};
+    size_t authlen = sep - value;
+    bool knownAuthority = false;
+    if (authlen < sizeof(authUpper)) {
+      strlcpy(authUpper, value, authlen + 1);
+      for (size_t i = 0; authUpper[i]; i++)
+        authUpper[i] = (char)toupper((unsigned char)authUpper[i]);
+      for (int i = 0; validAuthorities[i] != NULL; i++) {
+        if (strcmp(authUpper, validAuthorities[i]) == 0) {
+          knownAuthority = true;
+          break;
+        }
+      }
+    }
+    if (knownAuthority) {
+      /* PROJ 6+ handles known authorities directly */
+      p->args = (char **)msSmallMalloc(sizeof(char *));
+      p->args[0] = msStrdup(value);
+      p->numargs = 1;
+    } else {
+      /* Prepend init= for file-based or legacy PROJ 4 references */
+      const size_t buffer_size = strlen("init=") + strlen(value) + 1;
+      char *init_string = (char *)msSmallMalloc(buffer_size);
+      snprintf(init_string, buffer_size, "init=%s", value);
+      p->args = (char **)msSmallMalloc(sizeof(char *));
+      p->args[0] = init_string;
+      p->numargs = 1;
+    }
+  } else {
+    /* Handle old style comma delimited e.g. "proj=utm,zone=11,ellps=WGS84" */
     p->args = msStringSplit(value, ',', &p->numargs);
   }
 
@@ -4524,10 +4570,10 @@ int loadLayer(layerObj *layer, mapObj *map) {
         return (-1); /* getString() cleans up previously allocated string */
       break;
     case (CONNECTIONTYPE):
-      if ((type = getSymbol(14, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL,
+      if ((type = getSymbol(15, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL,
                             MS_WFS, MS_GRATICULE, MS_PLUGIN, MS_UNION,
                             MS_UVRASTER, MS_CONTOUR, MS_KERNELDENSITY, MS_IDW,
-                            MS_FLATGEOBUF, MS_RASTER_LABEL)) == -1)
+                            MS_FLATGEOBUF, MS_RASTER_LABEL, MS_KRIGING)) == -1)
         return (-1);
       layer->connectiontype = type;
       break;
@@ -4979,12 +5025,12 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer) {
   writeCluster(stream, indent, &(layer->cluster));
   writeLayerCompositer(stream, indent, layer->compositer);
   writeString(stream, indent, "CONNECTION", NULL, layer->connection);
-  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 12,
+  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 13,
                MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS",
                MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_PLUGIN,
                "PLUGIN", MS_UNION, "UNION", MS_UVRASTER, "UVRASTER", MS_CONTOUR,
                "CONTOUR", MS_KERNELDENSITY, "KERNELDENSITY", MS_IDW, "IDW",
-               MS_FLATGEOBUF, "FLATGEOBUF");
+               MS_FLATGEOBUF, "FLATGEOBUF", MS_KRIGING, "KRIGING");
   writeHashTable(stream, indent, "CONNECTIONOPTIONS",
                  &(layer->connectionoptions));
   writeString(stream, indent, "DATA", NULL, layer->data);
@@ -6910,7 +6956,7 @@ static bool msGetCWD(char *szBuffer, size_t nBufferSize,
 /*
  * Apply any SLD styles referenced in a LAYER's STYLEITEM
  */
-static void applyStyleItemToLayer(mapObj *map) {
+void msApplyStyleItemsToLayers(mapObj *map) {
 
   // applying SLD can create cloned layers so store the original layer count
   int layerCount = map->numlayers;
@@ -6924,8 +6970,7 @@ static void applyStyleItemToLayer(mapObj *map) {
       if (*filename == '\0') {
         msSetErrorWithStatus(MS_IOERR, MS_HTTP_500_INTERNAL_SERVER_ERROR,
                              "Empty SLD filename: \"%s\".",
-                             "applyLayerDefaultSubstitutions()",
-                             layer->styleitem);
+                             "msApplyStyleItemsToLayers()", layer->styleitem);
       } else {
         msSLDApplyFromFile(map, layer, filename);
       }
@@ -7007,7 +7052,7 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath,
 
   msReleaseLock(TLOCK_PARSER);
 
-  applyStyleItemToLayer(map);
+  msApplyStyleItemsToLayers(map);
 
   if (debuglevel >= MS_DEBUGLEVEL_TUNING) {
     /* In debug mode, report time spent loading/parsing mapfile. */
@@ -7140,8 +7185,6 @@ mapObj *msLoadMap(const char *filename, const char *new_mappath,
     return NULL;
   }
   msReleaseLock(TLOCK_PARSER);
-
-  applyStyleItemToLayer(map);
 
   if (debuglevel >= MS_DEBUGLEVEL_TUNING) {
     /* In debug mode, report time spent loading/parsing mapfile. */

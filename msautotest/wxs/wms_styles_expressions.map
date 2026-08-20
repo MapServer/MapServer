@@ -37,6 +37,13 @@
 # RUN_PARMS: wms_getstyles_expressions30.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test30" > [RESULT_DEMIME]
 # RUN_PARMS: wms_getstyles_expressions31.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test31" > [RESULT_DEMIME]
 
+# RUN_PARMS: wms_getstyles_expressions32.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test32" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions33.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test33" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions34.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test34" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions35.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test35" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions36.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test36" > [RESULT_DEMIME]
+# RUN_PARMS: wms_getstyles_expressions37.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&layers=Test37" > [RESULT_DEMIME]
+
 MAP
     NAME WMS_TEST
 
@@ -479,4 +486,81 @@ MAP
       END
     END
 
+    # field name containing "le"
+    LAYER
+      NAME "Test32"
+      TYPE POINT
+      CLASS
+        EXPRESSION (([field_le] > 0) AND ([field_le] <= 6))
+        STYLE
+            COLOR 0 176 80
+            WIDTH 1
+        END
+      END
+    END
+
+    # field name containing "ge"
+    LAYER
+      NAME "Test33"
+      TYPE POINT
+      CLASS
+        EXPRESSION (([field_ge] > 0) AND ([field_ge] >= 6))
+        STYLE
+            COLOR 0 176 80
+            WIDTH 1
+        END
+      END
+    END
+
+    # field name containing "lt"
+    LAYER
+      NAME "Test34"
+      TYPE POINT
+      CLASS
+        EXPRESSION (([field_lt] > 0) AND ([field_lt] <= 10))
+        STYLE
+            COLOR 0 176 80
+            WIDTH 1
+        END
+      END
+    END
+
+    # field name containing "gt"
+    LAYER
+      NAME "Test35"
+      TYPE POINT
+      CLASS
+        EXPRESSION (([field_gt] > 0) AND ([field_gt] <= 10))
+        STYLE
+            COLOR 0 176 80
+            WIDTH 1
+        END
+      END
+    END
+
+    # field name containing "ne"
+    LAYER
+      NAME "Test36"
+      TYPE POINT
+      CLASS
+        EXPRESSION (([field_ne] != 0) AND ([field_ne] != 99))
+        STYLE
+            COLOR 0 176 80
+            WIDTH 1
+        END
+      END
+    END
+
+    # field name containing "le" with no spaces around operator
+    LAYER
+      NAME "Test37"
+      TYPE POINT
+      CLASS
+        EXPRESSION (([field_le]>0) AND ([field_le]<=6))
+        STYLE
+            COLOR 0 176 80
+            WIDTH 1
+        END
+      END
+    END
 END

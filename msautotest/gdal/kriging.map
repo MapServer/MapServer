@@ -1,0 +1,77 @@
+#RUN_PARMS: kriging_mean.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT] -l krig_mean
+#RUN_PARMS: kriging_sd.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT] -l krig_sd
+#
+# Ordinary-kriging (NNGP) interpolation of 16 gridded point samples whose
+# "weight" attribute (40..220, increasing W->E and S->N) is the value field.
+#   layer "krig_mean" -> band 1, predictive mean      (blue=low .. red=high)
+#   layer "krig_sd"   -> band 2, predictive std dev   (black=low .. white=high)
+# Exercises CONNECTIONTYPE kriging, the two-band output (BANDS=), and the
+# PROCESSING knobs. No fonts/labels -> the raster is rendered by the vendored
+# AGG, so the expected image is platform-independent.
+# NB: "kriging" is a reserved keyword, so layer names avoid it / are quoted.
+#
+MAP
+  NAME "KRIGING_TEST"
+  STATUS ON
+  SIZE 256 256
+  EXTENT 0 0 256 256
+  IMAGECOLOR 255 255 255
+  IMAGETYPE png
+
+  LAYER
+    NAME "krig_mean"
+    TYPE raster
+    STATUS ON
+    CONNECTIONTYPE kriging
+    CONNECTION "pts"
+    PROCESSING "RANGE_COLORSPACE=RGB"
+    PROCESSING "KRIGING_MODEL=EXPONENTIAL"
+    PROCESSING "KRIGING_TYPE=ORDINARY"
+    PROCESSING "KRIGING_NEIGHBORS=8"
+    PROCESSING "KRIGING_RANGE=120"
+    PROCESSING "KRIGING_NUGGET=0"
+    CLASS
+      STYLE
+        COLORRANGE 0 0 255  255 0 0
+        DATARANGE 40 220
+      END
+    END
+  END
+
+  LAYER
+    NAME "krig_sd"
+    TYPE raster
+    STATUS ON
+    CONNECTIONTYPE kriging
+    CONNECTION "pts"
+    PROCESSING "RANGE_COLORSPACE=RGB"
+    PROCESSING "BANDS=2"
+    PROCESSING "KRIGING_MODEL=EXPONENTIAL"
+    PROCESSING "KRIGING_TYPE=ORDINARY"
+    PROCESSING "KRIGING_NEIGHBORS=8"
+    PROCESSING "KRIGING_RANGE=120"
+    PROCESSING "KRIGING_NUGGET=0"
+    CLASS
+      STYLE
+        COLORRANGE 0 0 0  255 255 255
+        DATARANGE 0 60
+      END
+    END
+  END
+
+  # invisible weight carrier (CONNECTION above == this layer's NAME).
+  # OGR reads the CSV "wkt" column directly as point geometry -> no .vrt needed.
+  LAYER
+    NAME "pts"
+    TYPE point
+    STATUS OFF
+    CONNECTIONTYPE OGR
+    CONNECTION "data/kriging_points.csv"
+    DATA "kriging_points"
+    CLASS
+      STYLE
+        SIZE [weight]
+      END
+    END
+  END
+END

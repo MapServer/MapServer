@@ -136,6 +136,7 @@ def read_test_directives(mapfile_name):
         lines = open(mapfile_name, encoding="utf8").readlines()
     else:
         lines = open(mapfile_name).readlines()
+    skip_whole_file = False
     for line in lines:
         req_off = line.find("REQUIRES:")
         if req_off != -1:
@@ -153,7 +154,10 @@ def read_test_directives(mapfile_name):
                     (items[0], "[MAP2IMG] [RENDERER] -m [MAPFILE] -o [RESULT]")
                 )
 
-    if len(runparms_list) == 0:
+        if "SKIP_WHOLE_FILE:" in line:
+            skip_whole_file = True
+
+    if len(runparms_list) == 0 and not skip_whole_file:
         runparms_list.append(
             (
                 mapfile_name[:-4] + ".png",
@@ -603,19 +607,19 @@ def _run(map, out_file, command, extra_args):
 
     os.environ["MS_PDF_CREATION_DATE"] = "dummy date"
 
-    # support for environment variable of type [ENV foo=bar]
-    begin = command.find("[ENV")
-    envirkey = ""
-    if begin != -1:
-        end = command[begin:].find("]")
-        equal = command[begin:].find("=")
-        # print("equal is %d"%equal)
-        envirkey = command[begin + len("[ENV ") : begin + equal]
+    # support for environment variables of type [ENV foo=bar] (repeatable)
+    envir_keys = []
+    while True:
+        begin = command.find("[ENV ")
+        if begin == -1:
+            break
+        end = command.find("]", begin)
+        equal = command.find("=", begin)
+        envirkey = command[begin + len("[ENV ") : equal]
         envirval = command[equal + 1 : end]
         os.environ[envirkey] = envirval
-        tmp = command
-        command = tmp[:begin] + tmp[end + 1 :]
-        # print('added environment variable (%s)=(%s); new command:%s' % (envirkey,envirval,command))
+        envir_keys.append(envirkey)
+        command = command[:begin] + command[end + 1 :]
 
     # support for POST request method
     begin = command.find("[POST]")
@@ -684,7 +688,7 @@ def _run(map, out_file, command, extra_args):
         del os.environ["REQUEST_METHOD"]
         del os.environ["MS_MAPFILE"]
 
-    if envirkey != "":
+    for envirkey in envir_keys:
         del os.environ[envirkey]
 
     if demime:

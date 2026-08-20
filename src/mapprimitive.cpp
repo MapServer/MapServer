@@ -687,10 +687,11 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect) {
 
   for (j = 0; j < shape->numlines; j++) {
 
+    /* A single edge can emit up to 3 points (a clip-rect corner, the entry
+       intersection and the exit/endpoint), so the worst case over numpoints-1
+       edges plus the closure point is 3*numpoints-2. */
     line.point = (pointObj *)msSmallMalloc(
-        sizeof(pointObj) * 2 * shape->line[j].numpoints +
-        1); /* worst case scenario, +1 allows us to duplicate the 1st and last
-               point */
+        sizeof(pointObj) * 3 * shape->line[j].numpoints + sizeof(pointObj));
     line.numpoints = 0;
 
     for (i = 0; i < shape->line[j].numpoints - 1; i++) {
