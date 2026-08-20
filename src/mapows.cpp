@@ -2795,6 +2795,7 @@ int msOWSGetLayerExtent(mapObj *map, layerObj *lp, const char *namespaces,
     if (tokens == NULL || n != 4) {
       msSetError(MS_WMSERR, "Wrong number of arguments for EXTENT metadata.",
                  "msOWSGetLayerExtent()");
+      msFreeCharArray(tokens, n);
       return MS_FAILURE;
     }
     ext->minx = atof(tokens[0]);
