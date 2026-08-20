@@ -4945,14 +4945,17 @@ static int msWMSFeatureInfo(mapObj *map, int nVersion, char **names,
     msObj->request->ParamNames = translated_names;
     msObj->request->ParamValues = translated_values;
 
-    msObj->request->ParamSources =
-        translated_numentries > 0
-            ? (enum MS_PARAM_SOURCE *)msSmallMalloc(
-                  sizeof(enum MS_PARAM_SOURCE) * translated_numentries)
-            : NULL;
-    for (int k = 0; k < translated_numentries; k++) {
-      msObj->request->ParamSources[k] = MS_PARAM_SOURCE_QUERYSTRING;
+    enum MS_PARAM_SOURCE *newParamSources = NULL;
+
+    if (translated_numentries > 0) {
+      newParamSources = (enum MS_PARAM_SOURCE *)msSmallMalloc(
+          sizeof(enum MS_PARAM_SOURCE) * translated_numentries);
+      for (int k = 0; k < translated_numentries; k++) {
+        newParamSources[k] = MS_PARAM_SOURCE_QUERYSTRING;
+      }
     }
+
+    msObj->request->ParamSources = newParamSources;
 
     msObj->Mode = QUERY;
     msObj->mappnt.x = point.x;
