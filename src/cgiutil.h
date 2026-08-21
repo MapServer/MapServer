@@ -50,6 +50,12 @@ extern "C" {
 
 enum MS_REQUEST_TYPE { MS_GET_REQUEST, MS_POST_REQUEST };
 
+enum MS_PARAM_SOURCE {
+  MS_PARAM_SOURCE_QUERYSTRING,
+  MS_PARAM_SOURCE_POST,
+  MS_PARAM_SOURCE_COOKIE
+};
+
 /**
 Class for programming OWS services
 */
@@ -57,6 +63,7 @@ typedef struct {
 #ifndef SWIG
   char **ParamNames;
   char **ParamValues;
+  enum MS_PARAM_SOURCE *ParamSources;
 #endif
 
 #ifdef SWIG

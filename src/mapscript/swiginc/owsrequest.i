@@ -149,6 +149,8 @@ static char *msPostEnvURL(const char *key, void *thread_context)
         if (i == self->NumParams) {
             self->ParamNames[self->NumParams] = msStrdup(name);
             self->ParamValues[self->NumParams] = msStrdup(value);
+            /* default to querystring as the source for programatically set parameters */
+            self->ParamSources[self->NumParams] = MS_PARAM_SOURCE_QUERYSTRING;
             self->NumParams++;
         }
     }
@@ -167,6 +169,8 @@ static char *msPostEnvURL(const char *key, void *thread_context)
         }
         self->ParamNames[self->NumParams] = msStrdup(name);
         self->ParamValues[self->NumParams] = msStrdup(value);
+        /* default to querystring as the source for programatically set parameters */
+        self->ParamSources[self->NumParams] = MS_PARAM_SOURCE_QUERYSTRING;
         self->NumParams++;
     }
 

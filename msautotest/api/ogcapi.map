@@ -39,6 +39,10 @@
 # RUN_PARMS: ogcapi_collections_queryables_unknown_parameter.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/queryables" "QUERY_STRING=f=json&unknown=parameter" > [RESULT]
 
 # RUN_PARMS: ogcapi_queryable_in_query_parameters_match.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&Name=Rice" > [RESULT]
+# test that parameters from cookies are ignored
+# RUN_PARMS: ogcapi_queryable_in_cookie_ignored.json.txt [ENV HTTP_COOKIE=Name=Rice] [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&limit=2" > [RESULT]
+# RUN_PARMS: ogcapi_queryable_cookie_ignored_with_querystring_filter.json.txt [ENV HTTP_COOKIE=AREA=999999999] [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&Name=Rice" > [RESULT]
+
 # RUN_PARMS: ogcapi_queryable_in_query_parameters_match_with_bbox.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&Name=Rice&bbox=-100,0,-90,90" > [RESULT]
 # RUN_PARMS: ogcapi_queryable_in_query_parameters_no_match_with_bbox.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&Name=Rice&bbox=0,0,1,1" > [RESULT]
 # RUN_PARMS: ogcapi_queryable_in_query_parameters_no_match.json.txt [MAPSERV] "PATH_INFO=/[MAPFILE]/ogcapi/collections/mn_counties/items" "QUERY_STRING=f=json&Name=no_match" > [RESULT]
