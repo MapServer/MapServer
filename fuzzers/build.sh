@@ -74,8 +74,8 @@ cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_STATIC=ON \
 make -j$(nproc) mapserver_static
 
 #Fuzzers
-for fuzzer in mapfuzzer shapefuzzer configfuzzer; do
-    $CC $CFLAGS -Wall -Wextra -I. -I.. -I/usr/include/gdal/. -DPROJ_VERSION_MAJOR=6 -c ../fuzzers/${fuzzer}.c
+for fuzzer in mapfuzzer shapefuzzer configfuzzer owsfuzzer; do
+    $CC $CFLAGS -Wall -Wextra -I. -I.. -I/usr/include/gdal/. -I/usr/local/include/libxml2 -I/usr/include/libxml2 -DPROJ_VERSION_MAJOR=6 -c ../fuzzers/${fuzzer}.c
 
     $CXX $CXXFLAGS $LIB_FUZZING_ENGINE ${fuzzer}.o -o ${fuzzer} \
         -L. -lmapserver_static -lgdal \
@@ -90,3 +90,10 @@ cd ..
 zip -r $OUT/mapfuzzer_seed_corpus.zip tests/*.map
 zip -r $OUT/shapefuzzer_seed_corpus.zip tests/*.shp tests/*.shx tests/*.dbf
 zip -r $OUT/configfuzzer_seed_corpus.zip tests/*.conf etc/*.conf msautotest/config/*.conf
+
+# OWS request fuzzer: seed with a few representative OGC query strings.
+printf "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities" > /tmp/ows_seed1
+printf "SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=l&STYLES=&SRS=EPSG:4326&BBOX=-180,-90,180,90&WIDTH=10&HEIGHT=10&FORMAT=image/png" > /tmp/ows_seed2
+printf "SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=l" > /tmp/ows_seed3
+printf "SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=l&QUERY_LAYERS=l&STYLES=&SRS=EPSG:4326&BBOX=-180,-90,180,90&WIDTH=10&HEIGHT=10&FORMAT=image/png&INFO_FORMAT=text/plain&X=1&Y=1" > /tmp/ows_seed4
+zip -j $OUT/owsfuzzer_seed_corpus.zip /tmp/ows_seed1 /tmp/ows_seed2 /tmp/ows_seed3 /tmp/ows_seed4
