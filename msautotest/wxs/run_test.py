@@ -29,7 +29,9 @@
 ###############################################################################
 
 import os
+import subprocess
 import sys
+import urllib.parse
 
 import pytest
 
@@ -44,6 +46,56 @@ import mstestlib
 )
 def test(map, out_file, command, extra_args):
     mstestlib.run_pytest(map, out_file, command, extra_args)
+
+
+def test_wms_filter_operation_limit():
+    test_dir = os.path.dirname(os.path.abspath(__file__))
+    leaf = (
+        "<PropertyIsEqualTo><PropertyName>NAME</PropertyName>"
+        "<Literal>Charlottetown</Literal></PropertyIsEqualTo>"
+    )
+    request = urllib.parse.urlencode(
+        {
+            "map": "wms_filter.map",
+            "SERVICE": "WMS",
+            "VERSION": "1.3.0",
+            "REQUEST": "GetMap",
+            "CRS": "EPSG:4326",
+            "BBOX": "40,-70,50,-60",
+            "WIDTH": "10",
+            "HEIGHT": "10",
+            "LAYERS": "popplace",
+            "STYLES": "",
+            "FORMAT": "image/png",
+            "EXCEPTIONS": "XML",
+            "FILTER": "<Filter><Or>" + leaf * 300 + "</Or></Filter>",
+        }
+    )
+    env = os.environ.copy()
+    env.update(
+        {
+            "REQUEST_METHOD": "POST",
+            "QUERY_STRING": "",
+            "CONTENT_TYPE": "application/x-www-form-urlencoded",
+            "CONTENT_LENGTH": str(len(request)),
+            "MAPSERVER_CONFIG_FILE": os.path.abspath(
+                os.path.join(test_dir, "..", "etc", "mapserv.conf")
+            ),
+        }
+    )
+
+    result = subprocess.run(
+        ["mapserv"],
+        input=request,
+        text=True,
+        capture_output=True,
+        cwd=test_dir,
+        env=env,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "InvalidParameterValue" in result.stdout
 
 
 ###############################################################################
