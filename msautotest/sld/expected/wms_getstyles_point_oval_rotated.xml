@@ -1,0 +1,22 @@
+<StyledLayerDescriptor version="1.1.0" xsi:schemaLocation="http://www.opengis.net/sld http://schemas.opengis.net/sld/1.1.0/StyledLayerDescriptor.xsd" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc" xmlns:se="http://www.opengis.net/se" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<NamedLayer>
+<se:Name>point_oval_rotated</se:Name>
+<UserStyle>
+<se:FeatureTypeStyle>
+<se:Rule>
+<se:PointSymbolizer>
+<se:Graphic>
+<se:ExternalGraphic>
+<se:OnlineResource xlink:type="simple" xlink:href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMSIgaGVpZ2h0PSIxMSIgdmlld0JveD0iMCAwIDIxIDExIj4KPGVsbGlwc2UgY3g9IjEwLjUiIGN5PSI1LjUiIHJ4PSIxMCIgcnk9IjUiIGZpbGw9IiM4ZmMxZmYiIHN0cm9rZT0iI2I1YjdiOCIgc3Ryb2tlLXdpZHRoPSIxIi8+Cjwvc3ZnPgo="/>
+<se:Format>image/svg+xml</se:Format>
+</se:ExternalGraphic>
+<se:Size>10</se:Size>
+<se:Rotation>315</se:Rotation>
+</se:Graphic>
+</se:PointSymbolizer>
+</se:Rule>
+</se:FeatureTypeStyle>
+</UserStyle>
+</NamedLayer>
+</StyledLayerDescriptor>
+

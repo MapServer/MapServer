@@ -32,6 +32,7 @@
 #include "mapows.h"
 #include "mapcopy.h"
 #include "cpl_string.h"
+#include <float.h>
 
 extern "C" {
 extern int yyparse(parseObj *);
@@ -3491,6 +3492,225 @@ char *msSLDGenerateSLD(mapObj *map, int iLayer, const char *pszVersion) {
 }
 
 /************************************************************************/
+/*       msSLDGenerateSVGFromEllipseSymbol                              */
+/*                                                                      */
+/*       Generate SVG for a MapServer ellipse symbol.                   */
+/************************************************************************/
+static char *msSLDGenerateSVGFromEllipseSymbol(symbolObj *psSymbol,
+                                               styleObj *psStyle) {
+  msStringBuffer *svgBuf = msStringBufferAlloc();
+
+  if (!svgBuf) {
+    return NULL;
+  }
+
+  char szTmp[512];
+
+  double dfRatioX = psSymbol->sizex > 0 ? psSymbol->sizex : 1.0;
+  double dfRatioY = psSymbol->sizey > 0 ? psSymbol->sizey : 1.0;
+
+  /* SIZE maps to height; width is derived from the sizex/sizey ratio,
+     matching msGetMarkerSize(). */
+  double dfWidth, dfHeight;
+  if (psStyle->size > 0) {
+    dfHeight = psStyle->size;
+    dfWidth = (psStyle->size / dfRatioY) * dfRatioX;
+  } else {
+    dfHeight = dfRatioY;
+    dfWidth = dfRatioX;
+  }
+
+  double dfRx = dfWidth / 2.0;
+  double dfRy = dfHeight / 2.0;
+
+  /* Pad the canvas for the stroke (if present) matching MapServer rendering */
+  int bHasStroke = (psStyle->outlinecolor.red != -1);
+  double dfStrokeWidth = psStyle->width > 0 ? psStyle->width : 1.0;
+  double dfPadding = bHasStroke ? dfStrokeWidth / 2.0 : 0.0;
+
+  double dfCanvasWidth = dfWidth + (dfPadding * 2.0);
+  double dfCanvasHeight = dfHeight + (dfPadding * 2.0);
+
+  char szFillColor[8] = "none";
+  char szStrokeColor[8] = "none";
+  char szFillOpacity[32] = "";
+  char szStrokeOpacity[32] = "";
+
+  if (psStyle->color.red != -1) {
+    snprintf(szFillColor, sizeof(szFillColor), "#%02x%02x%02x",
+             psStyle->color.red, psStyle->color.green, psStyle->color.blue);
+    if (psStyle->color.alpha != 255 && psStyle->color.alpha != -1) {
+      snprintf(szFillOpacity, sizeof(szFillOpacity), " fill-opacity=\"%.2f\"",
+               psStyle->color.alpha / 255.0);
+    }
+  }
+  if (bHasStroke) {
+    snprintf(szStrokeColor, sizeof(szStrokeColor), "#%02x%02x%02x",
+             psStyle->outlinecolor.red, psStyle->outlinecolor.green,
+             psStyle->outlinecolor.blue);
+    if (psStyle->outlinecolor.alpha != 255 &&
+        psStyle->outlinecolor.alpha != -1) {
+      snprintf(szStrokeOpacity, sizeof(szStrokeOpacity),
+               " stroke-opacity=\"%.2f\"", psStyle->outlinecolor.alpha / 255.0);
+    }
+  }
+
+  snprintf(szTmp, sizeof(szTmp),
+           "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%g\" "
+           "height=\"%g\" viewBox=\"0 0 %g %g\">\n"
+           "<ellipse cx=\"%g\" cy=\"%g\" rx=\"%g\" ry=\"%g\" "
+           "fill=\"%s\"%s stroke=\"%s\"%s stroke-width=\"%g\"/>\n</svg>\n",
+           dfCanvasWidth, dfCanvasHeight, dfCanvasWidth, dfCanvasHeight,
+           dfCanvasWidth / 2.0, dfCanvasHeight / 2.0, dfRx, dfRy, szFillColor,
+           szFillOpacity, szStrokeColor, szStrokeOpacity, dfStrokeWidth);
+  msStringBufferAppend(svgBuf, szTmp);
+
+  return msStringBufferReleaseStringAndFree(svgBuf);
+}
+
+/************************************************************************/
+/*       msSLDGenerateSVGFromVectorSymbol                               */
+/*                                                                      */
+/*       Generate SVG for a MapServer vector symbol.                    */
+/************************************************************************/
+static char *msSLDGenerateSVGFromVectorSymbol(symbolObj *psSymbol,
+                                              styleObj *psStyle) {
+  msStringBuffer *svgBuf = msStringBufferAlloc();
+
+  if (!svgBuf) {
+    return NULL;
+  }
+
+  char szTmp[512];
+  int i;
+  int bStartNewSubpath;
+
+  /* The upper left corner of the bounding box of a symbol of TYPE vector is
+   * always (0, 0) */
+  double dfMinX = 0.0, dfMinY = 0.0;
+  double dfMaxX = -DBL_MAX, dfMaxY = -DBL_MAX;
+
+  /* Compute the symbol's bounding box (ignoring the magic values -99 -99) */
+  for (i = 0; i < psSymbol->numpoints; i++) {
+    double x = psSymbol->points[i].x;
+    double y = psSymbol->points[i].y;
+    if (x == -99.0 && y == -99.0)
+      continue;
+    if (x > dfMaxX)
+      dfMaxX = x;
+    if (y > dfMaxY)
+      dfMaxY = y;
+  }
+
+  double dfBBoxWidth = dfMaxX - dfMinX;
+  double dfBBoxHeight = dfMaxY - dfMinY;
+  if (dfBBoxWidth <= 0 || dfBBoxHeight <= 0) {
+    msStringBufferFree(svgBuf);
+    return NULL;
+  }
+
+  /* Match MapServer marker sizing in msGetMarkerSize: SIZE defines the height,
+     and width is scaled from the symbol aspect ratio. */
+  double dfRenderScale;
+  double dfOutWidth, dfOutHeight;
+  if (psStyle->size > 0) {
+    dfOutHeight = psStyle->size;
+    dfRenderScale = dfOutHeight / dfBBoxHeight;
+    dfOutWidth = dfBBoxWidth * dfRenderScale;
+  } else {
+    dfOutWidth = dfBBoxWidth;
+    dfOutHeight = dfBBoxHeight;
+    dfRenderScale = 1.0;
+  }
+
+  /* Add padding for the stroke since it extends outside the path,
+     matching MapServer rendering and avoiding clipped outlines. */
+  int bHasStroke;
+  if (!psSymbol->filled) {
+    bHasStroke = (psStyle->color.red != -1);
+  } else {
+    bHasStroke = (psStyle->outlinecolor.red != -1);
+  }
+
+  double dfStrokeWidth = psStyle->width > 0 ? psStyle->width : 1.0;
+  double dfPadding = bHasStroke ? dfStrokeWidth / 2.0 : 0.0;
+
+  double dfCanvasWidth = dfOutWidth + (dfPadding * 2.0);
+  double dfCanvasHeight = dfOutHeight + (dfPadding * 2.0);
+  double dfOffset = dfPadding;
+
+  char szFillColor[8] = "none";
+  char szStrokeColor[8] = "none";
+  char szFillOpacity[32] = "";
+  char szStrokeOpacity[32] = "";
+
+  /* When using line fills in a polygon COLOR is used for the stroke color
+    otherwise COLOR is used for the fill */
+  if (!psSymbol->filled) {
+    if (psStyle->color.red != -1) {
+      snprintf(szStrokeColor, sizeof(szStrokeColor), "#%02x%02x%02x",
+               psStyle->color.red, psStyle->color.green, psStyle->color.blue);
+      if (psStyle->color.alpha != 255 && psStyle->color.alpha != -1) {
+        snprintf(szStrokeOpacity, sizeof(szStrokeOpacity),
+                 " stroke-opacity=\"%.2f\"", psStyle->color.alpha / 255.0);
+      }
+    }
+  } else {
+    if (psStyle->color.red != -1) {
+      snprintf(szFillColor, sizeof(szFillColor), "#%02x%02x%02x",
+               psStyle->color.red, psStyle->color.green, psStyle->color.blue);
+      if (psStyle->color.alpha != 255 && psStyle->color.alpha != -1) {
+        snprintf(szFillOpacity, sizeof(szFillOpacity), " fill-opacity=\"%.2f\"",
+                 psStyle->color.alpha / 255.0);
+      }
+    }
+    if (psStyle->outlinecolor.red != -1) {
+      snprintf(szStrokeColor, sizeof(szStrokeColor), "#%02x%02x%02x",
+               psStyle->outlinecolor.red, psStyle->outlinecolor.green,
+               psStyle->outlinecolor.blue);
+      if (psStyle->outlinecolor.alpha != 255 &&
+          psStyle->outlinecolor.alpha != -1) {
+        snprintf(szStrokeOpacity, sizeof(szStrokeOpacity),
+                 " stroke-opacity=\"%.2f\"",
+                 psStyle->outlinecolor.alpha / 255.0);
+      }
+    }
+  }
+
+  snprintf(szTmp, sizeof(szTmp),
+           "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%g\" "
+           "height=\"%g\" viewBox=\"0 0 %g %g\">\n<path d=\"",
+           dfCanvasWidth, dfCanvasHeight, dfCanvasWidth, dfCanvasHeight);
+  msStringBufferAppend(svgBuf, szTmp);
+
+  bStartNewSubpath = MS_TRUE;
+  for (i = 0; i < psSymbol->numpoints; i++) {
+    double x = psSymbol->points[i].x;
+    double y = psSymbol->points[i].y;
+
+    if (x == -99.0 && y == -99.0) {
+      bStartNewSubpath = MS_TRUE;
+      continue;
+    }
+
+    /* Translate into the 0-origin viewBox computed above. */
+    snprintf(szTmp, sizeof(szTmp), "%s%g,%g ", bStartNewSubpath ? "M " : "L ",
+             (x - dfMinX) * dfRenderScale + dfOffset,
+             (y - dfMinY) * dfRenderScale + dfOffset);
+    msStringBufferAppend(svgBuf, szTmp);
+    bStartNewSubpath = MS_FALSE;
+  }
+
+  snprintf(szTmp, sizeof(szTmp),
+           "%s\" fill=\"%s\" stroke=\"%s\" stroke-width=\"%g\"/>\n</svg>\n",
+           psSymbol->filled ? "Z" : "", szFillColor, szStrokeColor,
+           dfStrokeWidth);
+  msStringBufferAppend(svgBuf, szTmp);
+
+  return msStringBufferReleaseStringAndFree(svgBuf);
+}
+
+/************************************************************************/
 /*                            msSLDGetGraphicSLD                        */
 /*                                                                      */
 /*      Get an SLD for a style containing a symbol (Mark or external).  */
@@ -3541,15 +3761,14 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
       if (psSymbol->type == MS_SYMBOL_VECTOR ||
           psSymbol->type == MS_SYMBOL_ELLIPSE) {
         /* Mark symbol */
-        if (psSymbol->name)
-
-        {
+        if (psSymbol->name) {
           if (strcasecmp(psSymbol->name, "square") == 0 ||
               strcasecmp(psSymbol->name, "circle") == 0 ||
               strcasecmp(psSymbol->name, "triangle") == 0 ||
               strcasecmp(psSymbol->name, "star") == 0 ||
               strcasecmp(psSymbol->name, "cross") == 0 ||
               strcasecmp(psSymbol->name, "x") == 0)
+
             pszSymbolName = msStrdup(psSymbol->name);
           else if (strncasecmp(psSymbol->name, "sld_mark_symbol_square", 22) ==
                    0)
@@ -3566,7 +3785,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                    0)
             pszSymbolName = msStrdup("cross");
           else if (strncasecmp(psSymbol->name, "sld_mark_symbol_x", 17) == 0)
-            pszSymbolName = msStrdup("X");
+            pszSymbolName = msStrdup("x");
 
           if (pszSymbolName) {
             colorObj sTmpFillColor = {128, 128, 128, 255};
@@ -3585,14 +3804,28 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                      pszSymbolName, sNameSpace);
             msStringBufferAppend(sldString, szTmp);
 
+            // the WellKnownName cross and x have no interior to fill, so
+            // for these we use the outline instead
+            int isStrokeOnlyMark = (strcasecmp(pszSymbolName, "x") == 0 ||
+                                    strcasecmp(pszSymbolName, "cross") == 0);
+
             if (psStyle->color.red != -1 && psStyle->color.green != -1 &&
                 psStyle->color.blue != -1) {
-              sTmpFillColor.red = psStyle->color.red;
-              sTmpFillColor.green = psStyle->color.green;
-              sTmpFillColor.blue = psStyle->color.blue;
-              sTmpFillColor.alpha = psStyle->color.alpha;
-              hasFillColor = 1;
+              if (isStrokeOnlyMark) {
+                sTmpStrokeColor.red = psStyle->color.red;
+                sTmpStrokeColor.green = psStyle->color.green;
+                sTmpStrokeColor.blue = psStyle->color.blue;
+                sTmpStrokeColor.alpha = psStyle->color.alpha;
+                hasStrokeColor = 1;
+              } else {
+                sTmpFillColor.red = psStyle->color.red;
+                sTmpFillColor.green = psStyle->color.green;
+                sTmpFillColor.blue = psStyle->color.blue;
+                sTmpFillColor.alpha = psStyle->color.alpha;
+                hasFillColor = 1;
+              }
             }
+
             if (psStyle->outlinecolor.red != -1 &&
                 psStyle->outlinecolor.green != -1 &&
                 psStyle->outlinecolor.blue != -1) {
@@ -3601,19 +3834,21 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
               sTmpStrokeColor.blue = psStyle->outlinecolor.blue;
               sTmpStrokeColor.alpha = psStyle->outlinecolor.alpha;
               hasStrokeColor = 1;
-              // Make defaults implicit
-              if (sTmpStrokeColor.red == 0 && sTmpStrokeColor.green == 0 &&
-                  sTmpStrokeColor.blue == 0 && sTmpStrokeColor.alpha == 255 &&
-                  psStyle->width == 1) {
-                hasStrokeColor = 0;
-              }
             }
             if (!hasFillColor && !hasStrokeColor) {
-              sTmpFillColor.red = 128;
-              sTmpFillColor.green = 128;
-              sTmpFillColor.blue = 128;
-              sTmpFillColor.alpha = 255;
-              hasFillColor = 1;
+              if (isStrokeOnlyMark) {
+                sTmpStrokeColor.red = 128;
+                sTmpStrokeColor.green = 128;
+                sTmpStrokeColor.blue = 128;
+                sTmpStrokeColor.alpha = 255;
+                hasStrokeColor = 1;
+              } else {
+                sTmpFillColor.red = 128;
+                sTmpFillColor.green = 128;
+                sTmpFillColor.blue = 128;
+                sTmpFillColor.alpha = 255;
+                hasFillColor = 1;
+              }
             }
 
             if (hasFillColor) {
@@ -3660,24 +3895,23 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
             snprintf(szTmp, sizeof(szTmp), "</%sMark>\n", sNameSpace);
             msStringBufferAppend(sldString, szTmp);
 
+            // Style opacity is already reported to alpha channel of color and
+            // outlinecolor if (psStyle->opacity < 100)
+
             if (psStyle->size > 0) {
               snprintf(szTmp, sizeof(szTmp), "<%sSize>%g</%sSize>\n",
                        sNameSpace, psStyle->size, sNameSpace);
               msStringBufferAppend(sldString, szTmp);
             }
 
+            // MapServer 's angle is clockwise, but SLD's angle is
+            // counter-clockwise
             if (fmod(psStyle->angle, 360)) {
+              double dfSEAngle = fmod(360.0 - psStyle->angle, 360.0);
               snprintf(szTmp, sizeof(szTmp), "<%sRotation>%g</%sRotation>\n",
-                       sNameSpace, psStyle->angle, sNameSpace);
+                       sNameSpace, dfSEAngle, sNameSpace);
               msStringBufferAppend(sldString, szTmp);
             }
-            // Style opacity is already reported to alpha channel of color and
-            // outlinecolor if (psStyle->opacity < 100)
-            // {
-            //   snprintf(szTmp, sizeof(szTmp), "<%sOpacity>%g</%sOpacity>\n",
-            //       sNameSpace, psStyle->opacity/100.0, sNameSpace);
-            //   pszSLD = msStringConcatenate(pszSLD, szTmp);
-            // }
 
             if (psStyle->offsetx != 0 || psStyle->offsety != 0) {
               snprintf(szTmp, sizeof(szTmp), "<%sDisplacement>\n", sNameSpace);
@@ -3699,9 +3933,153 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
 
             if (pszSymbolName)
               free(pszSymbolName);
+          } else {
+            /* No WellKnownName match — attempt to generate an ExternalGraphic
+               SVG instead of fall back to a default symbol. */
+            char *pszSVG =
+                // handle ELLIPSE as a special case
+                (psSymbol->type == MS_SYMBOL_ELLIPSE)
+                    ? msSLDGenerateSVGFromEllipseSymbol(psSymbol, psStyle)
+                    : msSLDGenerateSVGFromVectorSymbol(psSymbol, psStyle);
+            if (pszSVG) {
+              // encode as Base64 so it can be output to XML
+              char *pszBase64 =
+                  CPLBase64Encode(static_cast<int>(strlen(pszSVG)),
+                                  reinterpret_cast<const GByte *>(pszSVG));
+
+              snprintf(szTmp, sizeof(szTmp), "<%sGraphic>\n", sNameSpace);
+              msStringBufferAppend(sldString, szTmp);
+
+              snprintf(szTmp, sizeof(szTmp), "<%sExternalGraphic>\n",
+                       sNameSpace);
+              msStringBufferAppend(sldString, szTmp);
+
+              snprintf(szTmp, sizeof(szTmp),
+                       "<%sOnlineResource xlink:type=\"simple\" "
+                       "xlink:href=\"data:image/svg+xml;base64,",
+                       sNameSpace);
+
+              msStringBufferAppend(sldString, szTmp);
+              msStringBufferAppend(sldString, pszBase64);
+              msStringBufferAppend(sldString, "\"/>\n");
+              CPLFree(pszBase64);
+
+              snprintf(szTmp, sizeof(szTmp),
+                       "<%sFormat>image/svg+xml</%sFormat>\n", sNameSpace,
+                       sNameSpace);
+              msStringBufferAppend(sldString, szTmp);
+
+              snprintf(szTmp, sizeof(szTmp), "</%sExternalGraphic>\n",
+                       sNameSpace);
+              msStringBufferAppend(sldString, szTmp);
+
+              if (psStyle->size > 0) {
+                snprintf(szTmp, sizeof(szTmp), "<%sSize>%g</%sSize>\n",
+                         sNameSpace, psStyle->size, sNameSpace);
+                msStringBufferAppend(sldString, szTmp);
+              }
+
+              // MapServer 's angle is clockwise, but SLD's angle is
+              // counter-clockwise
+              if (fmod(psStyle->angle, 360)) {
+                double dfSEAngle = fmod(360.0 - psStyle->angle, 360.0);
+                snprintf(szTmp, sizeof(szTmp), "<%sRotation>%g</%sRotation>\n",
+                         sNameSpace, dfSEAngle, sNameSpace);
+                msStringBufferAppend(sldString, szTmp);
+              }
+
+              if (psStyle->offsetx != 0 || psStyle->offsety != 0) {
+                snprintf(szTmp, sizeof(szTmp), "<%sDisplacement>\n",
+                         sNameSpace);
+                msStringBufferAppend(sldString, szTmp);
+                snprintf(szTmp, sizeof(szTmp),
+                         "<%sDisplacementX>%g</%sDisplacementX>\n", sNameSpace,
+                         psStyle->offsetx, sNameSpace);
+                msStringBufferAppend(sldString, szTmp);
+                snprintf(szTmp, sizeof(szTmp),
+                         "<%sDisplacementY>%g</%sDisplacementY>\n", sNameSpace,
+                         psStyle->offsety, sNameSpace);
+                msStringBufferAppend(sldString, szTmp);
+                snprintf(szTmp, sizeof(szTmp), "</%sDisplacement>\n",
+                         sNameSpace);
+                msStringBufferAppend(sldString, szTmp);
+              }
+
+              snprintf(szTmp, sizeof(szTmp), "</%sGraphic>\n", sNameSpace);
+              msStringBufferAppend(sldString, szTmp);
+
+              free(pszSVG);
+            } else {
+              // unable to generate SVG
+              bGenerateDefaultSymbol = 1;
+            }
           }
-        } else
-          bGenerateDefaultSymbol = 1;
+        }
+      } else if (psSymbol->type == MS_SYMBOL_HATCH) {
+        /* map hatch symbols to one of the SLD "shape://" well-known names.
+           The angle is snapped to the nearest horizontal, vertical, slash or
+           backslash hatch, so no <Rotation> is required. We can't use rotation
+           as it produces gaps between GraphicFill tiles in some clients such as
+           OpenLayers */
+        const char *pszHatchShape;
+        double dfAngleMod = fmod(psStyle->angle, 180);
+        if (dfAngleMod < 0)
+          dfAngleMod += 180;
+
+        if (fabs(dfAngleMod - 90) < 22.5) {
+          pszHatchShape = "shape://vertline";
+        } else if (fabs(dfAngleMod - 135) < 22.5) {
+          pszHatchShape = "shape://backslash";
+        } else if (fabs(dfAngleMod - 45) < 22.5) {
+          pszHatchShape = "shape://slash";
+        } else {
+          pszHatchShape = "shape://horline";
+        }
+
+        snprintf(szTmp, sizeof(szTmp), "<%sGraphic>\n", sNameSpace);
+        msStringBufferAppend(sldString, szTmp);
+
+        snprintf(szTmp, sizeof(szTmp), "<%sMark>\n", sNameSpace);
+        msStringBufferAppend(sldString, szTmp);
+
+        snprintf(szTmp, sizeof(szTmp),
+                 "<%sWellKnownName>%s</%sWellKnownName>\n", sNameSpace,
+                 pszHatchShape, sNameSpace);
+        msStringBufferAppend(sldString, szTmp);
+
+        if (psStyle->color.red != -1 && psStyle->color.green != -1 &&
+            psStyle->color.blue != -1) {
+          snprintf(szTmp, sizeof(szTmp), "<%sStroke>\n", sNameSpace);
+          msStringBufferAppend(sldString, szTmp);
+          snprintf(szTmp, sizeof(szTmp),
+                   "<%s name=\"stroke\">#%02x%02x%02x</%s>\n", sCssParam,
+                   psStyle->color.red, psStyle->color.green,
+                   psStyle->color.blue, sCssParam);
+          msStringBufferAppend(sldString, szTmp);
+          if (psStyle->width > 0) {
+            snprintf(szTmp, sizeof(szTmp),
+                     "<%s name=\"stroke-width\">%g</%s>\n", sCssParam,
+                     psStyle->width, sCssParam);
+            msStringBufferAppend(sldString, szTmp);
+          }
+          if (psStyle->color.alpha != 255 && psStyle->color.alpha != -1) {
+            snprintf(szTmp, sizeof(szTmp),
+                     "<%s name=\"stroke-opacity\">%.2f</%s>\n", sCssParam,
+                     (float)psStyle->color.alpha / 255.0, sCssParam);
+            msStringBufferAppend(sldString, szTmp);
+          }
+          snprintf(szTmp, sizeof(szTmp), "</%sStroke>\n", sNameSpace);
+          msStringBufferAppend(sldString, szTmp);
+        }
+
+        snprintf(szTmp, sizeof(szTmp), "</%sMark>\n", sNameSpace);
+        msStringBufferAppend(sldString, szTmp);
+
+        // size does not space hatch lines, but spaces tiles in OpenLayers
+        // causing gaps, so do not add it to the output
+
+        snprintf(szTmp, sizeof(szTmp), "</%sGraphic>\n", sNameSpace);
+        msStringBufferAppend(sldString, szTmp);
       } else if (psSymbol->type == MS_SYMBOL_PIXMAP ||
                  psSymbol->type == MS_SYMBOL_SVG) {
         if (psSymbol->name) {
@@ -4034,19 +4412,19 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer,
       pszSLD = msStringConcatenate(pszSLD, szTmp);
 
       free(pszGraphicSLD);
-    }
+    } else {
+      // only add a fill colour when there is no graphic pattern.
 
-    snprintf(szHexColor, sizeof(szHexColor), "%02x%02x%02x", psStyle->color.red,
-             psStyle->color.green, psStyle->color.blue);
-
-    snprintf(szTmp, sizeof(szTmp), "<%s name=\"fill\">#%s</%s>\n", sCssParam,
-             szHexColor, sCssParam);
-    pszSLD = msStringConcatenate(pszSLD, szTmp);
-
-    if (psStyle->color.alpha != 255 && psStyle->color.alpha != -1) {
-      snprintf(szTmp, sizeof(szTmp), "<%s name=\"fill-opacity\">%.2f</%s>\n",
-               sCssParam, (float)psStyle->color.alpha / 255, sCssParam);
+      snprintf(szHexColor, sizeof(szHexColor), "%02x%02x%02x",
+               psStyle->color.red, psStyle->color.green, psStyle->color.blue);
+      snprintf(szTmp, sizeof(szTmp), "<%s name=\"fill\">#%s</%s>\n", sCssParam,
+               szHexColor, sCssParam);
       pszSLD = msStringConcatenate(pszSLD, szTmp);
+      if (psStyle->color.alpha != 255 && psStyle->color.alpha != -1) {
+        snprintf(szTmp, sizeof(szTmp), "<%s name=\"fill-opacity\">%.2f</%s>\n",
+                 sCssParam, (float)psStyle->color.alpha / 255, sCssParam);
+        pszSLD = msStringConcatenate(pszSLD, szTmp);
+      }
     }
 
     snprintf(szTmp, sizeof(szTmp), "</%sFill>\n", sNameSpace);
@@ -4140,6 +4518,9 @@ char *msSLDGeneratePointSLD(styleObj *psStyle, layerObj *psLayer,
   if (pszGraphicSLD) {
     pszSLD = msStringConcatenate(pszSLD, pszGraphicSLD);
     free(pszGraphicSLD);
+  } else {
+    snprintf(szTmp, sizeof(szTmp), "<!-- unsupported symbol for style -->\n");
+    pszSLD = msStringConcatenate(pszSLD, szTmp);
   }
 
   snprintf(szTmp, sizeof(szTmp), "</%sPointSymbolizer>\n", sNameSpace);
