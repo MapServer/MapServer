@@ -316,8 +316,15 @@ static inline pointObj wkbReadPoint(wkbObj *w, int nZMFlag) {
 */
 static void wkbReadLine(wkbObj *w, lineObj *line, int nZMFlag) {
   pointObj p;
+  line->numpoints = 0;
+  line->point = NULL;
   const int npoints = wkbReadInt(w);
-  if (npoints > (int)((w->size - (w->ptr - w->wkb)) / 16))
+  /* Each point is 2, 3 or 4 doubles depending on the Z/M flags, so the byte
+     stride has to include those before comparing against the bytes left. */
+  const int point_size = 8 * (2 + (((nZMFlag & HAS_Z) != 0) ? 1 : 0) +
+                              (((nZMFlag & HAS_M) != 0) ? 1 : 0));
+  if (npoints < 0 ||
+      npoints > (int)((w->size - (w->ptr - w->wkb)) / point_size))
     return;
 
   line->numpoints = npoints;
@@ -873,6 +880,13 @@ static int arcStrokeCircularString(wkbObj *w, double segment_angle,
 
   /* All CircularStrings have an odd number of points */
   if (npoints < 3 || npoints % 2 != 1)
+    return MS_FAILURE;
+
+  /* Bound the point count to the bytes left, using the real Z/M stride, before
+     reading npoints coordinates below. */
+  const int point_size = 8 * (2 + (((nZMFlag & HAS_Z) != 0) ? 1 : 0) +
+                              (((nZMFlag & HAS_M) != 0) ? 1 : 0));
+  if (npoints > (int)((w->size - (w->ptr - w->wkb)) / point_size))
     return MS_FAILURE;
 
   /* Make a large guess at how much space we'll need */
