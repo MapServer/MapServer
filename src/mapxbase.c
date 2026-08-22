@@ -218,6 +218,17 @@ DBFHandle msDBFOpenVirtualFile(VSILFILE *fp) {
           psDBF->panFieldOffset[iField - 1] + psDBF->panFieldSize[iField - 1];
   }
 
+  /* The field offsets and sizes come straight from the header and are trusted
+     by msDBFReadAttribute() when it copies panFieldSize bytes out of the
+     nRecLen-byte record buffer. Reject a header whose fields do not fit within
+     the record length, otherwise that copy reads past pszCurrentRecord. */
+  if (nFields > 0 &&
+      psDBF->panFieldOffset[nFields - 1] + psDBF->panFieldSize[nFields - 1] >
+          nRecLen) {
+    msDBFClose(psDBF);
+    return (NULL);
+  }
+
   return (psDBF);
 }
 
