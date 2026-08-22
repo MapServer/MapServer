@@ -595,6 +595,29 @@ bool msCheckDepthLessThan(const CPLXMLNode *psNode, int nMaxDepth) {
   return true;
 }
 
+/* Logical operators with many operands are converted to right-deep binary
+ * trees. Limit the number of operations before that conversion so subsequent
+ * recursive tree walks cannot exhaust the process stack. */
+static const int nMaxFilterOperations = 256;
+
+static bool FLTCheckFilterOperationCountInternal(CPLXMLNode *psNode,
+                                                 int *pnOperationCount) {
+  for (CPLXMLNode *psIter = psNode; psIter; psIter = psIter->psNext) {
+    if (psIter->eType == CXT_Element && FLTIsSupportedFilterType(psIter) &&
+        ++(*pnOperationCount) > nMaxFilterOperations)
+      return false;
+    if (psIter->psChild && !FLTCheckFilterOperationCountInternal(
+                               psIter->psChild, pnOperationCount))
+      return false;
+  }
+  return true;
+}
+
+static bool FLTCheckFilterOperationCount(CPLXMLNode *psNode) {
+  int nOperationCount = 0;
+  return FLTCheckFilterOperationCountInternal(psNode, &nOperationCount);
+}
+
 /************************************************************************/
 /*            FilterNode *FLTPaserFilterEncoding(char *szXMLString)     */
 /*                                                                      */
@@ -631,6 +654,11 @@ FilterEncodingNode *FLTParseFilterEncoding(const char *szXMLString) {
   /* -------------------------------------------------------------------- */
   psFilter = CPLGetXMLNode(psRoot, "=Filter");
   if (!psFilter) {
+    CPLDestroyXMLNode(psRoot);
+    return NULL;
+  }
+  if (!FLTCheckFilterOperationCount(psFilter)) {
+    msDebug("FLTParseFilterEncoding(): %s", "Too many operations in filter");
     CPLDestroyXMLNode(psRoot);
     return NULL;
   }
