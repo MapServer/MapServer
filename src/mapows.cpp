@@ -1071,6 +1071,18 @@ int msOWSParseVersionString(const char *pszVersion) {
       return OWS_VERSION_BADFORMAT;
     }
 
+    for (int i = 0; i < numDigits; i++) {
+      int v = atoi(digits[i]);
+      if (v < 0 || v > 255) {
+        msSetError(MS_OWSERR,
+                   "Invalid version (%s). Each component must be "
+                   "between 0 and 255",
+                   "msOWSParseVersionString()", pszVersion);
+        msFreeCharArray(digits, numDigits);
+        return OWS_VERSION_BADFORMAT;
+      }
+    }
+
     nVersion = atoi(digits[0]) * 0x010000;
     nVersion += atoi(digits[1]) * 0x0100;
     if (numDigits > 2)
