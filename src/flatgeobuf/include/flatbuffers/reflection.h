@@ -26,7 +26,6 @@
 
 // Helper functionality for reflection.
 
-namespace mapserver {
 namespace flatbuffers {
 
 // ------------------------- GETTERS -------------------------
@@ -67,6 +66,7 @@ inline size_t GetTypeSize(reflection::BaseType base_type) {
     4,  // Union
     0,  // Array. Only used in structs. 0 was chosen to prevent out-of-bounds
         // errors.
+    8,  // Vector64
 
     0  // MaxBaseType. This must be kept the last entry in this array.
   };
@@ -519,6 +519,5 @@ bool VerifySizePrefixed(const reflection::Schema &schema,
                         uoffset_t max_tables = 1000000);
 
 }  // namespace flatbuffers
-}  // namespace mapserver
 
 #endif  // FLATBUFFERS_REFLECTION_H_

@@ -17,6 +17,8 @@
 #ifndef FLATBUFFERS_H_
 #define FLATBUFFERS_H_
 
+#include <algorithm>
+
 // TODO: These includes are for mitigating the pains of users editing their
 // source because they relied on flatbuffers.h to include everything for them.
 #include "flatbuffers/array.h"
@@ -33,7 +35,6 @@
 #include "flatbuffers/vector_downward.h"
 #include "flatbuffers/verifier.h"
 
-namespace mapserver {
 namespace flatbuffers {
 
 /// @brief This can compute the start of a FlatBuffer from a root pointer, i.e.
@@ -75,8 +76,20 @@ inline const uint8_t *GetBufferStartFromRootPointer(const void *root) {
 }
 
 /// @brief This return the prefixed size of a FlatBuffer.
-inline uoffset_t GetPrefixedSize(const uint8_t *buf) {
-  return ReadScalar<uoffset_t>(buf);
+template<typename SizeT = uoffset_t>
+inline SizeT GetPrefixedSize(const uint8_t *buf) {
+  return ReadScalar<SizeT>(buf);
+}
+
+// Gets the total length of the buffer given a sized prefixed FlatBuffer.
+//
+// This includes the size of the prefix as well as the buffer:
+//
+//  [size prefix][flatbuffer]
+//  |---------length--------|
+template<typename SizeT = uoffset_t>
+inline SizeT GetSizePrefixedBufferLength(const uint8_t *const buf) {
+  return ReadScalar<SizeT>(buf) + sizeof(SizeT);
 }
 
 // Base class for native objects (FlatBuffer data de-serialized into native
@@ -235,37 +248,36 @@ inline const char *flatbuffers_version_string() {
 
 // clang-format off
 #define FLATBUFFERS_DEFINE_BITMASK_OPERATORS(E, T)\
-    inline E operator | (E lhs, E rhs){\
+    inline FLATBUFFERS_CONSTEXPR_CPP11 E operator | (E lhs, E rhs){\
         return E(T(lhs) | T(rhs));\
     }\
-    inline E operator & (E lhs, E rhs){\
+    inline FLATBUFFERS_CONSTEXPR_CPP11 E operator & (E lhs, E rhs){\
         return E(T(lhs) & T(rhs));\
     }\
-    inline E operator ^ (E lhs, E rhs){\
+    inline FLATBUFFERS_CONSTEXPR_CPP11 E operator ^ (E lhs, E rhs){\
         return E(T(lhs) ^ T(rhs));\
     }\
-    inline E operator ~ (E lhs){\
+    inline FLATBUFFERS_CONSTEXPR_CPP11 E operator ~ (E lhs){\
         return E(~T(lhs));\
     }\
-    inline E operator |= (E &lhs, E rhs){\
+    inline FLATBUFFERS_CONSTEXPR_CPP11 E operator |= (E &lhs, E rhs){\
         lhs = lhs | rhs;\
         return lhs;\
     }\
-    inline E operator &= (E &lhs, E rhs){\
+    inline FLATBUFFERS_CONSTEXPR_CPP11 E operator &= (E &lhs, E rhs){\
         lhs = lhs & rhs;\
         return lhs;\
     }\
-    inline E operator ^= (E &lhs, E rhs){\
+    inline FLATBUFFERS_CONSTEXPR_CPP11 E operator ^= (E &lhs, E rhs){\
         lhs = lhs ^ rhs;\
         return lhs;\
     }\
-    inline bool operator !(E rhs) \
+    inline FLATBUFFERS_CONSTEXPR_CPP11 bool operator !(E rhs) \
     {\
         return !bool(T(rhs)); \
     }
 /// @endcond
 }  // namespace flatbuffers
-}  // namespace mapserver
 
 // clang-format on
 

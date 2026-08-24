@@ -22,7 +22,6 @@
 
 #include "flatbuffers/idl.h"
 
-namespace mapserver {
 namespace flatbuffers {
 
 // Utility class to assist in generating code through use of text templates.
@@ -139,7 +138,8 @@ class BaseGenerator {
   std::string WrapInNameSpace(const Namespace *ns,
                               const std::string &name) const;
 
-  std::string WrapInNameSpace(const Definition &def) const;
+  std::string WrapInNameSpace(const Definition &def,
+                              const std::string &suffix = "") const;
 
   std::string GetNameSpace(const Definition &def) const;
 
@@ -229,7 +229,10 @@ class TypedFloatConstantGenerator : public FloatConstantGenerator {
   const std::string neg_inf_number_;
 };
 
+std::string JavaCSharpMakeRule(const bool java, const Parser &parser,
+                               const std::string &path,
+                               const std::string &file_name);
+
 }  // namespace flatbuffers
-}  // namespace mapserver
 
 #endif  // FLATBUFFERS_CODE_GENERATORS_H_

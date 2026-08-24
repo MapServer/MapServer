@@ -20,11 +20,9 @@
 // Helper functionality to glue FlatBuffers and GRPC.
 
 #include "flatbuffers/flatbuffers.h"
-#include "grpc/byte_buffer_reader.h"
 #include "grpcpp/support/byte_buffer.h"
 #include "grpcpp/support/slice.h"
 
-namespace mapserver {
 namespace flatbuffers {
 namespace grpc {
 
@@ -257,7 +255,6 @@ class MessageBuilder : private detail::SliceAllocatorMember,
 
 }  // namespace grpc
 }  // namespace flatbuffers
-}  // namespace mapserver
 
 namespace grpc {
 
