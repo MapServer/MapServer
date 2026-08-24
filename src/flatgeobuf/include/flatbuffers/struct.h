@@ -19,7 +19,6 @@
 
 #include "flatbuffers/base.h"
 
-namespace mapserver {
 namespace flatbuffers {
 
 // "structs" are flat structures that do not have an offset table, thus
@@ -50,6 +49,5 @@ class Struct FLATBUFFERS_FINAL_CLASS {
 };
 
 }  // namespace flatbuffers
-}  // namespace mapserver
 
 #endif  // FLATBUFFERS_STRUCT_H_
