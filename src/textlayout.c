@@ -629,6 +629,12 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
     }
   }
 
+  /* add a guard against empty lines */
+  if (num_glyphs == 0) {
+    ret = MS_SUCCESS;
+    goto cleanup;
+  }
+
   if (ts->label->wrap || ts->label->maxlength > 0) {
     if (ts->label->wrap && ts->label->maxlength == 0) {
       for (i = 0; i < num_glyphs; i++) {
@@ -732,7 +738,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
                   (nruns - i - 2) * sizeof(text_run));
 
           i++;
-          /* new run inherints line number */
+          /* new run inherits line number */
           runs[i].line_number = runs[i - 1].line_number;
           runs[i].offset = original_offset + j;
           runs[i].length =
@@ -778,7 +784,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
                   (nruns - i - 2) * sizeof(text_run));
 
           i++;
-          /* new run inherints line number and rtl*/
+          /* new run inherits line number and rtl*/
           runs[i].line_number = runs[i - 1].line_number;
           runs[i].rtl = runs[i - 1].rtl;
           runs[i].offset = original_offset + j;
