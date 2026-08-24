@@ -327,7 +327,7 @@ static int loadQueryResults(mapObj *map, FILE *stream) {
       return MS_FAILURE;
     }
 
-    if (j < 0 || j > map->numlayers) {
+    if (j < 0 || j >= map->numlayers) {
       msSetError(MS_MISCERR, "Invalid layer index loaded from query file.",
                  "loadQueryResults()");
       return MS_FAILURE;
