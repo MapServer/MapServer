@@ -37,8 +37,6 @@
 #include <unordered_map>
 #include <iostream>
 
-namespace mapserver
-{
 namespace FlatGeobuf
 {
 
@@ -480,4 +478,3 @@ NodeItem PackedRTree::getExtent() const
 }
 
 }  // namespace FlatGeobuf
-}

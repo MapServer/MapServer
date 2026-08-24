@@ -38,7 +38,6 @@
 
 #include "flatbuffers/flatbuffers.h"
 
-namespace mapserver {
 namespace FlatGeobuf
 {
 
@@ -164,6 +163,5 @@ class PackedRTree
 };
 
 }  // namespace FlatGeobuf
-}
 
 #endif

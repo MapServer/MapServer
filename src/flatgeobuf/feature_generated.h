@@ -15,7 +15,6 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 24 &&
 
 #include "header_generated.h"
 
-namespace mapserver {
 namespace FlatGeobuf {
 
 struct Geometry;
@@ -282,6 +281,5 @@ inline void FinishSizePrefixedFeatureBuffer(
 }
 
 }  // namespace FlatGeobuf
-}
 
 #endif  // FLATBUFFERS_GENERATED_FEATURE_FLATGEOBUF_H_
