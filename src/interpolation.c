@@ -165,7 +165,11 @@ int msInterpolationDataset(mapObj *map, imageObj *image,
       if (!values) { /* defer allocation until we effectively have a feature */
         values = (float *)msSmallCalloc(((size_t)im_width) * im_height,
                                         sizeof(float));
+        /* keep the capacity non-zero so the growth loop below always makes
+         * progress (im_width/im_height are >= 1 on any real image) */
         xyz_capacity = ((size_t)im_width) * im_height;
+        if (xyz_capacity == 0)
+          xyz_capacity = 3;
         xyz_values = (float *)msSmallCalloc(xyz_capacity, sizeof(float));
       }
       if (layer->project)
