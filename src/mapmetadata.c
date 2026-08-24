@@ -951,23 +951,39 @@ void msMetadataFreeParamsObj(metadataParamsObj *metadataparams) {
 }
 
 /************************************************************************/
+/*                             msMetadataSetParam                       */
+/*                                                                      */
+/*      Keep the first value supplied and ignore later duplicates.      */
+/*      Consistent with msWFSSetParam()                                 */
+/************************************************************************/
+
+int msMetadataSetParam(char **ppszOut, cgiRequestObj *request, int i,
+                       const char *pszExpectedParamName) {
+  if (strcasecmp(request->ParamNames[i], pszExpectedParamName) == 0) {
+    if (*ppszOut == NULL)
+      *ppszOut = msStrdup(request->ParamValues[i]);
+    return 1;
+  }
+  return 0;
+}
+
+/************************************************************************/
 /*                            msMetadataParseRequest                    */
 /*                                                                      */
 /*      Parse request into the params object.                           */
 /************************************************************************/
-
 static int msMetadataParseRequest(cgiRequestObj *request,
                                   metadataParamsObj *metadataparams) {
   if (!request || !metadataparams)
     return MS_FAILURE;
-
   if (request->NumParams > 0) {
     for (int i = 0; i < request->NumParams; i++) {
       if (request->ParamNames[i] && request->ParamValues[i]) {
-        if (strcasecmp(request->ParamNames[i], "LAYER") == 0)
-          metadataparams->pszLayer = msStrdup(request->ParamValues[i]);
-        if (strcasecmp(request->ParamNames[i], "OUTPUTSCHEMA") == 0)
-          metadataparams->pszOutputSchema = msStrdup(request->ParamValues[i]);
+        if (msMetadataSetParam(&metadataparams->pszLayer, request, i,
+                               "LAYER")) {
+        } else if (msMetadataSetParam(&metadataparams->pszOutputSchema, request,
+                                      i, "OUTPUTSCHEMA")) {
+        }
       }
     }
   }
