@@ -9,6 +9,7 @@
 
 # Capabilities : invalid version
 # RUN_PARMS: wfs_default_version_110_caps_invalid.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=invalid&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_default_version_110_caps_invalid2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=55550.&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
 
 # Capabilities : test old-style negotiation
 # RUN_PARMS: wfs_default_version_110_caps_000.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=0.0.0&REQUEST=GetCapabilities" > [EXTRACT_SERVICE_VERSION]
