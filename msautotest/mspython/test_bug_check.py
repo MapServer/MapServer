@@ -303,3 +303,65 @@ def test_bug_6896():
 
     os.unlink(ref_filename)
     os.unlink(test_filename)
+
+
+###############################################################################
+# Verify that a layer moved to another map no longer carries the cached
+# reprojector of the map it was removed from.
+#
+# https://github.com/MapServer/MapServer/issues/7611
+
+
+def test_bug_7611():
+    def add_polygon_layer(map):
+        layer = mapscript.layerObj(map)
+        layer.name = "poly"
+        layer.type = mapscript.MS_LAYER_POLYGON
+        layer.status = mapscript.MS_ON
+        layer.setProjection("init=epsg:4326")
+
+        shape = mapscript.shapeObj(mapscript.MS_SHAPE_POLYGON)
+        ring = mapscript.lineObj()
+        for x, y in [
+            (-117.4, 42.8),
+            (-116.6, 42.8),
+            (-116.6, 43.2),
+            (-117.4, 43.2),
+            (-117.4, 42.8),
+        ]:
+            ring.add(mapscript.pointObj(x, y))
+        shape.add(ring)
+        layer.addFeature(shape)
+
+        style = mapscript.styleObj(mapscript.classObj(layer))
+        style.color = mapscript.colorObj(255, 0, 0)
+        return layer
+
+    def renders(map, layer):
+        drawn = map.draw().getBytes()
+        layer.status = mapscript.MS_OFF
+        blank = map.draw().getBytes()
+        layer.status = mapscript.MS_ON
+        return drawn != blank
+
+    # Map A is Web Mercator, the layer is geographic. Drawing caches a
+    # reprojector on the layer whose "out" is map A's projection.
+    map_a = mapscript.mapObj()
+    map_a.setSize(100, 100)
+    map_a.setProjection("init=epsg:3857")
+    map_a.setExtent(-13100000, 5250000, -12950000, 5380000)
+    layer = add_polygon_layer(map_a)
+    assert renders(map_a, layer)
+
+    # Move the layer to a map that uses a different projection.
+    map_a.removeLayer(0)
+    map_b = mapscript.mapObj()
+    map_b.setSize(100, 100)
+    map_b.setProjection("init=epsg:32611")
+    map_b.setExtent(450000, 4720000, 560000, 4800000)
+    map_b.insertLayer(layer)
+
+    # If the cached reprojector survived removeLayer(), the polygon is still
+    # projected to map A's Web Mercator coordinates, lands outside map B's
+    # extent, and nothing is drawn.
+    assert renders(map_b, layer)

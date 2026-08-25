@@ -635,6 +635,14 @@ layerObj *msRemoveLayer(mapObj *map, int nIndex) {
         map->layerorder[i]--;
     }
 
+    /* The cached reprojectors reference this map's projection; they become
+       stale once the layer is detached (and dangling if this map is freed
+       while the layer lives on in another map), so drop them here. */
+    msProjectDestroyReprojector(layer->reprojectorLayerToMap);
+    layer->reprojectorLayerToMap = NULL;
+    msProjectDestroyReprojector(layer->reprojectorMapToLayer);
+    layer->reprojectorMapToLayer = NULL;
+
     /* decrement number of layers and return copy of removed layer */
     map->numlayers--;
     layer->map = NULL;
