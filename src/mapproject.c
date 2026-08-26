@@ -2052,6 +2052,8 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect) {
           fabs(p.y - 90) < 1e-8) {
         in->is_polar = 1;
         reprojector = msProjectCreateReprojector(in, out);
+        if (reprojector == NULL)
+          break;
         /* Is the pole in the rectangle ? */
         if (0 >= rect->minx && 0 >= rect->miny && 0 <= rect->maxx &&
             0 <= rect->maxy) {
@@ -2068,6 +2070,8 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect) {
           msProjectDestroyReprojector(reprojectorToLongLat);
           return ret;
         }
+        msProjectDestroyReprojector(reprojector);
+        reprojector = NULL;
       }
     }
     msProjectDestroyReprojector(reprojectorToLongLat);
