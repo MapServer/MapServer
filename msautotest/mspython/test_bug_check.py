@@ -365,3 +365,25 @@ def test_bug_7611():
     # projected to map A's Web Mercator coordinates, lands outside map B's
     # extent, and nothing is drawn.
     assert renders(map_b, layer)
+
+
+###############################################################################
+# msProjectRect() used the result of msProjectCreateReprojector() without
+# checking it for NULL, which segfaults when a transformation cannot be built.
+# The polar branch is selected because (0,0) in this CRS is the pole and the
+# rectangle encloses it.
+
+
+def test_msprojectrect_null_reprojector():
+
+    polar = mapscript.projectionObj(
+        "+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 "
+        "+datum=WGS84 +units=m +no_defs"
+    )
+    # Not a CRS, so no transformation can be built from it.
+    not_a_crs = mapscript.projectionObj("+proj=noop")
+
+    rect = mapscript.rectObj(-1000000, -1000000, 1000000, 1000000)
+
+    # Only has to return rather than crash.
+    rect.project(polar, not_a_crs)
