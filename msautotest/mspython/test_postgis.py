@@ -474,3 +474,96 @@ def test_postgis_trim_char_fields():
         s.getValue(i)
         for i in filter(lambda i: layer.getItem(i) == "mytext", range(layer.numitems))
     ] == ["ghi "]
+
+
+###############################################################################
+# Fetch the single shape of a one-feature line layer
+
+
+def get_single_line_shape(table):
+
+    map = mapscript.mapObj()
+    layer = mapscript.layerObj(map)
+    layer.updateFromString(
+        """
+        LAYER
+            CONNECTIONTYPE postgis
+            CONNECTION "dbname=msautotest user=postgres"
+            DATA "the_geom from (select * from %s order by id) as foo using srid=27700 using unique id"
+            NAME mylayer
+            TYPE LINE
+            TEMPLATE "junk.tmpl"
+        END
+        """
+        % table
+    )
+
+    layer.open()
+    rect = mapscript.rectObj()
+    rect.minx = -1000
+    rect.maxx = 1000
+    rect.miny = -1000
+    rect.maxy = 1000
+
+    layer.queryByRect(map, rect)
+    result = layer.getResult(0)
+    assert result is not None
+    s = layer.getShape(result)
+    assert s is not None
+    return s
+
+
+###############################################################################
+# Test that the WKB reader honors the M and ZM per-point strides
+# (https://github.com/MapServer/MapServer/pull/7593)
+
+
+def test_postgis_linestring_m():
+
+    s = get_single_line_shape("linestringm")
+    assert s.numlines == 1
+    line = s.get(0)
+    assert line.numpoints == 2
+    p = line.get(0)
+    assert (p.x, p.y, p.z, p.m) == (1, 2, 0, 3)
+    p = line.get(1)
+    assert (p.x, p.y, p.z, p.m) == (4, 5, 0, 6)
+
+
+def test_postgis_linestring_zm():
+
+    s = get_single_line_shape("linestringzm")
+    assert s.numlines == 1
+    line = s.get(0)
+    assert line.numpoints == 2
+    p = line.get(0)
+    assert (p.x, p.y, p.z, p.m) == (1, 2, 3, 4)
+    p = line.get(1)
+    assert (p.x, p.y, p.z, p.m) == (5, 6, 7, 8)
+
+
+###############################################################################
+# Test that circular strings are still stroked to linestrings, in 2D and
+# with a Z ordinate (https://github.com/MapServer/MapServer/pull/7593)
+
+
+@pytest.mark.parametrize("table", ["circularstring", "circularstring3d"])
+def test_postgis_circularstring(table):
+
+    # The arc runs through (0 0),(5 5),(10 0): the upper half of the
+    # circle of radius 5 centered on (5 0).
+    s = get_single_line_shape(table)
+    assert s.numlines == 1
+    line = s.get(0)
+    assert line.numpoints > 3
+    first = line.get(0)
+    last = line.get(line.numpoints - 1)
+    assert (first.x, first.y) == pytest.approx((0, 0), abs=1e-9)
+    # The end point is copied through unchanged, with its Z ordinate
+    assert (last.x, last.y) == (10, 0)
+    if table == "circularstring3d":
+        assert last.z == 3
+    for i in range(line.numpoints):
+        p = line.get(i)
+        assert (p.x - 5) ** 2 + p.y**2 == pytest.approx(25, abs=1e-6)
+        assert p.y >= -1e-9
