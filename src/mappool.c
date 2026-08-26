@@ -205,16 +205,20 @@ void msConnPoolRegister(layerObj *layer, void *conn_handle,
   /* -------------------------------------------------------------------- */
   msAcquireLock(TLOCK_POOL);
 
-  if (connectionCount == connectionMax) {
-    connectionMax += 10;
+  if (connectionCount >= connectionMax) {
+    const int newConnectionMax = connectionMax + 10;
     connectionObj *newConnections = (connectionObj *)realloc(
-        connections, sizeof(connectionObj) * connectionMax);
+        connections, sizeof(connectionObj) * newConnectionMax);
     if (newConnections == NULL) {
+      /* Leave connectionMax matching the capacity we actually have, so a
+         later registration still takes this growth path instead of writing
+         past the end of the existing array. */
       msSetError(MS_MEMERR, NULL, "msConnPoolRegister()");
       msReleaseLock(TLOCK_POOL);
       return;
     }
     connections = newConnections;
+    connectionMax = newConnectionMax;
   }
 
   /* -------------------------------------------------------------------- */
