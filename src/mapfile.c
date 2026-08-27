@@ -5772,6 +5772,7 @@ void initScalebar(scalebarObj *scalebar) {
   MS_INIT_COLOR(scalebar->color, 0, 0, 0, 255); /* default to black */
   MS_INIT_COLOR(scalebar->outlinecolor, -1, -1, -1, 255);
   scalebar->units = MS_MILES;
+  scalebar->measure = MS_SCALEBAR_MEASURE_CARTESIAN;
   scalebar->status = MS_OFF;
   scalebar->position = MS_LL;
   scalebar->transparent = MS_NOOVERRIDE; /* no transparency */
@@ -5781,7 +5782,9 @@ void initScalebar(scalebarObj *scalebar) {
   scalebar->offsety = 0;
 }
 
-void freeScalebar(scalebarObj *scalebar) { freeLabel(&(scalebar->label)); }
+MS_DLL_EXPORT void freeScalebar(scalebarObj *scalebar) {
+  freeLabel(&(scalebar->label));
+}
 
 int loadScalebar(scalebarObj *scalebar) {
   for (;;) {
@@ -5819,6 +5822,18 @@ int loadScalebar(scalebarObj *scalebar) {
       if (loadLabel(&(scalebar->label)) == -1)
         return (-1);
       scalebar->label.angle = 0;
+      break;
+    case (MS_STRING):
+      if (!EQUAL(msyystring_buffer, "MEASURE"))
+        goto scalebar_parse_error;
+      if (msyylex() != MS_STRING)
+        goto scalebar_parse_error;
+      if (EQUAL(msyystring_buffer, "CARTESIAN"))
+        scalebar->measure = MS_SCALEBAR_MEASURE_CARTESIAN;
+      else if (EQUAL(msyystring_buffer, "GEODESIC"))
+        scalebar->measure = MS_SCALEBAR_MEASURE_GEODESIC;
+      else
+        goto scalebar_parse_error;
       break;
     case (OUTLINECOLOR):
       if (loadColor(&(scalebar->outlinecolor), NULL) != MS_SUCCESS)
@@ -5870,6 +5885,7 @@ int loadScalebar(scalebarObj *scalebar) {
         return (-1);
       break;
     default:
+    scalebar_parse_error:
       if (strlen(msyystring_buffer) > 0) {
         msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)",
                    "loadScalebar()", msyystring_buffer, msyylineno);
@@ -5918,6 +5934,9 @@ static void writeScalebar(FILE *stream, int indent, scalebarObj *scalebar) {
   writeColor(stream, indent, "IMAGECOLOR", NULL, &(scalebar->imagecolor));
   writeNumber(stream, indent, "INTERVALS", -1, scalebar->intervals);
   writeLabel(stream, indent, &(scalebar->label));
+  writeKeyword(stream, indent, "MEASURE", scalebar->measure, 2,
+               MS_SCALEBAR_MEASURE_CARTESIAN, "CARTESIAN",
+               MS_SCALEBAR_MEASURE_GEODESIC, "GEODESIC");
   writeColor(stream, indent, "OUTLINECOLOR", NULL, &(scalebar->outlinecolor));
   if (scalebar->status == MS_EMBED)
     writeKeyword(stream, indent, "POSITION", scalebar->position, 6, MS_LL, "LL",
