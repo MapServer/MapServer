@@ -68,6 +68,7 @@ int msInterpolationDataset(mapObj *map, imageObj *image,
   shapeObj shape;
   layerObj *layer = NULL;
   float *values = NULL, *xyz_values = NULL;
+  size_t xyz_capacity = 0;
   int im_width = image->width, im_height = image->height;
   double invcellsize = 1.0 / map->cellsize, georadius = 0;
   unsigned char *iValues;
@@ -176,8 +177,12 @@ int msInterpolationDataset(mapObj *map, imageObj *image,
       if (!values) { /* defer allocation until we effectively have a feature */
         values = (float *)msSmallCalloc(((size_t)im_width) * im_height,
                                         sizeof(float));
-        xyz_values = (float *)msSmallCalloc(((size_t)im_width) * im_height,
-                                            sizeof(float));
+        /* keep the capacity non-zero so the growth loop below always makes
+         * progress (im_width/im_height are >= 1 on any real image) */
+        xyz_capacity = ((size_t)im_width) * im_height;
+        if (xyz_capacity == 0)
+          xyz_capacity = 3;
+        xyz_values = (float *)msSmallCalloc(xyz_capacity, sizeof(float));
       }
       if (layer->project)
         msProjectShape(&layer->projection, &map->projection, &shape);
@@ -223,6 +228,16 @@ int msInterpolationDataset(mapObj *map, imageObj *image,
           if (x >= 0 && y >= 0 && x < im_width && y < im_height) {
             float *value = values + y * im_width + x;
             (*value) += weight;
+            /* xyz_values stores 3 floats (x, y, accumulated value) for every
+             * in-extent vertex. The number of vertices is not bounded by the
+             * output pixel count, so grow the buffer as needed rather than
+             * writing past its end (GHSA-59gr-4vvx-5f56). */
+            if ((size_t)length + 3 > xyz_capacity) {
+              while ((size_t)length + 3 > xyz_capacity)
+                xyz_capacity *= 2;
+              xyz_values = (float *)msSmallRealloc(
+                  xyz_values, xyz_capacity * sizeof(float));
+            }
             xyz_values[length++] = x;
             xyz_values[length++] = y;
             xyz_values[length++] = (*value);
