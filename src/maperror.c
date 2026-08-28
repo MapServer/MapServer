@@ -525,7 +525,12 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   }
 
   if (map) {
-    if (map->width > 0 && map->height > 0) {
+    /* Error paths that run before the requested image size has been validated
+       (e.g. a WMS GetMap exception raised while the request is still being
+       parsed) leave map->width/map->height holding raw client input, so only
+       use them when they are within the MAXSIZE limit of the map. */
+    if (map->width > 0 && map->width <= map->maxsize && map->height > 0 &&
+        map->height <= map->maxsize) {
       width = map->width;
       height = map->height;
     }
@@ -550,6 +555,14 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   img = msImageCreate(width, height, format, imagepath, imageurl,
                       MS_DEFAULT_RESOLUTION, MS_DEFAULT_RESOLUTION,
                       imagecolorptr);
+  if (img == NULL) {
+    /* There is nothing to draw the message on, and the error that brought us
+       here is already on the error list. */
+    if (format->refcount == 0)
+      msFreeOutputFormat(format);
+    msFree(errormsg);
+    return;
+  }
 
   const int nTextLength = strlen(errormsg);
   const int nWidthTxt = nTextLength * charWidth;
