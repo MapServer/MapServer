@@ -2581,9 +2581,10 @@ int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS) {
               std::isfinite(maxx) && std::isfinite(maxy)) {
             bCoordinatesValid = 1;
           } else {
-            msSetError(MS_MISCERR,
-                       "Invalid (NaN or infinite) coordinate values in bounding box.",
-                       "FLTParseGMLBox()");
+            msSetError(
+                MS_MISCERR,
+                "Invalid (NaN or infinite) coordinate values in bounding box.",
+                "FLTParseGMLBox()");
           }
         }
 
@@ -2612,7 +2613,8 @@ int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS) {
               bCoordinatesValid = 1;
             } else {
               msSetError(MS_MISCERR,
-                         "Invalid (NaN or infinite) coordinate values in bounding box.",
+                         "Invalid (NaN or infinite) coordinate values in "
+                         "bounding box.",
                          "FLTParseGMLBox()");
             }
           }
@@ -2679,7 +2681,8 @@ int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS) {
               bValid = 1;
             } else {
               msSetError(MS_MISCERR,
-                         "Invalid (NaN or infinite) coordinate values in bounding box.",
+                         "Invalid (NaN or infinite) coordinate values in "
+                         "bounding box.",
                          "FLTParseGMLEnvelope()");
             }
           }
