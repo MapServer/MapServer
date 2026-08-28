@@ -82,21 +82,25 @@ static void msXMLStripIndentation(char *ptr) {
 /************************************************************************/
 /*                   msStringParseInteger()                             */
 /*                                                                      */
-/*      Tries to parse a string as a integer value. If not possible     */
-/*      the value MS_WCS20_UNBOUNDED is stored as value.                */
-/*      If no characters could be parsed, MS_FAILURE is returned. If at */
-/*      least some characters could be parsed, MS_DONE is returned and  */
-/*      only if all characters could be parsed, MS_SUCCESS is returned. */
+/*      Parses a string as an int. Returns MS_SUCCESS only if the       */
+/*      entire string was consumed and the value fits in an int,        */
+/*      otherwise stores 0 and returns MS_FAILURE.                      */
 /************************************************************************/
 
 static int msStringParseInteger(const char *string, int *dest) {
   char *parse_check;
-  *dest = (int)strtol(string, &parse_check, 0);
-  if (parse_check == string) {
+  long value;
+
+  errno = 0;
+  value = strtol(string, &parse_check, 0);
+
+  if (parse_check == string || *parse_check != '\0' || errno == ERANGE ||
+      value < INT_MIN || value > INT_MAX) {
+    *dest = 0;
     return MS_FAILURE;
-  } else if (parse_check - strlen(string) != string) {
-    return MS_DONE;
   }
+
+  *dest = (int)value;
   return MS_SUCCESS;
 }
 
@@ -673,7 +677,7 @@ static int msWCSParseScaleExtentString20(char *string, char *outAxis,
   number = strchr(string, '(');
 
   if (NULL == number) {
-    msSetError(MS_WCSERR, "Invalid extent parameter value : %s.",
+    msSetError(MS_WCSERR, "Invalid extent parameter value : %s",
                "msWCSParseScaleExtentString20()", string);
     return MS_FAILURE;
   }
@@ -682,7 +686,7 @@ static int msWCSParseScaleExtentString20(char *string, char *outAxis,
   colon = strchr(string, ':');
 
   if (NULL == colon || colon < number) {
-    msSetError(MS_WCSERR, "Invalid extent parameter value : %s.",
+    msSetError(MS_WCSERR, "Invalid extent parameter value : %s",
                "msWCSParseScaleExtentString20()", string);
     return MS_FAILURE;
   }
@@ -706,12 +710,12 @@ static int msWCSParseScaleExtentString20(char *string, char *outAxis,
 
   if (msStringParseInteger(number, outMin) != MS_SUCCESS) {
     *outMin = 0;
-    msSetError(MS_WCSERR, "Invalid min parameter value : %s.",
+    msSetError(MS_WCSERR, "Invalid min parameter value : %s",
                "msWCSParseScaleExtentString20()", number);
     return MS_FAILURE;
   } else if (msStringParseInteger(colon, outMax) != MS_SUCCESS) {
     *outMax = 0;
-    msSetError(MS_WCSERR, "Invalid resolution parameter value : %s.",
+    msSetError(MS_WCSERR, "Invalid max parameter value : %s",
                "msWCSParseScaleExtentString20()", colon);
     return MS_FAILURE;
   }
@@ -719,6 +723,15 @@ static int msWCSParseScaleExtentString20(char *string, char *outAxis,
   if (*outMin > *outMax) {
     msSetError(MS_WCSERR,
                "Invalid extent: lower part is higher than upper part.",
+               "msWCSParseScaleExtentString20()");
+    return MS_FAILURE;
+  }
+
+  /* Axis size is (max - min), but the value must fit into an int */
+  if (*outMin < 0 && *outMax > INT_MAX + *outMin) {
+    *outMin = 0;
+    *outMax = 0;
+    msSetError(MS_WCSERR, "Invalid extent: the extent is too large.",
                "msWCSParseScaleExtentString20()");
     return MS_FAILURE;
   }
@@ -1318,6 +1331,13 @@ static int msWCSParseRequest20_XMLGetCoverage(mapObj *map, xmlNodePtr root,
 
               if (high <= low) {
                 msSetError(MS_WCSERR, "Invalid extent, high is lower than low.",
+                           "msWCSParseRequest20_XMLGetCoverage()");
+                return MS_FAILURE;
+              }
+
+              if (low < 0 && high > INT_MAX + low) {
+                msSetError(MS_WCSERR,
+                           "Invalid extent, the extent is too large.",
                            "msWCSParseRequest20_XMLGetCoverage()");
                 return MS_FAILURE;
               }
