@@ -29,7 +29,8 @@
 # RUN_PARMS: ows_metadata_302_layer_param.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetMetadata&LAYER=road" > [RESULT_DEVERSION]
 # RUN_PARMS: ows_metadata_layer_vector.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetMetadata&LAYER=province" > [RESULT_DEVERSION]
 # RUN_PARMS: ows_metadata_layer_raster.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetMetadata&LAYER=toronto" > [RESULT_DEVERSION]
-
+# The first LAYER parameter will be used
+# RUN_PARMS: ows_metadata_duplicate_layer_vector.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetMetadata&LAYER=province&LAYER=toronto" > [RESULT_DEVERSION]
 
 # Results expected
 # WMS getcapabilities: layers without *_metadataurl_href displayed as dynamic GetMetadata URLs, else *_metadata_url
