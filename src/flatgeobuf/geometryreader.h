@@ -8,7 +8,6 @@
 #include "flatgeobuf_c.h"
 #include "feature_generated.h"
 
-namespace mapserver {
 namespace FlatGeobuf {
 
 class GeometryReader {
@@ -56,7 +55,6 @@ class GeometryReader {
         void read(shapeObj *);
 };
 
-}
 }
 
 

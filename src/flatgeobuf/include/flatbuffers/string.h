@@ -20,7 +20,6 @@
 #include "flatbuffers/base.h"
 #include "flatbuffers/vector.h"
 
-namespace mapserver {
 namespace flatbuffers {
 
 struct String : public Vector<char> {
@@ -30,6 +29,11 @@ struct String : public Vector<char> {
   // clang-format off
   #ifdef FLATBUFFERS_HAS_STRING_VIEW
   flatbuffers::string_view string_view() const {
+    return flatbuffers::string_view(c_str(), size());
+  }
+
+  /* implicit */
+  operator flatbuffers::string_view() const {
     return flatbuffers::string_view(c_str(), size());
   }
   #endif // FLATBUFFERS_HAS_STRING_VIEW
@@ -61,6 +65,5 @@ static inline flatbuffers::string_view GetStringView(const String *str) {
 #endif  // FLATBUFFERS_HAS_STRING_VIEW
 
 }  // namespace flatbuffers
-}  // namespace mapserver
 
 #endif  // FLATBUFFERS_STRING_H_

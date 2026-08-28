@@ -22,7 +22,6 @@
 
 #include "flatbuffers/flatbuffers.h"
 
-namespace mapserver {
 namespace flatbuffers {
 
 template<typename T> struct FnvTraits {
@@ -124,6 +123,5 @@ inline NamedHashFunction<uint64_t>::HashFunction FindHashFunction64(
 }
 
 }  // namespace flatbuffers
-}  // namespace mapserver
 
 #endif  // FLATBUFFERS_HASH_H_

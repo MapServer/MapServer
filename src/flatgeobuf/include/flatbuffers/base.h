@@ -32,7 +32,7 @@
 #include <cstdlib>
 #include <cstring>
 
-#if defined(ARDUINO) && !defined(ARDUINOSTL_M_H)
+#if defined(ARDUINO) && !defined(ARDUINOSTL_M_H) && defined(__AVR__)
   #include <utility.h>
 #else
   #include <utility>
@@ -43,6 +43,7 @@
 #include <vector>
 #include <set>
 #include <algorithm>
+#include <limits>
 #include <iterator>
 #include <memory>
 
@@ -138,16 +139,15 @@
   #endif
 #endif // !defined(FLATBUFFERS_LITTLEENDIAN)
 
-#define FLATBUFFERS_VERSION_MAJOR 2
-#define FLATBUFFERS_VERSION_MINOR 0
-#define FLATBUFFERS_VERSION_REVISION 6
+#define FLATBUFFERS_VERSION_MAJOR 24
+#define FLATBUFFERS_VERSION_MINOR 12
+#define FLATBUFFERS_VERSION_REVISION 23
 #define FLATBUFFERS_STRING_EXPAND(X) #X
 #define FLATBUFFERS_STRING(X) FLATBUFFERS_STRING_EXPAND(X)
-namespace mapserver {
 namespace flatbuffers {
   // Returns version as string  "MAJOR.MINOR.REVISION".
   const char* FLATBUFFERS_VERSION();
-} }
+}
 
 #if (!defined(_MSC_VER) || _MSC_VER > 1600) && \
     (!defined(__GNUC__) || (__GNUC__ * 100 + __GNUC_MINOR__ >= 407)) || \
@@ -155,7 +155,7 @@ namespace flatbuffers {
   #define FLATBUFFERS_FINAL_CLASS final
   #define FLATBUFFERS_OVERRIDE override
   #define FLATBUFFERS_EXPLICIT_CPP11 explicit
-  #define FLATBUFFERS_VTABLE_UNDERLYING_TYPE : flatbuffers::voffset_t
+  #define FLATBUFFERS_VTABLE_UNDERLYING_TYPE : ::flatbuffers::voffset_t
 #else
   #define FLATBUFFERS_FINAL_CLASS
   #define FLATBUFFERS_OVERRIDE
@@ -222,27 +222,29 @@ namespace flatbuffers {
     // Check for std::string_view (in c++17)
     #if __has_include(<string_view>) && (__cplusplus >= 201606 || (defined(_HAS_CXX17) && _HAS_CXX17))
       #include <string_view>
-      namespace mapserver {
-namespace flatbuffers {
+      namespace flatbuffers {
         typedef std::string_view string_view;
-      } }
+      }
       #define FLATBUFFERS_HAS_STRING_VIEW 1
     // Check for std::experimental::string_view (in c++14, compiler-dependent)
     #elif __has_include(<experimental/string_view>) && (__cplusplus >= 201411)
       #include <experimental/string_view>
-      namespace mapserver {
-namespace flatbuffers {
+      namespace flatbuffers {
         typedef std::experimental::string_view string_view;
-      } }
+      }
       #define FLATBUFFERS_HAS_STRING_VIEW 1
     // Check for absl::string_view
-    #elif __has_include("absl/strings/string_view.h") && (__cplusplus >= 201411)
-      #include "absl/strings/string_view.h"
-      namespace mapserver {
-namespace flatbuffers {
-        typedef absl::string_view string_view;
-      } }
-      #define FLATBUFFERS_HAS_STRING_VIEW 1
+    #elif __has_include("absl/strings/string_view.h") && \
+          __has_include("absl/base/config.h") && \
+          (__cplusplus >= 201411)
+      #include "absl/base/config.h"
+      #if !defined(ABSL_USES_STD_STRING_VIEW)
+        #include "absl/strings/string_view.h"
+        namespace flatbuffers {
+          typedef absl::string_view string_view;
+        }
+        #define FLATBUFFERS_HAS_STRING_VIEW 1
+      #endif
     #endif
   #endif // __has_include
 #endif // !FLATBUFFERS_HAS_STRING_VIEW
@@ -264,9 +266,12 @@ namespace flatbuffers {
 #endif // !FLATBUFFERS_HAS_NEW_STRTOD
 
 #ifndef FLATBUFFERS_LOCALE_INDEPENDENT
-  // Enable locale independent functions {strtof_l, strtod_l,strtoll_l, strtoull_l}.
-  #if ((defined(_MSC_VER) && _MSC_VER >= 1800)            || \
-       (defined(_XOPEN_VERSION) && (_XOPEN_VERSION>=700)) && (!defined(__ANDROID_API__) || (defined(__ANDROID_API__) && (__ANDROID_API__>=21))))
+  // Enable locale independent functions {strtof_l, strtod_l,strtoll_l,
+  // strtoull_l}.
+  #if (defined(_MSC_VER) && _MSC_VER >= 1800) || \
+      (defined(__ANDROID_API__) && __ANDROID_API__>= 21) || \
+      (defined(_XOPEN_VERSION) && (_XOPEN_VERSION >= 700)) && \
+        (!defined(__Fuchsia__) && !defined(__ANDROID_API__))
     #define FLATBUFFERS_LOCALE_INDEPENDENT 1
   #else
     #define FLATBUFFERS_LOCALE_INDEPENDENT 0
@@ -274,20 +279,22 @@ namespace flatbuffers {
 #endif  // !FLATBUFFERS_LOCALE_INDEPENDENT
 
 // Suppress Undefined Behavior Sanitizer (recoverable only). Usage:
-// - __supress_ubsan__("undefined")
-// - __supress_ubsan__("signed-integer-overflow")
+// - FLATBUFFERS_SUPPRESS_UBSAN("undefined")
+// - FLATBUFFERS_SUPPRESS_UBSAN("signed-integer-overflow")
 #if defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7))
-  #define __supress_ubsan__(type) __attribute__((no_sanitize(type)))
+  #define FLATBUFFERS_SUPPRESS_UBSAN(type) __attribute__((no_sanitize(type)))
 #elif defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__ >= 409)
-  #define __supress_ubsan__(type) __attribute__((no_sanitize_undefined))
+  #define FLATBUFFERS_SUPPRESS_UBSAN(type) __attribute__((no_sanitize_undefined))
 #else
-  #define __supress_ubsan__(type)
+  #define FLATBUFFERS_SUPPRESS_UBSAN(type)
 #endif
 
-// This is constexpr function used for checking compile-time constants.
-// Avoid `#pragma warning(disable: 4127) // C4127: expression is constant`.
-template<typename T> FLATBUFFERS_CONSTEXPR inline bool IsConstTrue(T t) {
-  return !!t;
+namespace flatbuffers {
+  // This is constexpr function used for checking compile-time constants.
+  // Avoid `#pragma warning(disable: 4127) // C4127: expression is constant`.
+  template<typename T> FLATBUFFERS_CONSTEXPR inline bool IsConstTrue(T t) {
+    return !!t;
+  }
 }
 
 // Enable C++ attribute [[]] if std:c++17 or higher.
@@ -312,7 +319,6 @@ template<typename T> FLATBUFFERS_CONSTEXPR inline bool IsConstTrue(T t) {
 /// @endcond
 
 /// @file
-namespace mapserver {
 namespace flatbuffers {
 
 /// @cond FLATBUFFERS_INTERNAL
@@ -320,9 +326,11 @@ namespace flatbuffers {
 // Also, using a consistent offset type maintains compatibility of serialized
 // offset values between 32bit and 64bit systems.
 typedef uint32_t uoffset_t;
+typedef uint64_t uoffset64_t;
 
 // Signed offsets for references that can go in both directions.
 typedef int32_t soffset_t;
+typedef int64_t soffset64_t;
 
 // Offset/index used in v-tables, can be changed to uint8_t in
 // format forks to save a bit of space if desired.
@@ -331,7 +339,15 @@ typedef uint16_t voffset_t;
 typedef uintmax_t largest_scalar_t;
 
 // In 32bits, this evaluates to 2GB - 1
-#define FLATBUFFERS_MAX_BUFFER_SIZE ((1ULL << (sizeof(::mapserver::flatbuffers::soffset_t) * 8 - 1)) - 1)
+#define FLATBUFFERS_MAX_BUFFER_SIZE (std::numeric_limits<::flatbuffers::soffset_t>::max)()
+#define FLATBUFFERS_MAX_64_BUFFER_SIZE (std::numeric_limits<::flatbuffers::soffset64_t>::max)()
+
+// The minimum size buffer that can be a valid flatbuffer.
+// Includes the offset to the root table (uoffset_t), the offset to the vtable
+// of the root table (soffset_t), the size of the vtable (uint16_t), and the
+// size of the referring table (uint16_t).
+#define FLATBUFFERS_MIN_BUFFER_SIZE sizeof(::flatbuffers::uoffset_t) + \
+  sizeof(::flatbuffers::soffset_t) + sizeof(uint16_t) + sizeof(uint16_t)
 
 // We support aligning the contents of buffers up to this size.
 #ifndef FLATBUFFERS_MAX_ALIGNMENT
@@ -347,7 +363,6 @@ inline bool VerifyAlignmentRequirements(size_t align, size_t min_align = 1) {
 }
 
 #if defined(_MSC_VER)
-  #pragma warning(disable: 4351) // C4351: new behavior: elements of array ... will be default initialized
   #pragma warning(push)
   #pragma warning(disable: 4127) // C4127: conditional expression is constant
 #endif
@@ -408,7 +423,7 @@ template<typename T> T EndianScalar(T t) {
 
 template<typename T>
 // UBSAN: C++ aliasing type rules, see std::bit_cast<> for details.
-__supress_ubsan__("alignment")
+FLATBUFFERS_SUPPRESS_UBSAN("alignment")
 T ReadScalar(const void *p) {
   return EndianScalar(*reinterpret_cast<const T *>(p));
 }
@@ -422,13 +437,13 @@ T ReadScalar(const void *p) {
 
 template<typename T>
 // UBSAN: C++ aliasing type rules, see std::bit_cast<> for details.
-__supress_ubsan__("alignment")
+FLATBUFFERS_SUPPRESS_UBSAN("alignment")
 void WriteScalar(void *p, T t) {
   *reinterpret_cast<T *>(p) = EndianScalar(t);
 }
 
 template<typename T> struct Offset;
-template<typename T> __supress_ubsan__("alignment") void WriteScalar(void *p, Offset<T> t) {
+template<typename T> FLATBUFFERS_SUPPRESS_UBSAN("alignment") void WriteScalar(void *p, Offset<T> t) {
   *reinterpret_cast<uoffset_t *>(p) = EndianScalar(t.o);
 }
 
@@ -439,15 +454,22 @@ template<typename T> __supress_ubsan__("alignment") void WriteScalar(void *p, Of
 // Computes how many bytes you'd have to pad to be able to write an
 // "scalar_size" scalar if the buffer had grown to "buf_size" (downwards in
 // memory).
-__supress_ubsan__("unsigned-integer-overflow")
+FLATBUFFERS_SUPPRESS_UBSAN("unsigned-integer-overflow")
 inline size_t PaddingBytes(size_t buf_size, size_t scalar_size) {
   return ((~buf_size) + 1) & (scalar_size - 1);
 }
 
+#if !defined(_MSC_VER)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
 // Generic 'operator==' with conditional specialisations.
 // T e - new value of a scalar field.
 // T def - default of scalar (is known at compile-time).
 template<typename T> inline bool IsTheSameAs(T e, T def) { return e == def; }
+#if !defined(_MSC_VER)
+  #pragma GCC diagnostic pop
+#endif
 
 #if defined(FLATBUFFERS_NAN_DEFAULTS) && \
     defined(FLATBUFFERS_HAS_NEW_STRTOD) && (FLATBUFFERS_HAS_NEW_STRTOD > 0)
@@ -478,5 +500,4 @@ inline bool IsInRange(const T &v, const T &low, const T &high) {
 }
 
 }  // namespace flatbuffers
-}  // namespace mapserver
 #endif  // FLATBUFFERS_BASE_H_

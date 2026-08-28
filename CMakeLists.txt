@@ -300,6 +300,11 @@ src/flatgeobuf/geometryreader.cpp
 src/flatgeobuf/packedrtree.cpp
 )
 include_directories(src/flatgeobuf/include)
+# Rename the flatbuffers namespace at compile time to avoid ODR/symbol clashes
+# with other copies of flatbuffers that may be linked in (e.g. via GDAL/OGR),
+# same trick used by GDAL for its bundled FlatGeobuf driver.
+set_source_files_properties(${flatgeobuf_SOURCES} PROPERTIES
+  COMPILE_DEFINITIONS "flatbuffers=mapserver_flatbuffers")
 
 find_package(PCRE2)
 set(WITH_PCRE2_DEFAULT OFF)
