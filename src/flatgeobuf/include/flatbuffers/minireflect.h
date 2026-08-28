@@ -20,7 +20,6 @@
 #include "flatbuffers/flatbuffers.h"
 #include "flatbuffers/util.h"
 
-namespace mapserver {
 namespace flatbuffers {
 
 // Utilities that can be used with the "mini reflection" tables present
@@ -408,14 +407,15 @@ struct ToStringVisitor : public IterationVisitor {
 inline std::string FlatBufferToString(const uint8_t *buffer,
                                       const TypeTable *type_table,
                                       bool multi_line = false,
-                                      bool vector_delimited = true) {
-  ToStringVisitor tostring_visitor(multi_line ? "\n" : " ", false, "",
+                                      bool vector_delimited = true,
+                                      const std::string &indent = "",
+                                      bool quotes = false) {
+  ToStringVisitor tostring_visitor(multi_line ? "\n" : " ", quotes, indent,
                                    vector_delimited);
   IterateFlatBuffer(buffer, type_table, &tostring_visitor);
   return tostring_visitor.s;
 }
 
 }  // namespace flatbuffers
-}  // namespace mapserver
 
 #endif  // FLATBUFFERS_MINIREFLECT_H_

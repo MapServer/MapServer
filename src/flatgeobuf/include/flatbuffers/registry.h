@@ -20,7 +20,6 @@
 #include "flatbuffers/base.h"
 #include "flatbuffers/idl.h"
 
-namespace mapserver {
 namespace flatbuffers {
 
 // Convenience class to easily parse or generate text for arbitrary FlatBuffers.
@@ -53,8 +52,10 @@ class Registry {
     Parser parser;
     if (!LoadSchema(ident, &parser)) return false;
     // Now we're ready to generate text.
-    if (!GenerateText(parser, flatbuf, dest)) {
-      lasterror_ = "unable to generate text for FlatBuffer binary";
+    auto err = GenText(parser, flatbuf, dest);
+    if (err) {
+      lasterror_ =
+          "unable to generate text for FlatBuffer binary: " + std::string(err);
       return false;
     }
     return true;
@@ -125,6 +126,5 @@ class Registry {
 };
 
 }  // namespace flatbuffers
-}  // namespace mapserver
 
 #endif  // FLATBUFFERS_REGISTRY_H_
