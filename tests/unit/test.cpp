@@ -145,8 +145,61 @@ static void testToString() {
 
 /* ----------------------------------------------------------------------- */
 
+static void testDBFFieldExtentValidation() {
+  /* A .dbf header that declares a field wider than the record length must be
+     rejected: msDBFReadAttribute() copies panFieldSize bytes out of the
+     nRecordLength-byte record buffer, so an oversized field reads past it. */
+  {
+    unsigned char buf[74];
+    memset(buf, 0, sizeof(buf));
+    buf[0] = 0x03; /* dBASE version */
+    buf[4] = 1;    /* one record */
+    buf[8] = 64;   /* header length -> a single field descriptor */
+    buf[10] = 10;  /* record length = 10 bytes */
+    memcpy(buf + 32, "FLD", 3);
+    buf[32 + 11] = 'C'; /* character field */
+    buf[32 + 16] = 250; /* field width 250, larger than the record */
+    memset(buf + 64, 'A', 10);
+
+    VSILFILE *fp =
+        VSIFileFromMemBuffer("/vsimem/test_bad.dbf", buf, sizeof(buf), false);
+    DBFHandle hDBF = msDBFOpenVirtualFile(fp);
+    EXPECT_TRUE(hDBF == nullptr);
+    if (hDBF)
+      msDBFClose(hDBF);
+    VSIUnlink("/vsimem/test_bad.dbf");
+  }
+
+  /* A well-formed header whose fields fit within the record length still
+     opens. */
+  {
+    unsigned char buf[64];
+    memset(buf, 0, sizeof(buf));
+    buf[0] = 0x03;
+    buf[4] = 0;  /* no records */
+    buf[8] = 64; /* one field descriptor */
+    buf[10] = 6; /* record length = 1 (flag) + 5 (field) */
+    memcpy(buf + 32, "FLD", 3);
+    buf[32 + 11] = 'C';
+    buf[32 + 16] = 5; /* field width 5 */
+
+    VSILFILE *fp =
+        VSIFileFromMemBuffer("/vsimem/test_ok.dbf", buf, sizeof(buf), false);
+    DBFHandle hDBF = msDBFOpenVirtualFile(fp);
+    EXPECT_TRUE(hDBF != nullptr);
+    if (hDBF) {
+      EXPECT_TRUE(msDBFGetFieldCount(hDBF) == 1);
+      msDBFClose(hDBF);
+    }
+    VSIUnlink("/vsimem/test_ok.dbf");
+  }
+}
+
+/* ----------------------------------------------------------------------- */
+
 int main() {
   testRedactCredentials();
   testToString();
+  testDBFFieldExtentValidation();
   return gTestRetCode;
 }

@@ -1,0 +1,51 @@
+#
+# Test .dbf field extent validation
+#
+# data/dbf-invalid.dbf declares a record length of 10 bytes but a single
+# character field of width 250, so reading any attribute would run past the
+# record buffer. msDBFOpenVirtualFile() must reject the file at open time,
+# which makes the layer fail to open.
+#
+# REQUIRES: INPUT=SHAPEFILE SUPPORTS=WFS
+#
+# RUN_PARMS: dbf-invalid-wfs-get-feature.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=invalid" > [RESULT] [STRIP:ShapefileOpen]
+#
+MAP
+  NAME "dbf-invalid-test"
+  STATUS ON
+  SIZE 400 300
+  EXTENT 0 0 30 30
+  UNITS DD
+  IMAGECOLOR 255 255 255
+  IMAGETYPE png
+
+  WEB
+    METADATA
+      "wfs_title"          "Test invalid .dbf field extents"
+      "wfs_onlineresource" "http://localhost/path/to/dbf-invalid?"
+      "wfs_srs"            "EPSG:4326"
+      "wfs_enable_request" "*"
+    END
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END
+
+  LAYER
+    NAME "invalid"
+    METADATA
+      "wfs_title"         "Invalid .dbf field extents"
+      "wfs_srs"           "EPSG:4326"
+      "gml_include_items" "all"
+      "wfs_enable_request" "*"
+    END
+    TYPE POINT
+    STATUS ON
+    DATA "data/dbf-invalid"
+    PROJECTION
+      "init=epsg:4326"
+    END
+  END # layer
+
+END # map
