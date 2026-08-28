@@ -556,8 +556,10 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
                       MS_DEFAULT_RESOLUTION, MS_DEFAULT_RESOLUTION,
                       imagecolorptr);
   if (img == NULL) {
-    /* There is nothing to draw the message on, and the error that brought us
-       here is already on the error list. */
+    /* Nothing to draw the message on. Return with the errors still unreported
+       and no headers sent, so that msCGIWriteError() emits its own error page
+       instead; marking them reported here would make it skip that and leave
+       the client with an empty response. */
     if (format->refcount == 0)
       msFreeOutputFormat(format);
     msFree(errormsg);
