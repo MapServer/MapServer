@@ -131,6 +131,27 @@ INSERT INTO multipolygon3d (the_geom) VALUES (GeomFromEWKT('SRID=27700;MULTIPOLY
 "
 
 psql -U postgres -d msautotest -c "
+CREATE TABLE linestringm (ID SERIAL PRIMARY KEY);
+SELECT AddGeometryColumn('public', 'linestringm', 'the_geom', 27700, 'LINESTRINGM', 3);
+INSERT INTO linestringm (the_geom) VALUES (GeomFromEWKT('SRID=27700;LINESTRINGM(1 2 3,4 5 6)'));
+"
+psql -U postgres -d msautotest -c "
+CREATE TABLE linestringzm (ID SERIAL PRIMARY KEY);
+SELECT AddGeometryColumn('public', 'linestringzm', 'the_geom', 27700, 'LINESTRING', 4);
+INSERT INTO linestringzm (the_geom) VALUES (GeomFromEWKT('SRID=27700;LINESTRING(1 2 3 4,5 6 7 8)'));
+"
+psql -U postgres -d msautotest -c "
+CREATE TABLE circularstring (ID SERIAL PRIMARY KEY);
+SELECT AddGeometryColumn('public', 'circularstring', 'the_geom', 27700, 'CIRCULARSTRING', 2);
+INSERT INTO circularstring (the_geom) VALUES (GeomFromEWKT('SRID=27700;CIRCULARSTRING(0 0,5 5,10 0)'));
+"
+psql -U postgres -d msautotest -c "
+CREATE TABLE circularstring3d (ID SERIAL PRIMARY KEY);
+SELECT AddGeometryColumn('public', 'circularstring3d', 'the_geom', 27700, 'CIRCULARSTRING', 3);
+INSERT INTO circularstring3d (the_geom) VALUES (GeomFromEWKT('SRID=27700;CIRCULARSTRING(0 0 1,5 5 2,10 0 3)'));
+"
+
+psql -U postgres -d msautotest -c "
 CREATE TABLE test_wfs_paging (ID SERIAL PRIMARY KEY);
 SELECT AddGeometryColumn('public', 'test_wfs_paging', 'the_geom', 27700, 'LINESTRING', 2);
 INSERT INTO test_wfs_paging (the_geom) VALUES (GeomFromEWKT('SRID=27700;LINESTRING (1 0,0 1)'));
