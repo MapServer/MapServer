@@ -403,9 +403,10 @@ FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode,
 
     if (!std::isfinite(sQueryRect.minx) || !std::isfinite(sQueryRect.miny) ||
         !std::isfinite(sQueryRect.maxx) || !std::isfinite(sQueryRect.maxy)) {
-      msSetError(MS_MISCERR,
-                 "Invalid (NaN or infinite) coordinate values in spatial filter.",
-                 "FLTGetSpatialComparisonCommonExpression()");
+      msSetError(
+          MS_MISCERR,
+          "Invalid (NaN or infinite) coordinate values in spatial filter.",
+          "FLTGetSpatialComparisonCommonExpression()");
       return std::string();
     }
 
