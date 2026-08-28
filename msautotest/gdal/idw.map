@@ -1,4 +1,11 @@
 #RUN_PARMS: idw.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&LAYERS=idw&BBOX=-79.369542201052,-39.684771100526,79.369542201052,39.684771100526&WIDTH=200&HEIGHT=100&VERSION=1.1.1&FORMAT=image%2Fpng&SERVICE=WMS&REQUEST=GetMap&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&SRS=EPSG%3A4326" > [RESULT_DEMIME]
+# Regression test for a heap out-of-bounds write in msInterpolationDataset()
+# (GHSA-59gr-4vvx-5f56): the xyz_values buffer was sized by the output pixel
+# count (WIDTH*HEIGHT) but filled with 3 floats per in-extent sample vertex.
+# A grid with fewer than 3*points pixels (1000x2 over all points of pnts.shp)
+# overflowed it. Before the fix this aborts under AddressSanitizer; after it,
+# a valid image is produced.
+#RUN_PARMS: idw_oob.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&LAYERS=idw&BBOX=-180,-90,180,90&WIDTH=1000&HEIGHT=2&VERSION=1.1.1&FORMAT=image%2Fpng&SERVICE=WMS&REQUEST=GetMap&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&SRS=EPSG%3A4326" > [RESULT_DEMIME]
 
 map
 
