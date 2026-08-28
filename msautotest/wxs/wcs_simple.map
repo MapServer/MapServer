@@ -261,6 +261,10 @@
 # ScalingError
 # RUN_PARMS: wcs_20_exception_scaling.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&RESOLUTION=x(5)&SIZE=x(10)" > [RESULT_DEMIME]
 #
+# ScaleExtent exceptions
+# RUN_PARMS: wcs_20_exception_scaleextent.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=grey&SCALEEXTENT=x(6666611106:366666666)" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_exception_scaleextent2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=grey&SCALEEXTENT=x(-2000000000:2000000000)" > [RESULT_DEMIME]
+#
 # Generate error if requested coverage exceeds maxsize
 # RUN_PARMS: wcs_20_exception_exceed_maxsize.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&size=x(5001)&size=y(5001)&FORMAT=image/tiff&COVERAGEID=grey" > [RESULT_DEMIME]
 #
