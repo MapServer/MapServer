@@ -1,0 +1,57 @@
+#
+# Test KML output with an out-of-range coordinate.
+#
+# A vertex whose value does not fit the fixed coordinate buffer used by the
+# KML renderer must not overflow it. See addCoordsNode() in mapkmlrenderer.cpp.
+#
+# REQUIRES: INPUT=GDAL OUTPUT=KML SUPPORTS=WMS
+
+# RUN_PARMS: wms_kml_bigcoord.kml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-1e307,-1e307,1e307,1e307&FORMAT=kml&WIDTH=100&HEIGHT=100&STYLES=&LAYERS=bigline" > [RESULT_DEMIME]
+
+MAP
+  NAME KML_BIGCOORD
+  STATUS ON
+  SIZE 100 100
+  EXTENT -1e307 -1e307 1e307 1e307
+  UNITS DD
+  IMAGECOLOR 255 255 255
+
+  PROJECTION
+    "init=epsg:4326"
+  END
+
+  WEB
+    IMAGEPATH "/tmp/ms_tmp/"
+    IMAGEURL "/ms_tmp/"
+    METADATA
+      "ows_enable_request"   "*"
+      "wms_title"            "kml bigcoord"
+      "wms_onlineresource"   "http://localhost/?"
+      "wms_srs"             "EPSG:4326"
+    END
+  END
+
+  LAYER
+    NAME bigline
+    TYPE LINE
+    STATUS ON
+    PROJECTION
+      "init=epsg:4326"
+    END
+    METADATA
+      "wms_title" "bigline"
+    END
+    FEATURE
+      POINTS
+        0 0
+        1e300 1e300
+      END
+    END
+    CLASS
+      STYLE
+        COLOR 220 0 0
+        WIDTH 1
+      END
+    END
+  END
+END
