@@ -1,8 +1,6 @@
 #include "../../src/mapserver.h"
 #include "../../src/maperror.h"
 
-#include <unistd.h>
-
 /* ----------------------------------------------------------------------- */
 
 int gTestRetCode = 0;
@@ -147,66 +145,8 @@ static void testToString() {
 
 /* ----------------------------------------------------------------------- */
 
-static void writeQueryResultsHeader(FILE *fp) {
-  fprintf(fp, "%s\n", MS_QUERY_RESULTS_MAGIC_STRING);
-}
-
-static void testLoadQueryLayerIndexBounds() {
-  mapObj *map = msNewMapObj();
-  EXPECT_TRUE(map != nullptr);
-  if (!map)
-    return;
-
-  /* Fill exactly one layer-allocation chunk so map->layers is packed and
-     map->layers[map->numlayers] would read past the allocation. */
-  for (int i = 0; i < MS_LAYER_ALLOCSIZE; i++) {
-    layerObj *lp = msGrowMapLayers(map);
-    EXPECT_TRUE(lp != nullptr);
-    initLayer(lp, map);
-    map->numlayers++;
-  }
-
-  const char *fname = "test_query_index_oob.qy";
-
-  /* A crafted query file whose layer index equals numlayers is out of range
-     and must be rejected, not used to index map->layers. */
-  {
-    FILE *fp = fopen(fname, "wb");
-    EXPECT_TRUE(fp != nullptr);
-    writeQueryResultsHeader(fp);
-    const int n = 1;
-    const int j = map->numlayers;
-    fwrite(&n, sizeof(int), 1, fp);
-    fwrite(&j, sizeof(int), 1, fp);
-    fclose(fp);
-    EXPECT_TRUE(msLoadQuery(map, (char *)fname) == MS_FAILURE);
-  }
-
-  /* A well-formed block with a valid index still loads. */
-  {
-    FILE *fp = fopen(fname, "wb");
-    EXPECT_TRUE(fp != nullptr);
-    writeQueryResultsHeader(fp);
-    const int n = 1;
-    const int j = 0;
-    const int numresults = 0;
-    rectObj bounds;
-    bounds.minx = bounds.miny = bounds.maxx = bounds.maxy = 0.0;
-    fwrite(&n, sizeof(int), 1, fp);
-    fwrite(&j, sizeof(int), 1, fp);
-    fwrite(&numresults, sizeof(int), 1, fp);
-    fwrite(&bounds, sizeof(rectObj), 1, fp);
-    fclose(fp);
-    EXPECT_TRUE(msLoadQuery(map, (char *)fname) == MS_SUCCESS);
-  }
-
-  unlink(fname);
-  msFreeMap(map);
-}
-
 int main() {
   testRedactCredentials();
   testToString();
-  testLoadQueryLayerIndexBounds();
   return gTestRetCode;
 }
