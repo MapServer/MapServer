@@ -1,0 +1,10 @@
+Status: 400 Bad request
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version="1.0" encoding="UTF-8"?>
+<ows:ExceptionReport xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ows="http://www.opengis.net/ows/1.1" version="2.0.0" xml:lang="en-US" xsi:schemaLocation="http://www.opengis.net/ows/1.1 http://ogc.dmsolutions.ca/ows/1.1.0/owsExceptionReport.xsd">
+  <ows:Exception exceptionCode="InvalidParameterValue" locator="filter">
+    <ows:ExceptionText>msWFSGetFeature(): WFS server error. Invalid or Unsupported FILTER in GetFeature : &lt;Filter&gt;&lt;BBOX&gt;&lt;ValueReference&gt;POINT&lt;/ValueReference&gt;&lt;Envelope srsName="EPSG:4326"&gt;&lt;lowerCorner&gt;NaN NaN&lt;/lowerCorner&gt;&lt;upperCorner&gt;NaN NaN&lt;/upperCorner&gt;&lt;/Envelope&gt;&lt;/BBOX&gt;&lt;/Filter&gt;
+FLTParseGMLEnvelope(): General error message. Invalid (NaN or infinite) coordinate values in bounding box.</ows:ExceptionText>
+  </ows:Exception>
+</ows:ExceptionReport>

@@ -33,6 +33,7 @@
 #include "cpl_minixml.h"
 
 #include <string>
+#include <cmath>
 
 static std::string FLTEscapePropertyName(const char *pszStr,
                                          char chEscapeChar) {
@@ -399,6 +400,15 @@ FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode,
   if (FLTIsBBoxFilter(psNode)) {
     rectObj sQueryRect;
     FLTGetBBOX(psNode, &sQueryRect);
+
+    if (!std::isfinite(sQueryRect.minx) || !std::isfinite(sQueryRect.miny) ||
+        !std::isfinite(sQueryRect.maxx) || !std::isfinite(sQueryRect.maxy)) {
+      msSetError(
+          MS_MISCERR,
+          "Invalid (NaN or infinite) coordinate values in spatial filter.",
+          "FLTGetSpatialComparisonCommonExpression()");
+      return std::string();
+    }
 
     char szPolygon[512];
     snprintf(szPolygon, sizeof(szPolygon),
