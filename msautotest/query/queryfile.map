@@ -1,0 +1,49 @@
+# Test loading saved query results (queryfile CGI parameter)
+#
+# Test 1: a crafted query results file whose layer index equals numlayers
+#         must be rejected, not used to index past the end of map->layers
+# RUN_PARMS: queryfile_test001.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&queryfile=data/queryfile_index_oob.qy' > [RESULT]
+#
+MAP
+  NAME 'queryfile'
+  STATUS ON
+  EXTENT 0 0 100 100
+  SIZE 100 100
+  UNITS METERS
+
+  WEB
+    VALIDATION
+      'queryfile' '^data/[a-z_]+\.qy$'
+    END
+  END
+
+  LAYER
+    NAME 'point1'
+    TYPE POINT
+    STATUS ON
+    FEATURE
+      POINTS 25 25 END
+    END
+    CLASS
+      STYLE
+        COLOR 0 0 0
+      END
+    END
+    TEMPLATE 'void'
+  END
+
+  LAYER
+    NAME 'point2'
+    TYPE POINT
+    STATUS ON
+    FEATURE
+      POINTS 75 75 END
+    END
+    CLASS
+      STYLE
+        COLOR 0 0 0
+      END
+    END
+    TEMPLATE 'void'
+  END
+END

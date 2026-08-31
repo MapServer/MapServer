@@ -1,0 +1,7 @@
+Content-Type: text/html
+
+<HTML>
+<HEAD><TITLE>MapServer Message</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF">
+loadQueryResults(): General error message. Invalid layer index loaded from query file.
+</BODY></HTML>
