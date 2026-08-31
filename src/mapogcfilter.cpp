@@ -37,6 +37,7 @@
 #include "maptime.h"
 #include "mapows.h"
 #include <ctype.h>
+#include <cmath>
 
 #if 0
 static int FLTHasUniqueTopLevelDuringFilter(FilterEncodingNode *psFilterNode);
@@ -2572,11 +2573,19 @@ int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS) {
           papszMax = msStringSplit(papszCoords[1], pszCS[0], &nCoordsMax);
         }
         if (papszMax && nCoordsMax == 2) {
-          bCoordinatesValid = 1;
           minx = atof(papszMin[0]);
           miny = atof(papszMin[1]);
           maxx = atof(papszMax[0]);
           maxy = atof(papszMax[1]);
+          if (std::isfinite(minx) && std::isfinite(miny) &&
+              std::isfinite(maxx) && std::isfinite(maxy)) {
+            bCoordinatesValid = 1;
+          } else {
+            msSetError(
+                MS_MISCERR,
+                "Invalid (NaN or infinite) coordinate values in bounding box.",
+                "FLTParseGMLBox()");
+          }
         }
 
         msFreeCharArray(papszMin, nCoordsMin);
@@ -2599,7 +2608,15 @@ int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS) {
           if (pszX && pszY) {
             maxx = atof(pszX);
             maxy = atof(pszY);
-            bCoordinatesValid = 1;
+            if (std::isfinite(minx) && std::isfinite(miny) &&
+                std::isfinite(maxx) && std::isfinite(maxy)) {
+              bCoordinatesValid = 1;
+            } else {
+              msSetError(MS_MISCERR,
+                         "Invalid (NaN or infinite) coordinate values in "
+                         "bounding box.",
+                         "FLTParseGMLBox()");
+            }
           }
         }
       }
@@ -2646,16 +2663,28 @@ int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS) {
       if (pszLowerCorner && pszUpperCorner) {
         tokens = msStringSplit(pszLowerCorner, ' ', &n);
         if (tokens && n >= 2) {
-          psBbox->minx = atof(tokens[0]);
-          psBbox->miny = atof(tokens[1]);
+          double minx = atof(tokens[0]);
+          double miny = atof(tokens[1]);
 
           msFreeCharArray(tokens, n);
 
           tokens = msStringSplit(pszUpperCorner, ' ', &n);
           if (tokens && n >= 2) {
-            psBbox->maxx = atof(tokens[0]);
-            psBbox->maxy = atof(tokens[1]);
-            bValid = 1;
+            double maxx = atof(tokens[0]);
+            double maxy = atof(tokens[1]);
+            if (std::isfinite(minx) && std::isfinite(miny) &&
+                std::isfinite(maxx) && std::isfinite(maxy)) {
+              psBbox->minx = minx;
+              psBbox->miny = miny;
+              psBbox->maxx = maxx;
+              psBbox->maxy = maxy;
+              bValid = 1;
+            } else {
+              msSetError(MS_MISCERR,
+                         "Invalid (NaN or infinite) coordinate values in "
+                         "bounding box.",
+                         "FLTParseGMLEnvelope()");
+            }
           }
         }
         msFreeCharArray(tokens, n);
