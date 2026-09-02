@@ -42,13 +42,13 @@ This is not a JavaScript version of MapScript, but provides support for the use 
 in [STYLEITEM](https://mapserver.org/mapfile/styleitem.html#styleitemjs) and 
 [GEOTRANSFORM](https://mapserver.org/mapfile/geomtransform.html#geomtransformjs). 
 
-API Documentation can be found at the [Shared SWIG MapScript Documentation](https://mapserver.org/mapscript/index.html) 
+API Documentation can be found at the [Shared SWIG MapScript Documentation](https://mapserver.org/mapscript/mapscript-api/) 
 page. 
 
 PHPNG (SWIG) MapScript
 ----------------------
 
-PHP support ("PHPNG") is included in the [SWIG API](https://mapserver.org/mapscript/index.html) 
+PHP support ("PHPNG") is included in the [SWIG API](https://mapserver.org/mapscript/mapscript-api/) 
 since the MapServer 7.4.0 release.  You can specify `WITH_PHPNG=ON` at your 
 CMake commandline, to compile PHPNG support for MapServer.
 
