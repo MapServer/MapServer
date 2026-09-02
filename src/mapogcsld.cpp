@@ -662,6 +662,7 @@ layerObj *msSLDParseSLD(mapObj *map, const char *psSLDXML, int *pnLayers) {
   psSLD = CPLGetXMLNode(psRoot, "=StyledLayerDescriptor");
   if (!psSLD) {
     msSetError(MS_WMSERR, "Invalid SLD document : %s", "", psSLDXML);
+    CPLDestroyXMLNode(psRoot);
     return NULL;
   }
 
@@ -672,8 +673,10 @@ layerObj *msSLDParseSLD(mapObj *map, const char *psSLDXML, int *pnLayers) {
 
   if (nLayers > 0)
     pasLayers = (layerObj *)malloc(sizeof(layerObj) * nLayers);
-  else
+  else {
+    CPLDestroyXMLNode(psRoot);
     return NULL;
+  }
 
   LOOP_ON_CHILD_ELEMENT(psSLD, psNamedLayer, "NamedLayer") {
     CPLXMLNode *psName = CPLGetXMLNode(psNamedLayer, "Name");
