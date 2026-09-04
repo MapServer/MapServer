@@ -668,12 +668,13 @@ void KmlRenderer::addCoordsNode(xmlNodePtr parentNode, pointObj *pts,
 
   for (int i = 0; i < numPts; i++) {
     if (mElevationFromAttribute) {
-      sprintf(lineBuf, "\t%.8f,%.8f,%.8f\n", pts[i].x, pts[i].y,
-              mCurrentElevationValue);
+      snprintf(lineBuf, sizeof(lineBuf), "\t%.8f,%.8f,%.8f\n", pts[i].x,
+               pts[i].y, mCurrentElevationValue);
     } else if (AltitudeMode == relativeToGround || AltitudeMode == absolute) {
-      sprintf(lineBuf, "\t%.8f,%.8f,%.8f\n", pts[i].x, pts[i].y, pts[i].z);
+      snprintf(lineBuf, sizeof(lineBuf), "\t%.8f,%.8f,%.8f\n", pts[i].x,
+               pts[i].y, pts[i].z);
     } else
-      sprintf(lineBuf, "\t%.8f,%.8f\n", pts[i].x, pts[i].y);
+      snprintf(lineBuf, sizeof(lineBuf), "\t%.8f,%.8f\n", pts[i].x, pts[i].y);
 
     xmlNodeAddContent(coordsNode, BAD_CAST lineBuf);
   }
@@ -869,16 +870,16 @@ xmlNodePtr KmlRenderer::createGroundOverlayNode(xmlNodePtr parentNode,
 
   xmlNodePtr latLonBoxNode =
       xmlNewChild(groundOverlayNode, NULL, BAD_CAST "LatLonBox", NULL);
-  sprintf(crdStr, "%.8f", mapextent.maxy);
+  snprintf(crdStr, sizeof(crdStr), "%.8f", mapextent.maxy);
   xmlNewChild(latLonBoxNode, NULL, BAD_CAST "north", BAD_CAST crdStr);
 
-  sprintf(crdStr, "%.8f", mapextent.miny);
+  snprintf(crdStr, sizeof(crdStr), "%.8f", mapextent.miny);
   xmlNewChild(latLonBoxNode, NULL, BAD_CAST "south", BAD_CAST crdStr);
 
-  sprintf(crdStr, "%.8f", mapextent.minx);
+  snprintf(crdStr, sizeof(crdStr), "%.8f", mapextent.minx);
   xmlNewChild(latLonBoxNode, NULL, BAD_CAST "west", BAD_CAST crdStr);
 
-  sprintf(crdStr, "%.8f", mapextent.maxx);
+  snprintf(crdStr, sizeof(crdStr), "%.8f", mapextent.maxx);
   xmlNewChild(latLonBoxNode, NULL, BAD_CAST "east", BAD_CAST crdStr);
 
   xmlNewChild(latLonBoxNode, NULL, BAD_CAST "rotation", BAD_CAST "0.0");
@@ -1152,7 +1153,7 @@ const char *KmlRenderer::lookupPlacemarkStyle() {
                     BAD_CAST lineHexColor);
 
         char width[16];
-        sprintf(width, "%.1f", LineStyle[i].width);
+        snprintf(width, sizeof(width), "%.1f", LineStyle[i].width);
         xmlNewChild(lineStyleNode, NULL, BAD_CAST "width", BAD_CAST width);
       }
     }

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <Style id="LayerFolder_check">
+      <ListStyle>
+        <listItemType>check</listItemType>
+      </ListStyle>
+    </Style>
+    <Style id="LayerFolder_checkHideChildren">
+      <ListStyle>
+        <listItemType>checkHideChildren</listItemType>
+      </ListStyle>
+    </Style>
+    <Style id="LayerFolder_checkOffOnly">
+      <ListStyle>
+        <listItemType>checkOffOnly</listItemType>
+      </ListStyle>
+    </Style>
+    <Style id="LayerFolder_radioFolder">
+      <ListStyle>
+        <listItemType>radioFolder</listItemType>
+      </ListStyle>
+    </Style>
+    <name>KML_BIGCOORD</name>
+    <Style id="style_line_ff0000dc_w1.0">
+      <LineStyle>
+        <color>ff0000dc</color>
+        <width>1.0</width>
+      </LineStyle>
+    </Style>
+    <Folder>
+      <name>bigline</name>
+      <visibility>1</visibility>
+      <styleUrl>#LayerFolder_check</styleUrl>
+      <Placemark>
+        <name>bigline.0</name>
+        <styleUrl>#style_line_ff0000dc_w1.0</styleUrl>
+        <LineString>
+          <coordinates>
+	0.00000000,0.00000000
+	100000000000000005250476025520442024870446858110815915491585411551180245798890819578637137508044786404370444383288387817694252	</coordinates>
+        </LineString>
+      </Placemark>
+    </Folder>
+  </Document>
+</kml>
