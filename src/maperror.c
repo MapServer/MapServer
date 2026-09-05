@@ -525,7 +525,14 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   }
 
   if (map) {
-    if (map->width > 0 && map->height > 0) {
+    /* Error paths that run before the requested image size has been validated
+       (e.g. a WMS GetMap exception raised while the request is still being
+       parsed) leave map->width/map->height holding raw client input, so only
+       use them when they are within the MAXSIZE limit of the map. The width
+       must also leave room for at least one character between the margins,
+       otherwise the line splitting below has no usable width to divide by. */
+    if (map->width >= (nMargin * 2) + charWidth && map->width <= map->maxsize &&
+        map->height > 0 && map->height <= map->maxsize) {
       width = map->width;
       height = map->height;
     }
@@ -550,6 +557,16 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   img = msImageCreate(width, height, format, imagepath, imageurl,
                       MS_DEFAULT_RESOLUTION, MS_DEFAULT_RESOLUTION,
                       imagecolorptr);
+  if (img == NULL) {
+    /* Nothing to draw the message on. Return with the errors still unreported
+       and no headers sent, so that msCGIWriteError() emits its own error page
+       instead; marking them reported here would make it skip that and leave
+       the client with an empty response. */
+    if (format->refcount == 0)
+      msFreeOutputFormat(format);
+    msFree(errormsg);
+    return;
+  }
 
   const int nTextLength = strlen(errormsg);
   const int nWidthTxt = nTextLength * charWidth;

@@ -46,6 +46,17 @@
 # RUN_PARMS: wms_get_map_missing_styles.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-67.5725,42.3683,-58.9275,48.13&FORMAT=image/png&WIDTH=300&HEIGHT=200&LAYERS=road" > [RESULT_DEMIME]
 # RUN_PARMS: wms_get_map_missing_layers.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-67.5725,42.3683,-58.9275,48.13&FORMAT=image/png&WIDTH=300&HEIGHT=200&STYLES=" > [RESULT_DEMIME]
 #
+# An in-image exception raised before the MAXSIZE check must not be sized from
+# the requested WIDTH/HEIGHT. MAXSIZE defaults to 4096 for this mapfile, so the
+# error image below must fall back to 400x300 instead of allocating
+# 5000*5000*4 bytes for a request that is rejected anyway.
+# RUN_PARMS: wms_get_map_oversized_exception_inimage.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-67.5725,42.3683,-58.9275,48.13&FORMAT=image/png&WIDTH=5000&HEIGHT=5000&STYLES=&LAYERS=no_such_layer&EXCEPTIONS=INIMAGE" > [RESULT_DEMIME]
+#
+# The same fallback applies to a request too small to fit a character of the
+# error text between the margins, where the line splitting would otherwise
+# divide by a zero character count.
+# RUN_PARMS: wms_get_map_small_exception_inimage.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-67.5725,42.3683,-58.9275,48.13&FORMAT=image/png&WIDTH=10&HEIGHT=10&STYLES=&LAYERS=no_such_layer&EXCEPTIONS=INIMAGE" > [RESULT_DEMIME]
+#
 #
 # GetStyles
 # RUN_PARMS: wms_getstyles.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetStyles&LAYERS=road" > [RESULT]
