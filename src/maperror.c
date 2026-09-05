@@ -528,9 +528,11 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
     /* Error paths that run before the requested image size has been validated
        (e.g. a WMS GetMap exception raised while the request is still being
        parsed) leave map->width/map->height holding raw client input, so only
-       use them when they are within the MAXSIZE limit of the map. */
-    if (map->width > 0 && map->width <= map->maxsize && map->height > 0 &&
-        map->height <= map->maxsize) {
+       use them when they are within the MAXSIZE limit of the map. The width
+       must also leave room for at least one character between the margins,
+       otherwise the line splitting below has no usable width to divide by. */
+    if (map->width >= (nMargin * 2) + charWidth && map->width <= map->maxsize &&
+        map->height > 0 && map->height <= map->maxsize) {
       width = map->width;
       height = map->height;
     }
