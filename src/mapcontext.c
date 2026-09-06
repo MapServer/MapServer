@@ -637,9 +637,11 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
   if (pszValue != NULL && !EQUAL(pszValue, "(null)")) {
     if (strncasecmp(pszValue, "AUTO:", 5) == 0) {
       pszProj = msStrdup(pszValue);
-    } else {
+    } else if (strncasecmp(pszValue, "EPSG:", 5) == 0) {
       pszProj = (char *)malloc(sizeof(char) * (strlen(pszValue) + 10));
       sprintf(pszProj, "init=epsg:%s", pszValue + 5);
+    } else {
+      pszProj = msStrdup(pszValue);
     }
 
     msFreeProjection(&map->projection);
