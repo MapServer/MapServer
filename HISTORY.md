@@ -13,11 +13,24 @@ https://mapserver.org/development/changelog/
 
 The online Migration Guide can be found at https://mapserver.org/MIGRATION_GUIDE.html
 
-8.6.6 development
------------------
+8.6.6 release (2026-09-06)
+--------------------------
+
+- security: maperror: size the error image within MAXSIZE (GHSA-qcjf-q672-q63w)
+
+- security: Heap buffer overflow in FlatGeobuf PackedRTree streamSearch via unchecked nodeItem.offset (GHSA-5v7w-325g-gpr9)
+
+- security: Fix heap out-of-bounds write in interpolation layers (GHSA-59gr-4vvx-5f56)
+
+- security: mapogcfilter: limit filter operation count (GHSA-5fx4-vjp9-863f)
 
 - security: shape smoothing: reject SMOOTHSIA() on point/degenerate shapes to prevent denial of service (GHSA-33h3-f4q2-pq5q)
+
 - security: WCS 2.0 GetCoverage: reject non-positive RESOLUTION values to prevent denial of service (GHSA-6jr5-rc9c-p3cj)
+
+- mapcairo.c: avoid double scaling of SVG symbols (#7595)
+
+see detailed changelog for other fixes
 
 8.6.5 release (2026-07-10)
 --------------------------
