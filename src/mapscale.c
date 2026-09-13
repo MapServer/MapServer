@@ -159,52 +159,18 @@ double msInchesPerUnit(int units, double center_lat) {
 static double msScalebarMeasurePixelSpanCartesian(mapObj *map,
                                                   const scalebarObj *scalebar,
                                                   double pixel_width) {
-  return MS_CONVERT_UNIT(map->units, scalebar->units,
-                         map->cellsize * pixel_width);
-}
-
-static void msScalebarSamplePixel(const mapObj *map, double *px, double *py) {
-  double y;
-
-  switch (map->scalebar.position) {
-  case MS_LL:
-  case MS_LR:
-  case MS_LC:
-    y = map->height - map->scalebar.offsety - 1.0;
-    break;
-  case MS_UL:
-  case MS_UR:
-  case MS_UC:
-    y = map->scalebar.offsety;
-    break;
-  default:
-    y = map->height * 0.5;
-    break;
-  }
-
-  *px = map->width * 0.5;
-  *py = MS_MAX(0.0, MS_MIN(y, map->height - 1.0));
+  return (map->cellsize * pixel_width) /
+         (msInchesPerUnit(scalebar->units, 0) / msInchesPerUnit(map->units, 0));
 }
 
 static int msScalebarProjectPointToLatLon(mapObj *map, pointObj *point) {
-  if (map->projection.proj) {
-    if (msProjectPoint(&map->projection, &map->latlon, point) == MS_SUCCESS)
-      return MS_SUCCESS;
-  }
-
-  if (!map->projection.proj && map->units == MS_DD)
+  if (msProjectPoint(&map->projection, &map->latlon, point) == MS_SUCCESS)
     return MS_SUCCESS;
 
-  if (map->projection.proj)
-    msSetError(MS_PROJERR,
-               "Failed to project scalebar measurement endpoint to "
-               "geographic coordinates.",
-               "msDrawScalebar()");
-  else
-    msSetError(MS_MISCERR,
-               "Geodesic scalebar measurement requires a map projection or "
-               "decimal degree map units.",
-               "msDrawScalebar()");
+  msSetError(MS_PROJERR,
+             "Failed to project scalebar measurement endpoint to "
+             "geographic coordinates.",
+             "msDrawScalebar()");
   return MS_FAILURE;
 }
 
@@ -214,15 +180,20 @@ static int msScalebarMeasurePixelSpanGeodesic(mapObj *map,
                                               double *distance) {
   pointObj p1, p2;
   PJ_COORD c1, c2, geod;
-  double sample_px, sample_py;
-  double sample_x, sample_y;
+  const double sample_x =
+      map->extent.minx + (map->extent.maxx - map->extent.minx) / 2.0;
+  const double sample_y =
+      map->extent.miny + (map->extent.maxy - map->extent.miny) / 2.0;
   const double half_width = map->cellsize * pixel_width / 2.0;
 
-  /*
-   * GEODESIC scalebars are local measurements. POSITION and OFFSET select a
-   * representative vertical sample row, while the horizontal sample remains
-   * centered in the map.
-   */
+  if (!map->projection.proj) {
+    msSetError(MS_PROJERR,
+               "Geodesic scalebar measurement requires an initialized map "
+               "projection.",
+               "msDrawScalebar()");
+    return MS_FAILURE;
+  }
+
   if (!map->latlon.proj) {
     msSetError(MS_MISCERR,
                "Geodesic scalebar measurement requires a geographic "
@@ -230,10 +201,6 @@ static int msScalebarMeasurePixelSpanGeodesic(mapObj *map,
                "msDrawScalebar()");
     return MS_FAILURE;
   }
-
-  msScalebarSamplePixel(map, &sample_px, &sample_py);
-  sample_x = map->extent.minx + sample_px * map->cellsize;
-  sample_y = map->extent.maxy - sample_py * map->cellsize;
 
   p1.x = sample_x - half_width;
   p1.y = sample_y;
@@ -261,23 +228,16 @@ static int msScalebarMeasurePixelSpanGeodesic(mapObj *map,
   return MS_SUCCESS;
 }
 
-int msScalebarMeasurePixelSpan(mapObj *map, const scalebarObj *scalebar,
-                               double pixel_width, double *distance) {
+static int msScalebarMeasurePixelSpan(mapObj *map, const scalebarObj *scalebar,
+                                      double pixel_width, double *distance) {
   int status;
 
-  switch (scalebar->measure) {
-  case MS_SCALEBAR_MEASURE_CARTESIAN:
+  if (map->projection.numargs == 0) {
     *distance = msScalebarMeasurePixelSpanCartesian(map, scalebar, pixel_width);
     status = MS_SUCCESS;
-    break;
-  case MS_SCALEBAR_MEASURE_GEODESIC:
+  } else {
     status = msScalebarMeasurePixelSpanGeodesic(map, scalebar, pixel_width,
                                                 distance);
-    break;
-  default:
-    msSetError(MS_MISCERR, "Unsupported scalebar measurement mode.",
-               "msDrawScalebar()");
-    return MS_FAILURE;
   }
 
   if (status != MS_SUCCESS)
@@ -349,7 +309,6 @@ imageObj *msDrawScalebar(mapObj *map) {
   }
   dsx = map->scalebar.width - 2 * HMARGIN;
   do {
-    double units_per_pixel;
     if (msScalebarMeasurePixelSpan(map, &map->scalebar, dsx, &msx) !=
         MS_SUCCESS) {
       status = MS_FAILURE;
@@ -358,8 +317,13 @@ imageObj *msDrawScalebar(mapObj *map) {
     i = roundInterval(msx / map->scalebar.intervals);
     snprintf(label, sizeof(label), "%g",
              map->scalebar.intervals * i); /* last label */
-    units_per_pixel = msx / dsx;
-    isx = MS_NINT(i / units_per_pixel);
+    if (map->projection.numargs == 0) {
+      isx = MS_NINT((i / (msInchesPerUnit(map->units, 0) /
+                          msInchesPerUnit(map->scalebar.units, 0))) /
+                    map->cellsize);
+    } else {
+      isx = MS_NINT(i / (msx / dsx));
+    }
     sx = (map->scalebar.intervals * isx) +
          MS_NINT((1.5 + strlen(label) / 2.0 +
                   strlen(unitText[map->scalebar.units])) *

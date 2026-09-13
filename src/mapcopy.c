@@ -818,7 +818,7 @@ int msCopyReferenceMap(referenceMapObj *dst, const referenceMapObj *src,
  * and msCopyLabel()                                                   *
  **********************************************************************/
 
-MS_DLL_EXPORT int msCopyScalebar(scalebarObj *dst, const scalebarObj *src) {
+int msCopyScalebar(scalebarObj *dst, const scalebarObj *src) {
 
   initScalebar(dst);
 
@@ -839,7 +839,6 @@ MS_DLL_EXPORT int msCopyScalebar(scalebarObj *dst, const scalebarObj *src) {
   MS_COPYCOLOR(&(dst->outlinecolor), &(src->outlinecolor));
 
   MS_COPYSTELEM(units);
-  MS_COPYSTELEM(measure);
   MS_COPYSTELEM(status);
   MS_COPYSTELEM(position);
   MS_COPYSTELEM(transparent);

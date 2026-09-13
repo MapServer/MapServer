@@ -1,6 +1,6 @@
 # RUN_PARMS: scalebar_3857_geodesic.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
 #
-# Test local geodesic scalebar measurement in EPSG:3857.
+# Test automatic local geodesic scalebar measurement in EPSG:3857.
 #
 # REQUIRES: OUTPUT=PNG
 #
@@ -18,7 +18,6 @@ PROJECTION
 END
 
 SCALEBAR
-  MEASURE GEODESIC
   TRANSPARENT OFF
   LABEL
     COLOR 0 0 0

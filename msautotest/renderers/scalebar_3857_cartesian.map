@@ -1,6 +1,6 @@
 # RUN_PARMS: scalebar_3857_cartesian.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
 #
-# Test explicit cartesian scalebar measurement in EPSG:3857.
+# Test Cartesian scalebar fallback when the map has no CRS.
 #
 # REQUIRES: OUTPUT=PNG
 #
@@ -13,12 +13,7 @@ IMAGECOLOR 255 255 255
 FONTSET "../misc/fonts.lst"
 IMAGETYPE png
 
-PROJECTION
-  "init=epsg:3857"
-END
-
 SCALEBAR
-  MEASURE CARTESIAN
   TRANSPARENT OFF
   LABEL
     COLOR 0 0 0
