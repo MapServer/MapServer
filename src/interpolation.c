@@ -170,6 +170,16 @@ int msInterpolationDataset(mapObj *map, imageObj *image,
     if (layer->classgroup && layer->numclasses > 0)
       classgroup = msAllocateValidClassGroups(layer, &nclasses);
 
+    reprojectionObj *reprojector = NULL;
+    if (layer->project) {
+      reprojector = msLayerGetReprojectorToMap(layer, map);
+      if (reprojector == NULL) {
+        msFree(classgroup);
+        msLayerClose(layer);
+        return MS_FAILURE;
+      }
+    }
+
     msInitShape(&shape);
     while ((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
       int l, p, s, c;
@@ -184,8 +194,8 @@ int msInterpolationDataset(mapObj *map, imageObj *image,
           xyz_capacity = 3;
         xyz_values = (float *)msSmallCalloc(xyz_capacity, sizeof(float));
       }
-      if (layer->project)
-        msProjectShape(&layer->projection, &map->projection, &shape);
+      if (reprojector)
+        msProjectShapeEx(reprojector, &shape);
 
       /* the weight for the sample is set to 1.0 by default. If the
        * layer has some classes defined, we will read the weight from

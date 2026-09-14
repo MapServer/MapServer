@@ -1,0 +1,118 @@
+/*
+PURPOSE:     test reprojection performance through MapScript heatmap
+SOURCE DATA: OSM places for Nova Scotia, 3843 points
+             in EPSG:4326
+DATA FORMAT: SpatiaLite database
+*/
+
+MAP
+  NAME 'reproj-heatmap'
+  EXTENT -66.374741 43.400270 -59.697577 50.267922
+  UNITS DD
+  SIZE 200 100
+  IMAGETYPE PNG
+
+  WEB
+    METADATA
+      "ows_srs" "epsg:4326 epsg:3857"
+      "ows_enable_request" "*"
+      "wms_getfeatureinfo_formatlist" "text/html"
+    END #metadata
+  END #web
+
+  PROJECTION
+    "init=epsg:4326"
+  END
+
+  LAYER
+    NAME "heatmap"
+    TYPE raster
+    CONNECTIONTYPE kerneldensity
+    CONNECTION "points"
+    STATUS on
+    PROCESSING "RANGE_COLORSPACE=%color%"
+    PROCESSING "KERNELDENSITY_RADIUS=%radius%"
+    PROCESSING "KERNELDENSITY_COMPUTE_BORDERS=%border%"
+    PROCESSING "KERNELDENSITY_NORMALIZATION=%norm%"
+    OFFSITE 0 0 0
+    SCALETOKEN
+      NAME "%radius%"
+      VALUES
+        "0" "15"
+        "255000000" "20"
+      END #values
+    END #scaletoken
+    SCALETOKEN
+      NAME "%border%"
+      VALUES
+        "0" "ON"
+        "255000000" "OFF"
+      END #values
+    END #scaletoken
+    SCALETOKEN
+      NAME "%norm%"
+      VALUES
+        "0" "AUTO"
+        "255000000" "30"
+      END #values
+    END #scaletoken
+    SCALETOKEN
+      NAME "%color%"
+      VALUES
+        "0" "HSL"
+        "255000000" "RGB"
+      END #values
+    END #scaletoken
+    CLASS
+      STYLE
+        COLORRANGE  "#0000ff00"  "#0000ffff"
+        DATARANGE 0 32
+      END #style
+      STYLE
+        COLORRANGE  "#0000ffff"  "#ff0000ff"
+        DATARANGE 32 255
+      END #style
+    END #class
+  END #layer
+
+  SYMBOL
+    NAME "circle"
+    TYPE ellipse
+    POINTS 1 1 END
+  END #symbol
+
+  LAYER
+    NAME "points"
+    STATUS ON
+    TYPE POINT
+    CONNECTIONTYPE OGR
+    CONNECTION "data/ns.db"
+    DATA "places"
+    CLASS
+      MAXSCALEDENOM 255000000
+      STYLE
+        SIZE [population]
+      END #style
+    END #class
+    CLASS
+      MAXSCALEDENOM 265000000
+      STYLE
+        SIZE [population]
+      END #style
+    END #class
+    CLASS
+      MAXSCALEDENOM 275000000
+     EXPRESSION ([population]>1)
+      STYLE
+        SIZE 1
+      END #style
+    END #class
+    CLASS
+      MAXSCALEDENOM 275000000
+      STYLE
+        SIZE 2
+      END #style
+    END #class
+  END #layer
+
+END #map
