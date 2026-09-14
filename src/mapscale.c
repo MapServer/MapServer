@@ -156,6 +156,102 @@ double msInchesPerUnit(int units, double center_lat) {
 
 #define X_STEP_SIZE 5
 
+static double msScalebarMeasurePixelSpanCartesian(mapObj *map,
+                                                  const scalebarObj *scalebar,
+                                                  double pixel_width) {
+  return (map->cellsize * pixel_width) /
+         (msInchesPerUnit(scalebar->units, 0) / msInchesPerUnit(map->units, 0));
+}
+
+static int msScalebarProjectPointToLatLon(mapObj *map, pointObj *point) {
+  if (msProjectPoint(&map->projection, &map->latlon, point) == MS_SUCCESS)
+    return MS_SUCCESS;
+
+  msSetError(MS_PROJERR,
+             "Failed to project scalebar measurement endpoint to "
+             "geographic coordinates.",
+             "msDrawScalebar()");
+  return MS_FAILURE;
+}
+
+static int msScalebarMeasurePixelSpanGeodesic(mapObj *map,
+                                              const scalebarObj *scalebar,
+                                              double pixel_width,
+                                              double *distance) {
+  pointObj p1, p2;
+  PJ_COORD c1, c2, geod;
+  const double sample_x =
+      map->extent.minx + (map->extent.maxx - map->extent.minx) / 2.0;
+  const double sample_y =
+      map->extent.miny + (map->extent.maxy - map->extent.miny) / 2.0;
+  const double half_width = map->cellsize * pixel_width / 2.0;
+
+  if (!map->projection.proj) {
+    msSetError(MS_PROJERR,
+               "Geodesic scalebar measurement requires an initialized map "
+               "projection.",
+               "msDrawScalebar()");
+    return MS_FAILURE;
+  }
+
+  if (!map->latlon.proj) {
+    msSetError(MS_MISCERR,
+               "Geodesic scalebar measurement requires a geographic "
+               "projection definition.",
+               "msDrawScalebar()");
+    return MS_FAILURE;
+  }
+
+  p1.x = sample_x - half_width;
+  p1.y = sample_y;
+  p2.x = sample_x + half_width;
+  p2.y = sample_y;
+
+  if (msScalebarProjectPointToLatLon(map, &p1) != MS_SUCCESS ||
+      msScalebarProjectPointToLatLon(map, &p2) != MS_SUCCESS)
+    return MS_FAILURE;
+
+  c1.lp.lam = p1.x * MS_DEG_TO_RAD;
+  c1.lp.phi = p1.y * MS_DEG_TO_RAD;
+  c2.lp.lam = p2.x * MS_DEG_TO_RAD;
+  c2.lp.phi = p2.y * MS_DEG_TO_RAD;
+
+  geod = proj_geod(map->latlon.proj, c1, c2);
+  if (!isfinite(geod.geod.s) || geod.geod.s <= 0) {
+    msSetError(MS_PROJERR,
+               "Failed to calculate a positive geodesic scalebar distance.",
+               "msDrawScalebar()");
+    return MS_FAILURE;
+  }
+
+  *distance = MS_CONVERT_UNIT(MS_METERS, scalebar->units, geod.geod.s);
+  return MS_SUCCESS;
+}
+
+static int msScalebarMeasurePixelSpan(mapObj *map, const scalebarObj *scalebar,
+                                      double pixel_width, double *distance) {
+  int status;
+
+  if (map->projection.numargs == 0) {
+    *distance = msScalebarMeasurePixelSpanCartesian(map, scalebar, pixel_width);
+    status = MS_SUCCESS;
+  } else {
+    status = msScalebarMeasurePixelSpanGeodesic(map, scalebar, pixel_width,
+                                                distance);
+  }
+
+  if (status != MS_SUCCESS)
+    return MS_FAILURE;
+
+  if (!isfinite(*distance) || *distance <= 0) {
+    msSetError(MS_MISCERR,
+               "Scalebar measurement did not produce a positive distance.",
+               "msDrawScalebar()");
+    return MS_FAILURE;
+  }
+  return MS_SUCCESS;
+}
+
 imageObj *msDrawScalebar(mapObj *map) {
   int status;
   char label[32];
@@ -213,14 +309,21 @@ imageObj *msDrawScalebar(mapObj *map) {
   }
   dsx = map->scalebar.width - 2 * HMARGIN;
   do {
-    msx = (map->cellsize * dsx) / (msInchesPerUnit(map->scalebar.units, 0) /
-                                   msInchesPerUnit(map->units, 0));
+    if (msScalebarMeasurePixelSpan(map, &map->scalebar, dsx, &msx) !=
+        MS_SUCCESS) {
+      status = MS_FAILURE;
+      goto scale_cleanup;
+    }
     i = roundInterval(msx / map->scalebar.intervals);
     snprintf(label, sizeof(label), "%g",
              map->scalebar.intervals * i); /* last label */
-    isx = MS_NINT((i / (msInchesPerUnit(map->units, 0) /
-                        msInchesPerUnit(map->scalebar.units, 0))) /
-                  map->cellsize);
+    if (map->projection.numargs == 0) {
+      isx = MS_NINT((i / (msInchesPerUnit(map->units, 0) /
+                          msInchesPerUnit(map->scalebar.units, 0))) /
+                    map->cellsize);
+    } else {
+      isx = MS_NINT(i / (msx / dsx));
+    }
     sx = (map->scalebar.intervals * isx) +
          MS_NINT((1.5 + strlen(label) / 2.0 +
                   strlen(unitText[map->scalebar.units])) *
@@ -382,7 +485,8 @@ imageObj *msDrawScalebar(mapObj *map) {
   }
   default:
     msSetError(MS_MISCERR, "Unsupported scalebar style.", "msDrawScalebar()");
-    return (NULL);
+    status = MS_FAILURE;
+    goto scale_cleanup;
   }
 
 scale_cleanup:
