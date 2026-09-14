@@ -1,6 +1,10 @@
 #include "../../src/mapserver.h"
 #include "../../src/maperror.h"
 
+#include "../../src/flatgeobuf/geometryreader.h"
+#include "../../src/flatgeobuf/feature_generated.h"
+#include <vector>
+
 /* ----------------------------------------------------------------------- */
 
 int gTestRetCode = 0;
@@ -197,9 +201,45 @@ static void testDBFFieldExtentValidation() {
 
 /* ----------------------------------------------------------------------- */
 
+static void testFlatGeobufGeometryBounds() {
+  /* A FlatGeobuf polygon carries its rings as "ends" (indices into the xy
+     coordinate array). The values come straight from the file and are not
+     validated by the flatbuffer accessors, so an end index past the number of
+     stored coordinates made GeometryReader read past the xy buffer. */
+  using namespace flatbuffers;
+  using namespace FlatGeobuf;
+
+  FlatBufferBuilder fbb;
+  std::vector<double> xy = {0.0, 0.0, 1.0, 1.0}; /* two coordinate pairs */
+  std::vector<uint32_t> ends = {2, 5}; /* second ring claims points up to 5 */
+  auto geom = CreateGeometryDirect(fbb, &ends, &xy, nullptr, nullptr, nullptr,
+                                   nullptr, GeometryType::Polygon, nullptr);
+  fbb.Finish(geom);
+
+  std::vector<uint8_t> buf(fbb.GetBufferPointer(),
+                           fbb.GetBufferPointer() + fbb.GetSize());
+  auto g = GetRoot<Geometry>(buf.data());
+
+  flatgeobuf_ctx ctx;
+  memset(&ctx, 0, sizeof(ctx));
+  ctx.geometry_type = (uint8_t)GeometryType::Polygon;
+
+  shapeObj shape;
+  msInitShape(&shape);
+  GeometryReader(&ctx, g).read(&shape);
+
+  /* The out-of-range ring must be dropped rather than read out of bounds. */
+  for (int i = 0; i < shape.numlines; i++)
+    EXPECT_TRUE(shape.line[i].numpoints <= 2);
+  msFreeShape(&shape);
+}
+
+/* ----------------------------------------------------------------------- */
+
 int main() {
   testRedactCredentials();
   testToString();
   testDBFFieldExtentValidation();
+  testFlatGeobufGeometryBounds();
   return gTestRetCode;
 }
