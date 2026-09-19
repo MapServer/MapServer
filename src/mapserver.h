@@ -2602,7 +2602,8 @@ MS_DLL_EXPORT void msCleanup(void);
 /**
 Sets up string-based mapfile loading and calls loadMapInternal to do the work
 */
-MS_DLL_EXPORT mapObj *msLoadMapFromString(char *buffer, char *new_mappath,
+MS_DLL_EXPORT mapObj *msLoadMapFromString(const char *buffer,
+                                          const char *new_mappath,
                                           const configObj *config);
 
 /* Function prototypes, not wrapable */
@@ -2723,7 +2724,6 @@ MS_DLL_EXPORT int msMapLoadOWSParameters(mapObj *map, cgiRequestObj *request,
 MS_DLL_EXPORT int msMapIgnoreMissingData(mapObj *map);
 
 /* mapfile.c */
-MS_DLL_EXPORT void msApplyStyleItemsToLayers(mapObj *map);
 MS_DLL_EXPORT int msValidateParameter(const char *value, const char *pattern1,
                                       const char *pattern2,
                                       const char *pattern3,
@@ -2733,6 +2733,9 @@ MS_DLL_EXPORT int msGetSymbolIndex(symbolSetObj *set, const char *name,
                                    int try_addimage_if_notfound);
 MS_DLL_EXPORT mapObj *msLoadMap(const char *filename, const char *new_mappath,
                                 const configObj *config);
+MS_DLL_EXPORT mapObj *msLoadMapEx(const char *filename, const char *new_mappath,
+                                  const configObj *config, int bFinalize);
+MS_DLL_EXPORT void msFinalizeMap(mapObj *map);
 MS_DLL_EXPORT int msTransformXmlMapfile(const char *stylesheet,
                                         const char *xmlMapfile, FILE *tmpfile);
 MS_DLL_EXPORT int msSaveMap(mapObj *map, char *filename);
