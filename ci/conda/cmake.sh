@@ -1,9 +1,13 @@
 #!/bin/sh
 
+#   CMAKE_INSTALL_PREFIX       - where "ninja install" writes
+#   CMAKE_PREFIX_PATH          - where CMake looks for packages
+#   CMAKE_IGNORE_PREFIX_PATH   - ignore Homebrew paths
+
 cmake -G Ninja                                            \
+    -DCMAKE_INSTALL_PREFIX:PATH=$CONDA_PREFIX             \
     -DCMAKE_PREFIX_PATH="$CONDA_PREFIX"                   \
     -DCMAKE_IGNORE_PREFIX_PATH="/opt/homebrew;/usr/local" \
-    -DCMAKE_FIND_FRAMEWORK=LAST                           \
     -DCMAKE_BUILD_TYPE=Release                            \
     -DWITH_APACHE_MODULE=0                                \
     -DWITH_CAIRO=1                                        \
