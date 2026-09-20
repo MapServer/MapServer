@@ -33,7 +33,7 @@
 
 shapeObj *msRasterizeArc(double x0, double y0, double radius, double startAngle,
                          double endAngle, int isSlice) {
-  static int allocated_size = 100;
+  int allocated_size = 100;
   shapeObj *shape = (shapeObj *)calloc(1, sizeof(shapeObj));
   MS_CHECK_ALLOC(shape, sizeof(shapeObj), NULL);
   mapserver::arc arc(x0, y0, radius, radius, startAngle * MS_DEG_TO_RAD,
