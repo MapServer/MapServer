@@ -4235,9 +4235,10 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter,
 
     strtmpl = "'%s'"; /* don't have a type for the righthand literal so assume
                          it's a string and we quote */
-    snippet = (char *)msSmallMalloc(strlen(strtmpl) + strlen(filter->string));
-    sprintf(snippet, strtmpl, filter->string); // TODO: escape filter->string
-                                               // (msPostGISEscapeSQLParam)
+    char *escaped = msReplaceSubstring(filter->string, "'", "''");
+    snippet = (char *)msSmallMalloc(strlen(strtmpl) + strlen(fescaped));
+    sprintf(snippet, strtmpl, escaped);
+    msFree(escaped);
     native_string = msStringConcatenate(native_string, snippet);
     free(snippet);
 
@@ -4253,9 +4254,10 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter,
     native_string = msStrdup(filteritem);
     native_string = msStringConcatenate(native_string, ", ");
     strtmpl = "'%s'";
-    snippet = (char *)msSmallMalloc(strlen(strtmpl) + strlen(filter->string));
-    sprintf(snippet, strtmpl, filter->string); // TODO: escape filter->string
-                                               // (msPostGISEscapeSQLParam)
+    char *escaped = msReplaceSubstring(filter->string, "'", "''");
+    snippet = (char *)msSmallMalloc(strlen(strtmpl) + strlen(escaped));
+    sprintf(snippet, strtmpl, escaped);
+    msFree(escaped);
     native_string = msStringConcatenate(native_string, snippet);
 
     if (filter->flags & MS_EXP_INSENSITIVE) {
@@ -4417,14 +4419,9 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter,
             node->next->token == MS_TOKEN_COMPARISON_IEQ) {
           native_string = msStringConcatenate(native_string, "REGEXP_LIKE( ");
         }
-        strtmpl = "%s";
-        snippet = (char *)msSmallMalloc(strlen(strtmpl) +
-                                        strlen(node->tokenval.strval));
-        sprintf(snippet, strtmpl,
-                node->tokenval
-                    .strval); // TODO: escape strval (msPostGISEscapeSQLParam)
-        native_string = msStringConcatenate(native_string, snippet);
-        free(snippet);
+        char* escaped = msDefaultEscapePropertyName(node->tokenval.strval))
+        native_string = msStringConcatenate(native_string, escaped);
+        msFree(escaped);
         break;
       case MS_TOKEN_BINDING_TIME:
         native_string =
