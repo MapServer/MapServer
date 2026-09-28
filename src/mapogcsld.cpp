@@ -3532,8 +3532,10 @@ static char *msSLDGenerateSVGFromEllipseSymbol(symbolObj *psSymbol,
   double dfStrokeWidth = psStyle->width > 0 ? psStyle->width : 1.0;
   double dfPadding = bHasStroke ? dfStrokeWidth / 2.0 : 0.0;
 
-  double dfCanvasWidth = dfWidth + (dfPadding * 2.0);
-  double dfCanvasHeight = dfHeight + (dfPadding * 2.0);
+  /* Round up to whole pixels, so renderers that work in integer
+     pixels don't clip the stroke at the right and bottom edges. */
+  double dfCanvasWidth = ceil(dfWidth + (dfPadding * 2.0));
+  double dfCanvasHeight = ceil(dfHeight + (dfPadding * 2.0));
 
   if (pdfCanvasHeight) {
     *pdfCanvasHeight = dfCanvasHeight;
@@ -3644,8 +3646,10 @@ static char *msSLDGenerateSVGFromVectorSymbol(symbolObj *psSymbol,
   double dfStrokeWidth = psStyle->width > 0 ? psStyle->width : 1.0;
   double dfPadding = bHasStroke ? dfStrokeWidth / 2.0 : 0.0;
 
-  double dfCanvasWidth = dfOutWidth + (dfPadding * 2.0);
-  double dfCanvasHeight = dfOutHeight + (dfPadding * 2.0);
+  /* Round up to whole pixels, so renderers that work in integer
+     pixels don't clip the stroke at the right and bottom edges. */
+  double dfCanvasWidth = ceil(dfOutWidth + (dfPadding * 2.0));
+  double dfCanvasHeight = ceil(dfOutHeight + (dfPadding * 2.0));
 
   if (pdfCanvasHeight) {
     *pdfCanvasHeight = dfCanvasHeight;
