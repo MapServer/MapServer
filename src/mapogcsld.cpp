@@ -3500,7 +3500,8 @@ char *msSLDGenerateSLD(mapObj *map, int iLayer, const char *pszVersion) {
 /*       Generate SVG for a MapServer ellipse symbol.                   */
 /************************************************************************/
 static char *msSLDGenerateSVGFromEllipseSymbol(symbolObj *psSymbol,
-                                               styleObj *psStyle) {
+                                               styleObj *psStyle,
+                                               double *pdfCanvasHeight) {
   msStringBuffer *svgBuf = msStringBufferAlloc();
 
   if (!svgBuf) {
@@ -3533,6 +3534,10 @@ static char *msSLDGenerateSVGFromEllipseSymbol(symbolObj *psSymbol,
 
   double dfCanvasWidth = dfWidth + (dfPadding * 2.0);
   double dfCanvasHeight = dfHeight + (dfPadding * 2.0);
+
+  if (pdfCanvasHeight) {
+    *pdfCanvasHeight = dfCanvasHeight;
+  }
 
   char szFillColor[8] = "none";
   char szStrokeColor[8] = "none";
@@ -3577,7 +3582,8 @@ static char *msSLDGenerateSVGFromEllipseSymbol(symbolObj *psSymbol,
 /*       Generate SVG for a MapServer vector symbol.                    */
 /************************************************************************/
 static char *msSLDGenerateSVGFromVectorSymbol(symbolObj *psSymbol,
-                                              styleObj *psStyle) {
+                                              styleObj *psStyle,
+                                              double *pdfCanvasHeight) {
   msStringBuffer *svgBuf = msStringBufferAlloc();
 
   if (!svgBuf) {
@@ -3640,6 +3646,11 @@ static char *msSLDGenerateSVGFromVectorSymbol(symbolObj *psSymbol,
 
   double dfCanvasWidth = dfOutWidth + (dfPadding * 2.0);
   double dfCanvasHeight = dfOutHeight + (dfPadding * 2.0);
+
+  if (pdfCanvasHeight) {
+    *pdfCanvasHeight = dfCanvasHeight;
+  }
+
   double dfOffset = dfPadding;
 
   char szFillColor[8] = "none";
@@ -3939,11 +3950,14 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
           } else {
             /* No WellKnownName match — attempt to generate an ExternalGraphic
                SVG instead of fall back to a default symbol. */
+            double dfCanvasHeight = 0;
             char *pszSVG =
                 // handle ELLIPSE as a special case
                 (psSymbol->type == MS_SYMBOL_ELLIPSE)
-                    ? msSLDGenerateSVGFromEllipseSymbol(psSymbol, psStyle)
-                    : msSLDGenerateSVGFromVectorSymbol(psSymbol, psStyle);
+                    ? msSLDGenerateSVGFromEllipseSymbol(psSymbol, psStyle,
+                                                        &dfCanvasHeight)
+                    : msSLDGenerateSVGFromVectorSymbol(psSymbol, psStyle,
+                                                       &dfCanvasHeight);
             if (pszSVG) {
               // encode as Base64 so it can be output to XML
               char *pszBase64 =
@@ -3976,9 +3990,11 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                        sNameSpace);
               msStringBufferAppend(sldString, szTmp);
 
-              if (psStyle->size > 0) {
+              /* The SVG includes stroke padding, so Size (the graphic's
+                 height per SE) must be the full canvas height. */
+              if (dfCanvasHeight > 0) {
                 snprintf(szTmp, sizeof(szTmp), "<%sSize>%g</%sSize>\n",
-                         sNameSpace, psStyle->size, sNameSpace);
+                         sNameSpace, dfCanvasHeight, sNameSpace);
                 msStringBufferAppend(sldString, szTmp);
               }
 
@@ -4137,10 +4153,11 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                      sNameSpace);
             msStringBufferAppend(sldString, szTmp);
 
-            if (psStyle->size > 0)
+            if (psStyle->size > 0) {
               snprintf(szTmp, sizeof(szTmp), "<%sSize>%g</%sSize>\n",
                        sNameSpace, psStyle->size, sNameSpace);
-            msStringBufferAppend(sldString, szTmp);
+              msStringBufferAppend(sldString, szTmp);
+            }
 
             snprintf(szTmp, sizeof(szTmp), "</%sGraphic>\n", sNameSpace);
             msStringBufferAppend(sldString, szTmp);
