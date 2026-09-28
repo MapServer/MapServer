@@ -7,10 +7,10 @@
 <se:PointSymbolizer>
 <se:Graphic>
 <se:ExternalGraphic>
-<se:OnlineResource xlink:type="simple" xlink:href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNS45MjgiIGhlaWdodD0iMTciIHZpZXdCb3g9IjAgMCAxNS45MjggMTciPgo8cGF0aCBkPSJNIDE1LjQyOCwxMi41IEwgMTUuNDI4LDQuNSBMIDguNSwwLjUgTCAxLjU3Miw0LjUgTCAxLjU3MiwxMi41IEwgOC41LDE2LjUgTCAxNS40MjgsMTIuNSBaIiBmaWxsPSIjMTU2MDgyIiBzdHJva2U9IiNmZjAwMDAiIHN0cm9rZS13aWR0aD0iMSIvPgo8L3N2Zz4K"/>
+<se:OnlineResource xlink:type="simple" xlink:href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNyIgdmlld0JveD0iMCAwIDE2IDE3Ij4KPHBhdGggZD0iTSAxNS40MjgsMTIuNSBMIDE1LjQyOCw0LjUgTCA4LjUsMC41IEwgMS41NzIsNC41IEwgMS41NzIsMTIuNSBMIDguNSwxNi41IEwgMTUuNDI4LDEyLjUgWiIgZmlsbD0iIzE1NjA4MiIgc3Ryb2tlPSIjZmYwMDAwIiBzdHJva2Utd2lkdGg9IjEiLz4KPC9zdmc+Cg=="/>
 <se:Format>image/svg+xml</se:Format>
 </se:ExternalGraphic>
-<se:Size>16</se:Size>
+<se:Size>17</se:Size>
 </se:Graphic>
 </se:PointSymbolizer>
 </se:Rule>

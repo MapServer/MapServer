@@ -10,7 +10,7 @@
 <se:OnlineResource xlink:type="simple" xlink:href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDE0IDE0Ij4KPHBhdGggZD0iTSAxLDEzIEwgNywxIEwgMTMsMTMgIiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4K"/>
 <se:Format>image/svg+xml</se:Format>
 </se:ExternalGraphic>
-<se:Size>12</se:Size>
+<se:Size>14</se:Size>
 </se:Graphic>
 </se:PointSymbolizer>
 </se:Rule>
