@@ -305,19 +305,19 @@ MAP
 END
         """
         map = mapscript.fromstring(s)
-        map.applyDefaultSubstitutions()
         assert map.web.metadata["wms_title"] == "Test Title"
 
     def testRuntimeSubstitutions(self):
         """
         For supported parameters see https://mapserver.org/cgi/runsub.html#parameters-supported
+        Any defaults are applied when loading the map, so remove these to test runtime substitutions.
         """
         s = """
 MAP
     WEB
         VALIDATION
             'key1' '.*'
-            'default_key1' 'Test Title'
+            # 'default_key1' 'Test Title'
         END
         METADATA
             "wms_title" "%key1%"

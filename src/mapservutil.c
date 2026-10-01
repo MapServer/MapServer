@@ -269,7 +269,9 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config) {
   }
 
   /* ok to try to load now */
-  map = msLoadMap(ms_mapfile, NULL, config);
+  /* do not apply any default substitutions yet, as these could be */
+  /* supplied in the request */
+  map = msLoadMapEx(ms_mapfile, NULL, config, MS_FALSE);
   if (!map)
     return NULL;
 
@@ -286,7 +288,6 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config) {
     msApplySubstitutions(map, mapserv->request->ParamNames,
                          mapserv->request->ParamValues,
                          mapserv->request->NumParams);
-    msApplyDefaultSubstitutions(map);
 
     /* check to see if a ogc map context is passed as argument. if there */
     /* is one load it */
@@ -355,9 +356,7 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config) {
                       mapserv->request->httpcookiedata);
   }
 
-  // apply any SLD files to layers - this has to be done after any
-  // runtime substitutions have been applied to the mapfile
-  msApplyStyleItemsToLayers(map);
+  msFinalizeMap(map);
 
   return map;
 }

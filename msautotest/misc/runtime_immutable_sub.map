@@ -1,0 +1,59 @@
+# Test "immutable" blocks runtime substitutions
+#
+# REQUIRES: INPUT=SHAPEFILE
+#
+# Request value must be ignored - layer1 keeps its %name1% unsubstituted
+# RUN_PARMS: immutable_sub_test001.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=layer1&name1=bdry_counpy2" > [RESULT_DEVERSION] [STRIP:ShapefileOpen]
+#
+# Default values are still applied
+# RUN_PARMS: immutable_sub_test002.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=map&layer=layer2&name2=indx_q100kpy4" > [RESULT_DEMIME]
+
+MAP
+  NAME 'immutable_sub'
+  EXTENT 125000 4785000 789000 5489000
+  UNITS METERS
+  SIZE 500 500
+  SHAPEPATH "."
+
+  IMAGETYPE PNG
+  PROJECTION
+    "epsg:3857"
+  END
+
+  WEB
+    VALIDATION
+      'immutable' 'true'
+      'name1' 'bdry_counpy2|indx_q100kpy4'
+    END
+    METADATA
+      "ows_onlineresource" "http://foo/"
+    END
+  END
+
+  LAYER
+    NAME 'layer1'
+    STATUS OFF
+    DATA '../query/data/%name1%'
+    TYPE POLYGON
+    VALIDATION
+      'name1' 'bdry_counpy2|indx_q100kpy4'
+    END
+    CLASS
+      STYLE OUTLINECOLOR 51 51 51 END
+    END
+  END
+
+  LAYER
+    NAME 'layer2'
+    STATUS OFF
+    DATA '../query/data/%name2%'
+    TYPE POLYGON
+    VALIDATION
+      'default_name2' 'bdry_counpy2'
+      'name2' 'bdry_counpy2|indx_q100kpy4'
+    END
+    CLASS
+      STYLE OUTLINECOLOR 51 51 51 END
+    END
+  END
+END
