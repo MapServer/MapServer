@@ -186,6 +186,9 @@ static int msNearestRasterResampler(
           } else if (psSrcImage->format->imagemode == MS_IMAGEMODE_FLOAT32) {
             psDstImage->img.raw_float[dst_off] =
                 psSrcImage->img.raw_float[src_off];
+          } else if (psSrcImage->format->imagemode == MS_IMAGEMODE_FLOAT64) {
+            psDstImage->img.raw_double[dst_off] =
+                psSrcImage->img.raw_double[src_off];
           } else if (psSrcImage->format->imagemode == MS_IMAGEMODE_BYTE) {
             psDstImage->img.raw_byte[dst_off] =
                 psSrcImage->img.raw_byte[src_off];
@@ -419,6 +422,8 @@ static int msBilinearRasterResampler(
             psDstImage->img.raw_16bit[dst_off] = (short)padfPixelSum[band];
           } else if (psSrcImage->format->imagemode == MS_IMAGEMODE_FLOAT32) {
             psDstImage->img.raw_float[dst_off] = (float)padfPixelSum[band];
+          } else if (psSrcImage->format->imagemode == MS_IMAGEMODE_FLOAT64) {
+            psDstImage->img.raw_double[dst_off] = padfPixelSum[band];
           } else if (psSrcImage->format->imagemode == MS_IMAGEMODE_BYTE) {
             psDstImage->img.raw_byte[dst_off] =
                 (unsigned char)MS_MAX(0, MS_MIN(255, padfPixelSum[band]));
