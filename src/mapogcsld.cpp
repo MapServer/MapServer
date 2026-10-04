@@ -4909,6 +4909,11 @@ static void msSLDGenerateUserStyle(msStringBuffer *sb, layerObj *psLayer,
       if (pszFilter) {
         msStringBufferAppend(sb, pszFilter);
         free(pszFilter);
+      } else if (psLayer->_class[i]->isfallback) {
+        /* A FALLBACK class applies to features not matched by any
+           other class, and is used to represent an SLD ElseFilter. */
+        msStringBufferAppend(sb, nVersion > OWS_1_0_0 ? "<se:ElseFilter/>\n"
+                                                      : "<ElseFilter/>\n");
       }
       /* -------------------------------------------------------------------- */
       /*      generate the min/max scale.                                     */
