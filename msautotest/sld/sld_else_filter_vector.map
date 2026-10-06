@@ -1,6 +1,9 @@
 # RUN_PARMS: sld_else_nofallback.png [MAP2IMG] -m [MAPFILE] -l multipolygon -o  [RESULT]
 # RUN_PARMS: sld_else_fallback.png [MAP2IMG] -m [MAPFILE] -l mapscript_output -o  [RESULT]
 # RUN_PARMS: sld_else_from_sld.png [MAP2IMG] -m [MAPFILE] -l set -o  [RESULT]
+# RUN_PARMS: sld_else_getstyles_fallback.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&LAYERS=mapscript_output" > [RESULT_DEMIME]
+# RUN_PARMS: sld_else_getstyles_fallback_sld10.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetStyles&LAYERS=mapscript_output" > [RESULT_DEMIME]
+# RUN_PARMS: sld_else_getstyles_nofallback.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&LAYERS=multipolygon" > [RESULT_DEMIME]
 
 # Test that we get the SLD else-filter behavior when FALLBACK is used together with RENDERMODE=ALL_MATCHING_CLASSES
 # FALLBACK should only be rendered if no other class is matching
@@ -8,6 +11,12 @@ MAP
   SIZE 500 500
   EXTENT -5 42 9 52
   INCLUDE "data/general.map.include"
+
+  WEB
+    METADATA
+      "ows_enable_request" "*"
+    END
+  END
 
   LAYER
     NAME multipolygon

@@ -1,0 +1,58 @@
+<StyledLayerDescriptor version="1.0.0" xmlns="http://www.opengis.net/sld" xmlns:gml="http://www.opengis.net/gml" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/sld http://ogc.dmsolutions.ca/sld/1.0.0/StyledLayerDescriptor.xsd">
+<NamedLayer>
+<Name>mapscript_output</Name>
+<UserStyle>
+<Name>set</Name>
+<FeatureTypeStyle>
+<Rule>
+<Name>set#0</Name>
+<ogc:Filter><ogc:PropertyIsGreaterThan><ogc:PropertyName>N_EDGES</ogc:PropertyName><ogc:Literal>4</ogc:Literal></ogc:PropertyIsGreaterThan></ogc:Filter>
+<PolygonSymbolizer>
+<Fill>
+<CssParameter name="fill">#2214a4</CssParameter>
+</Fill>
+</PolygonSymbolizer>
+<PolygonSymbolizer>
+<Stroke>
+<CssParameter name="stroke">#232323</CssParameter>
+<CssParameter name="stroke-width">1.00</CssParameter>
+</Stroke>
+</PolygonSymbolizer>
+</Rule>
+<Rule>
+<Name>set#1</Name>
+<ogc:Filter><ogc:Or><ogc:PropertyIsEqualTo><ogc:PropertyName>NAME</ogc:PropertyName><ogc:Literal>Hauts-de-France</ogc:Literal></ogc:PropertyIsEqualTo><ogc:PropertyIsEqualTo><ogc:PropertyName>NAME</ogc:PropertyName><ogc:Literal>Bretagne</ogc:Literal></ogc:PropertyIsEqualTo></ogc:Or></ogc:Filter>
+<PolygonSymbolizer>
+<Fill>
+<CssParameter name="fill">#b60205</CssParameter>
+<CssParameter name="fill-opacity">0.36</CssParameter>
+</Fill>
+</PolygonSymbolizer>
+<PolygonSymbolizer>
+<Stroke>
+<CssParameter name="stroke">#232323</CssParameter>
+<CssParameter name="stroke-width">7.00</CssParameter>
+<CssParameter name="stroke-opacity">0.40</CssParameter>
+</Stroke>
+</PolygonSymbolizer>
+</Rule>
+<Rule>
+<Name>set#2</Name>
+<ElseFilter/>
+<PolygonSymbolizer>
+<Fill>
+<CssParameter name="fill">#7d8b8f</CssParameter>
+</Fill>
+</PolygonSymbolizer>
+<PolygonSymbolizer>
+<Stroke>
+<CssParameter name="stroke">#232323</CssParameter>
+<CssParameter name="stroke-width">1.00</CssParameter>
+</Stroke>
+</PolygonSymbolizer>
+</Rule>
+</FeatureTypeStyle>
+</UserStyle>
+</NamedLayer>
+</StyledLayerDescriptor>
+
