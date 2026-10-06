@@ -74,7 +74,7 @@ cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_STATIC=ON \
 make -j$(nproc) mapserver_static
 
 #Fuzzers
-for fuzzer in mapfuzzer shapefuzzer configfuzzer owsfuzzer; do
+for fuzzer in mapfuzzer shapefuzzer configfuzzer owsfuzzer sldfuzzer; do
     $CC $CFLAGS -Wall -Wextra -I. -I.. -I/usr/include/gdal/. -I/usr/local/include/libxml2 -I/usr/include/libxml2 -DPROJ_VERSION_MAJOR=6 -c ../fuzzers/${fuzzer}.c
 
     $CXX $CXXFLAGS $LIB_FUZZING_ENGINE ${fuzzer}.o -o ${fuzzer} \
@@ -97,3 +97,23 @@ printf "SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=l&STYLES=&SRS=EPSG:4326&
 printf "SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=l" > /tmp/ows_seed3
 printf "SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=l&QUERY_LAYERS=l&STYLES=&SRS=EPSG:4326&BBOX=-180,-90,180,90&WIDTH=10&HEIGHT=10&FORMAT=image/png&INFO_FORMAT=text/plain&X=1&Y=1" > /tmp/ows_seed4
 zip -j $OUT/owsfuzzer_seed_corpus.zip /tmp/ows_seed1 /tmp/ows_seed2 /tmp/ows_seed3 /tmp/ows_seed4
+
+# SLD fuzzer: seed with a StyledLayerDescriptor carrying a rule filter, so the
+# mutator starts from something that reaches both the SLD and the Filter
+# Encoding parsers.
+cat > /tmp/sld_seed1 <<'EOF'
+<StyledLayerDescriptor version="1.0.0" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc">
+<NamedLayer><Name>fuzz</Name><UserStyle><FeatureTypeStyle><Rule>
+<ogc:Filter><ogc:PropertyIsEqualTo><ogc:PropertyName>p</ogc:PropertyName><ogc:Literal>1</ogc:Literal></ogc:PropertyIsEqualTo></ogc:Filter>
+<PolygonSymbolizer><Fill><CssParameter name="fill">#112233</CssParameter></Fill></PolygonSymbolizer>
+</Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>
+EOF
+cat > /tmp/sld_seed2 <<'EOF'
+<StyledLayerDescriptor version="1.0.0" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc">
+<NamedLayer><Name>fuzz</Name><UserStyle><FeatureTypeStyle><Rule>
+<ogc:Filter><ogc:BBOX><ogc:PropertyName>g</ogc:PropertyName><Box><coordinates>-1,-1 1,1</coordinates></Box></ogc:BBOX></ogc:Filter>
+<MinScaleDenominator>0</MinScaleDenominator><MaxScaleDenominator>1e6</MaxScaleDenominator>
+<LineSymbolizer><Stroke><CssParameter name="stroke-width">2</CssParameter></Stroke></LineSymbolizer>
+</Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>
+EOF
+zip -j $OUT/sldfuzzer_seed_corpus.zip /tmp/sld_seed1 /tmp/sld_seed2
