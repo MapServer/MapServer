@@ -106,6 +106,12 @@ struct defaultOutputFormatEntry defaultoutputformats[] = {
     {"png24", "AGG/PNG", "image/png; mode=24bit"},
     {"jpegpng", "AGG/MIXED", "image/vnd.jpeg-png"},
     {"jpegpng8", "AGG/MIXED", "image/vnd.jpeg-png8"},
+#ifdef USE_SKIA
+    {"png","SKIA/PNG","image/png"},
+    {"jpeg","SKIA/JPEG","image/jpeg"},
+    {"png8","SKIA/PNG8","image/png; mode=8bit"},
+    {"png24","SKIA/PNG","image/png; mode=24bit"},
+#endif
 #ifdef USE_CAIRO
     {"pdf", "CAIRO/PDF", "application/x-pdf"},
     {"svg", "CAIRO/SVG", "image/svg+xml"},
@@ -211,6 +217,24 @@ outputFormatObj *msCreateDefaultOutputFormat(mapObj *map, const char *driver,
     format->extension = msStrdup("jpg");
     format->renderer = MS_RENDER_WITH_AGG;
   }
+#if defined(USE_SKIA)
+  else if( strcasecmp(driver,"SKIA/PNG") == 0 ) {
+    if(!name) name="png";
+    format = msAllocOutputFormat( map, name, driver );
+    format->mimetype = msStrdup("image/png");
+    format->imagemode = MS_IMAGEMODE_RGB;
+    format->extension = msStrdup("png");
+    format->renderer = MS_RENDER_WITH_SKIA;
+  }
+  else if( strcasecmp(driver,"SKIA/JPEG") == 0 ) {
+    if(!name) name="jpeg";
+    format = msAllocOutputFormat( map, name, driver );
+    format->mimetype = msStrdup("image/jpeg");
+    format->imagemode = MS_IMAGEMODE_RGB;
+    format->extension = msStrdup("jpg");
+    format->renderer = MS_RENDER_WITH_SKIA;
+  }
+#endif
 #if defined(USE_PBF)
   else if (strcasecmp(driver, "MVT") == 0) {
     if (!name)
@@ -1071,6 +1095,10 @@ int msInitializeRendererVTable(outputFormatObj *format) {
   switch (format->renderer) {
   case MS_RENDER_WITH_AGG:
     return msPopulateRendererVTableAGG(format->vtable);
+#ifdef USE_SKIA
+  case MS_RENDER_WITH_SKIA:
+    return msPopulateRendererVTableSkia(format->vtable);
+#endif
   case MS_RENDER_WITH_UTFGRID:
     return msPopulateRendererVTableUTFGrid(format->vtable);
 #ifdef USE_PBF
