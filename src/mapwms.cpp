@@ -5541,6 +5541,8 @@ static int msWMSGetStyles(mapObj *map, int nVersion, const char *const *names,
 
 {
   bool validlayer = false;
+  const char *styles = NULL;
+  std::vector<std::string> wmslayers;
 
   const char *sldenabled =
       msOWSLookupMetadata(&(map->web.metadata), "MO", "sld_enabled");
@@ -5553,7 +5555,7 @@ static int msWMSGetStyles(mapObj *map, int nVersion, const char *const *names,
   for (int i = 0; i < numentries; i++) {
     /* getMap parameters */
     if (strcasecmp(names[i], "LAYERS") == 0) {
-      const auto wmslayers = msStringSplit(values[i], ',');
+      wmslayers = msStringSplit(values[i], ',');
       if (wmslayers.empty()) {
         msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
                              "At least one layer name required in LAYERS.",
@@ -5588,6 +5590,11 @@ static int msWMSGetStyles(mapObj *map, int nVersion, const char *const *names,
              strlen(values[i]) > 0 && strcasecmp(sldenabled, "true") == 0) {
       msSLDApplySLD(map, values[i], -1, NULL, NULL);
     }
+
+    /* Vendor-specific STYLES parameter that uses the same format as GetMap */
+    else if (strcasecmp(names[i], "STYLES") == 0) {
+      styles = values[i];
+    }
   }
 
   /* validate all layers given. If an invalid layer is sent, return an
@@ -5602,17 +5609,68 @@ this request. Check wms/ows_enable_request settings.",
                           wms_exception_format);
   }
 
+  /* Return all styles for each layer, unless the vendor-specific STYLES
+   * parameter selects one style (CLASS GROUP) per layer */
+  std::vector<std::string> tokens;
+  std::vector<const char *> classGroups(map->numlayers, nullptr);
+
+  if (styles && strlen(styles) > 0) {
+    int n = 0;
+    char **papszTokens =
+        msStringSplitComplex(styles, ",", &n, MS_ALLOWEMPTYTOKENS);
+    tokens.assign(papszTokens, papszTokens + n);
+    msFreeCharArray(papszTokens, n);
+
+    for (size_t i = 0; i < tokens.size(); i++) {
+      if (tokens[i].empty() || strcasecmp(tokens[i].c_str(), "default") == 0)
+        continue;
+
+      if (wmslayers.size() != tokens.size()) {
+        msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                             "Invalid style (%s). The number of styles must "
+                             "match the number of layers in LAYERS.",
+                             "msWMSGetStyles()", styles);
+        return msWMSException(map, nVersion, "StyleNotDefined",
+                              wms_exception_format);
+      }
+
+      auto iter = mapNameToNode.find(msStringToLower(wmslayers[i]));
+      if (iter == mapNameToNode.end())
+        continue;
+
+      for (int layerIdx : iter->second->collectLayerIndices()) {
+        layerObj *lp = GET_LAYER(map, layerIdx);
+        if (lp->status != MS_ON)
+          continue;
+
+        bool found = false;
+        for (int k = 0; k < lp->numclasses && !found; k++) {
+          found = lp->_class[k]->group &&
+                  strcasecmp(lp->_class[k]->group, tokens[i].c_str()) == 0;
+        }
+        if (!found) {
+          msSetErrorWithStatus(MS_WMSERR, MS_HTTP_400_BAD_REQUEST,
+                               "Style (%s) not defined on layer %s.",
+                               "msWMSGetStyles()", tokens[i].c_str(), lp->name);
+          return msWMSException(map, nVersion, "StyleNotDefined",
+                                wms_exception_format);
+        }
+        classGroups[layerIdx] = tokens[i].c_str();
+      }
+    }
+  }
+
   char *sld = NULL;
   if (nVersion <= OWS_1_1_1) {
     msIO_setHeader("Content-Type",
                    "application/vnd.ogc.sld+xml; charset=UTF-8");
     msIO_sendHeaders();
-    sld = msSLDGenerateSLD(map, -1, "1.0.0");
+    sld = msSLDGenerateSLDWithStyles(map, -1, "1.0.0", classGroups.data());
   } else {
     /*for wms 1.3.0 generate a 1.1 sld*/
     msIO_setHeader("Content-Type", "text/xml; charset=UTF-8");
     msIO_sendHeaders();
-    sld = msSLDGenerateSLD(map, -1, "1.1.0");
+    sld = msSLDGenerateSLDWithStyles(map, -1, "1.1.0", classGroups.data());
   }
   if (sld) {
     msIO_printf("%s\n", sld);

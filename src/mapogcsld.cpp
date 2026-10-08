@@ -3413,14 +3413,26 @@ int msSLDSetColorObject(char *psHexColor, colorObj *psColor) {
 /************************************************************************/
 /*                msSLDGenerateSLD(mapObj *map, int iLayer)             */
 /*                                                                      */
+/*      Calls msSLDGenerateSLDWithStyles() with no style filter.        */
+/************************************************************************/
+char *msSLDGenerateSLD(mapObj *map, int iLayer, const char *pszVersion) {
+  return msSLDGenerateSLDWithStyles(map, iLayer, pszVersion, NULL);
+}
+
+/************************************************************************/
+/*                      msSLDGenerateSLDWithStyles                      */
+/*                                                                      */
 /*      Return an SLD document for all layers that are on or            */
 /*      default. The second argument should be set to -1 to generate    */
 /*      on all layers. Or set to the layer index to generate an SLD     */
-/*      for a specific layer.                                           */
+/*      for a specific layer. papszClassGroups optionally limits each   */
+/*      layer to a single CLASS GROUP.                                  */
 /*                                                                      */
 /*      The caller should free the returned string.                     */
 /************************************************************************/
-char *msSLDGenerateSLD(mapObj *map, int iLayer, const char *pszVersion) {
+char *msSLDGenerateSLDWithStyles(mapObj *map, int iLayer,
+                                 const char *pszVersion,
+                                 const char *const *papszStyles) {
 #if defined(USE_WMS_SVR) || defined(USE_WFS_SVR) || defined(USE_WCS_SVR) ||    \
     defined(USE_SOS_SVR)
 
@@ -3467,14 +3479,18 @@ char *msSLDGenerateSLD(mapObj *map, int iLayer, const char *pszVersion) {
     pszSLD = msStringConcatenate(pszSLD, szTmp);
     if (iLayer < 0 || iLayer > map->numlayers - 1) {
       for (i = 0; i < map->numlayers; i++) {
-        pszTmp = msSLDGenerateSLDLayer(GET_LAYER(map, i), sld_version);
+        pszTmp =
+            msSLDGenerateSLDLayerWithStyle(GET_LAYER(map, i), sld_version,
+                                           papszStyles ? papszStyles[i] : NULL);
         if (pszTmp) {
           pszSLD = msStringConcatenate(pszSLD, pszTmp);
           free(pszTmp);
         }
       }
     } else {
-      pszTmp = msSLDGenerateSLDLayer(GET_LAYER(map, iLayer), sld_version);
+      pszTmp = msSLDGenerateSLDLayerWithStyle(
+          GET_LAYER(map, iLayer), sld_version,
+          papszStyles ? papszStyles[iLayer] : NULL);
       if (pszTmp) {
         pszSLD = msStringConcatenate(pszSLD, pszTmp);
         free(pszTmp);
@@ -3488,7 +3504,7 @@ char *msSLDGenerateSLD(mapObj *map, int iLayer, const char *pszVersion) {
 
 #else
   msSetError(MS_MISCERR, "OWS support is not available.",
-             "msSLDGenerateSLDLayer()");
+             "msSLDGenerateSLDWithStyles()");
   return NULL;
 
 #endif
@@ -5024,9 +5040,20 @@ static void msSLDGenerateUserStyle(msStringBuffer *sb, layerObj *psLayer,
 /************************************************************************/
 /*                          msSLDGenerateSLDLayer                       */
 /*                                                                      */
-/*      Generate an SLD XML string based on the layer's classes.        */
+/*      Calls msSLDGenerateSLDLayerWithStyle() with no style filter.    */
 /************************************************************************/
 char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion) {
+  return msSLDGenerateSLDLayerWithStyle(psLayer, nVersion, NULL);
+}
+
+/************************************************************************/
+/*                     msSLDGenerateSLDLayerWithStyle                   */
+/*                                                                      */
+/*      Generate an SLD XML string based on the layer's classes. If     */
+/*      pszClassGroup is set, only that CLASS GROUP is output.          */
+/************************************************************************/
+char *msSLDGenerateSLDLayerWithStyle(layerObj *psLayer, int nVersion,
+                                     const char *pszStyle) {
 #if defined(USE_WMS_SVR) || defined(USE_WFS_SVR) || defined(USE_WCS_SVR) ||    \
     defined(USE_SOS_SVR)
 
@@ -5044,6 +5071,11 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion) {
     for (i = 0; i < psLayer->numclasses; i++) {
       const char *group = psLayer->_class[i]->group;
       int j;
+
+      /* only output the requested style, if any */
+      if (pszStyle && (group == NULL || strcasecmp(group, pszStyle) != 0)) {
+        continue;
+      }
       for (j = 0; j < numClassGroupNames; j++) {
         if (group == NULL) {
           if (papszClassGroupNames[j] == NULL)
@@ -5081,7 +5113,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion) {
 
 #else
   msSetError(MS_MISCERR, "OWS support is not available.",
-             "msSLDGenerateSLDLayer()");
+             "msSLDGenerateSLDLayerWithStyle()");
   return NULL;
 #endif
 }

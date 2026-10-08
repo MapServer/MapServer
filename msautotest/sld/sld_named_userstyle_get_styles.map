@@ -4,6 +4,44 @@
 # GetStyles
 # RUN_PARMS: sld_named_userstyle_get_styles.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetStyles&LAYERS=lline" > [RESULT]
 
+# GetStyles with the vendor-specific STYLES parameter
+# Only the "green" UserStyle should be returned
+# RUN_PARMS: sld_named_userstyle_get_styles_green.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetStyles&LAYERS=lline&STYLES=green" > [RESULT]
+
+# Only the "red_and_blue" should be returned (and marked as IsDefault as it is set in CLASSGROUP)
+# RUN_PARMS: sld_named_userstyle_get_styles_red_and_blue.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetStyles&LAYERS=lline&STYLES=red_and_blue" > [RESULT]
+
+# Style names are case-insensitive
+# RUN_PARMS: sld_named_userstyle_get_styles_green_case.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetStyles&LAYERS=lline&STYLES=GREEN" > [RESULT]
+
+# WMS 1.3.0 uses SLD 1.1.0 output
+# RUN_PARMS: sld_named_userstyle_get_styles_green_130.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&LAYERS=lline&STYLES=green" > [RESULT]
+
+# Empty STYLES and "default" return all styles, same as no STYLES
+# RUN_PARMS: sld_named_userstyle_get_styles_empty.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetStyles&LAYERS=lline&STYLES=" > [RESULT]
+# RUN_PARMS: sld_named_userstyle_get_styles_default.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetStyles&LAYERS=lline&STYLES=default" > [RESULT]
+
+# Unknown style returns StyleNotDefined exception
+# RUN_PARMS: sld_named_userstyle_get_styles_unknown.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetStyles&LAYERS=lline&STYLES=purple" > [RESULT]
+
+# Number of styles does not match number of layers returns StyleNotDefined exception
+# RUN_PARMS: sld_named_userstyle_get_styles_count.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetStyles&LAYERS=lline&STYLES=green,red_and_blue" > [RESULT]
+
+# Multiple layers, with one style per layer
+# RUN_PARMS: sld_named_userstyle_get_styles_multi.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetStyles&LAYERS=lline,lpoly&STYLES=green,yellow" > [RESULT]
+
+# Empty style - all styles for lline, only "yellow" for lpoly
+# RUN_PARMS: sld_named_userstyle_get_styles_multi_leading_empty.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetStyles&LAYERS=lline,lpoly&STYLES=,yellow" > [RESULT]
+
+# Trailing empty style - only "green" for lline, all styles for lpoly
+# RUN_PARMS: sld_named_userstyle_get_styles_multi_trailing_empty.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetStyles&LAYERS=lline,lpoly&STYLES=green," > [RESULT]
+
+# Empty style in the middle and a duplicate layer
+# RUN_PARMS: sld_named_userstyle_get_styles_multi_middle_empty.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetStyles&LAYERS=lpoly,lline,lpoly&STYLES=yellow,,yellow" > [RESULT]
+
+# Styles are matched to layers by position, if style is not on layer then StyleNotDefined exception is returned
+# RUN_PARMS: sld_named_userstyle_get_styles_multi_wrong_order.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetStyles&LAYERS=lline,lpoly&STYLES=yellow,green" > [RESULT]
+
 MAP
 
 NAME TEST
@@ -56,6 +94,27 @@ LAYER
       WIDTH 5
       OPACITY 50
       COLOR 0 255 0
+    END
+  END
+END
+
+LAYER
+  NAME lpoly
+  DATA hexagon
+  TYPE POLYGON
+  STATUS ON
+  CLASS
+    GROUP "yellow"
+    STYLE
+      COLOR 255 255 0
+      OUTLINECOLOR 0 0 0
+    END
+  END
+  CLASS
+    GROUP "outline"
+    STYLE
+      OUTLINECOLOR 255 0 255
+      WIDTH 2
     END
   END
 END
