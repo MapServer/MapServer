@@ -1,0 +1,51 @@
+#
+# Test FlatGeobuf geometry ring bounds validation
+#
+# data/flatgeobuf-ring-invalid.fgb is a one-feature polygon whose second ring
+# "end" indexes past the coordinate pairs stored in xy. The reader must drop
+# that ring instead of walking off the coordinate buffer.
+#
+# REQUIRES: INPUT=FLATGEOBUF SUPPORTS=WFS
+#
+# RUN_PARMS: flatgeobuf-ring-invalid-wfs-get-feature.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=ring_invalid" > [RESULT]
+#
+MAP
+  NAME "fgb-ring-invalid-test"
+  STATUS ON
+  SIZE 400 300
+  EXTENT 0 0 30 30
+  UNITS DD
+  IMAGECOLOR 255 255 255
+  IMAGETYPE png
+
+  WEB
+    METADATA
+      "wfs_title"          "Test FlatGeobuf invalid ring end"
+      "wfs_onlineresource" "http://localhost/path/to/flatgeobuf-ring-invalid?"
+      "wfs_srs"            "EPSG:4326"
+      "wfs_enable_request" "*"
+    END
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END
+
+  LAYER
+    NAME "ring_invalid"
+    METADATA
+      "wfs_title"         "Invalid ring end feature"
+      "wfs_srs"           "EPSG:4326"
+      "gml_include_items" "all"
+      "wfs_enable_request" "*"
+    END
+    TYPE POLYGON
+    STATUS ON
+    CONNECTIONTYPE flatgeobuf
+    DATA "data/flatgeobuf-ring-invalid.fgb"
+    PROJECTION
+      "init=epsg:4326"
+    END
+  END # layer
+
+END # map
