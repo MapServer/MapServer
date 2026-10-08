@@ -29,11 +29,13 @@ void GeometryReader::readPoint(shapeObj *shape)
     shape->type = MS_SHAPE_POINT;
 }
 
-void GeometryReader::readLineObj(lineObj *line)
+/* Reads the current m_offset/m_length coordinate range into line. Returns
+   false and leaves line untouched if that range is not entirely within the
+   xy array, in which case the caller must drop the part rather than keep an
+   empty one: shapeObj consumers such as msIsOuterRing() index point[0]
+   without looking at numpoints. */
+bool GeometryReader::readLineObj(lineObj *line)
 {
-    line->point = nullptr;
-    line->numpoints = 0;
-
     /* m_offset and m_length are derived from the geometry part "ends" taken
        from the (untrusted) file and are not validated by the flatbuffer
        accessors. Reject a range that does not fit the xy array before any
@@ -42,7 +44,7 @@ void GeometryReader::readLineObj(lineObj *line)
         msSetError(MS_FGBERR,
                    "Corrupt FlatGeobuf geometry: coordinate range out of bounds",
                    "GeometryReader::readLineObj");
-        return;
+        return false;
     }
 
     const double *z = nullptr;
@@ -53,7 +55,7 @@ void GeometryReader::readLineObj(lineObj *line)
             msSetError(MS_FGBERR,
                        "Corrupt FlatGeobuf geometry: z range out of bounds",
                        "GeometryReader::readLineObj");
-            return;
+            return false;
         }
         z = zv->data();
     }
@@ -63,7 +65,7 @@ void GeometryReader::readLineObj(lineObj *line)
             msSetError(MS_FGBERR,
                        "Corrupt FlatGeobuf geometry: m range out of bounds",
                        "GeometryReader::readLineObj");
-            return;
+            return false;
         }
         m = mv->data();
     }
@@ -79,6 +81,8 @@ void GeometryReader::readLineObj(lineObj *line)
         if (m_has_m)
             point->m = m[i];
     }
+
+    return true;
 }
 
 void GeometryReader::readMultiPoint(shapeObj *shape)
@@ -90,8 +94,7 @@ void GeometryReader::readMultiPoint(shapeObj *shape)
 void GeometryReader::readLineString(shapeObj *shape)
 {
     lineObj *line = (lineObj *) malloc(sizeof(lineObj));
-    readLineObj(line);
-    shape->numlines = 1;
+    shape->numlines = readLineObj(line) ? 1 : 0;
     shape->line = line;
     shape->type = MS_SHAPE_LINE;
 }
@@ -111,17 +114,19 @@ void GeometryReader::readPolygon(shapeObj *shape)
         nrings = ends->size();
 
     lineObj *line = (lineObj *) malloc(nrings * sizeof(lineObj));
+    uint32_t numlines = 0;
     if (nrings > 1) {
         for (uint32_t i = 0; i < nrings; i++) {
             const auto e = ends->Get(i);
             m_length = e - m_offset;
-            readLineObj(&line[i]);
+            if (readLineObj(&line[numlines]))
+                numlines++;
             m_offset = e;
         }
-    } else {
-        readLineObj(line);
+    } else if (readLineObj(line)) {
+        numlines = 1;
     }
-    shape->numlines = nrings;
+    shape->numlines = numlines;
     shape->line = line;
     shape->type = MS_SHAPE_POLYGON;
 }

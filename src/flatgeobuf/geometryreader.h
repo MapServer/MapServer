@@ -31,7 +31,7 @@ class GeometryReader {
         void readMultiPolygon(shapeObj *);
         //void readGeometryCollection(shapeObj *);
 
-        void readLineObj(lineObj *line);
+        bool readLineObj(lineObj *line);
 
     public:
         GeometryReader(
