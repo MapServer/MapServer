@@ -34,6 +34,9 @@ extern "C" {
 
 MS_DLL_EXPORT char *msSLDGenerateSLD(mapObj *map, int iLayer,
                                      const char *pszVersion);
+char *msSLDGenerateSLDWithStyles(mapObj *map, int iLayer,
+                                 const char *pszVersion,
+                                 const char *const *papszStyles);
 MS_DLL_EXPORT int msSLDApplySLDURL(mapObj *map, const char *szURL, int iLayer,
                                    const char *pszStyleLayerName,
                                    char **ppszLayerNames);
@@ -91,6 +94,8 @@ int ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass);
 int ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass);
 
 char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion);
+char *msSLDGenerateSLDLayerWithStyle(layerObj *psLayer, int nVersion,
+                                     const char *pszStyle);
 
 char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter);
 char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion);
