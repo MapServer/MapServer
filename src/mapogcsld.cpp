@@ -3744,8 +3744,14 @@ static char *msSLDGenerateSVGFromVectorSymbol(symbolObj *psSymbol,
   int kLast = bWrap ? 1 : 0;
   for (int ky = kFirst; ky <= kLast; ky++) {
     for (int kx = kFirst; kx <= kLast; kx++) {
-      double dfShiftX = kx * dfCanvasWidth;
-      double dfShiftY = ky * dfCanvasHeight;
+      /* Shift a wrapped tile by half a tile so features lying on the tile
+         edge (e.g. a horizontal line at y=1) end up in the middle of the
+         bitmap to avoid tile boundary issues */
+      double dfShiftX =
+          kx * dfCanvasWidth + (bWrap ? dfCanvasWidth / 2.0 : 0.0);
+      double dfShiftY =
+          ky * dfCanvasHeight + (bWrap ? dfCanvasHeight / 2.0 : 0.0);
+
       bStartNewSubpath = MS_TRUE;
       for (i = 0; i < psSymbol->numpoints; i++) {
         double x = psSymbol->points[i].x;
