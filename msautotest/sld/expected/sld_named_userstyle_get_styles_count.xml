@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
+<!DOCTYPE ServiceExceptionReport SYSTEM "http://schemas.opengis.net/wms/1.1.1/exception_1_1_1.dtd">
+<ServiceExceptionReport version="1.1.1">
+<ServiceException code="StyleNotDefined">
+msWMSGetStyles(): WMS server error. Invalid style (green,red_and_blue). The number of styles must match the number of layers in LAYERS.
+</ServiceException>
+</ServiceExceptionReport>
