@@ -3598,9 +3598,12 @@ static char *msSLDGenerateSVGFromEllipseSymbol(symbolObj *psSymbol,
 /*       msSLDGenerateSVGFromVectorSymbol                               */
 /*                                                                      */
 /*       Generate SVG for a MapServer vector symbol.                    */
+/*                                                                      */
+/*       bTile should be true when the SVG will be repeated as a        */
+/*       polygon fill.                                                   */
 /************************************************************************/
 static char *msSLDGenerateSVGFromVectorSymbol(symbolObj *psSymbol,
-                                              styleObj *psStyle,
+                                              styleObj *psStyle, int bTile,
                                               double *pdfCanvasHeight) {
   msStringBuffer *svgBuf = msStringBufferAlloc();
 
@@ -3662,16 +3665,34 @@ static char *msSLDGenerateSVGFromVectorSymbol(symbolObj *psSymbol,
   double dfStrokeWidth = psStyle->width > 0 ? psStyle->width : 1.0;
   double dfPadding = bHasStroke ? dfStrokeWidth / 2.0 : 0.0;
 
-  /* Round up to whole pixels, so renderers that work in integer
-     pixels don't clip the stroke at the right and bottom edges. */
-  double dfCanvasWidth = ceil(dfOutWidth + (dfPadding * 2.0));
-  double dfCanvasHeight = ceil(dfOutHeight + (dfPadding * 2.0));
+  int bWrap = bTile && !psSymbol->filled;
+  double dfPad = bWrap ? 0.0 : dfPadding;
+
+  /* Round to whole pixels, so renderers that work in integer
+     pixels don't clip the stroke at the edges. */
+  double dfScaleX = dfRenderScale;
+  double dfScaleY = dfRenderScale;
+  double dfCanvasWidth, dfCanvasHeight;
+
+  if (bWrap) {
+    // don't add padding
+    dfCanvasWidth = floor(dfOutWidth + 0.5);
+    dfCanvasHeight = floor(dfOutHeight + 0.5);
+    // avoid zero dimensions
+    if (dfCanvasWidth < 1.0)
+      dfCanvasWidth = 1.0;
+    if (dfCanvasHeight < 1.0)
+      dfCanvasHeight = 1.0;
+    dfScaleX = dfCanvasWidth / dfBBoxWidth;
+    dfScaleY = dfCanvasHeight / dfBBoxHeight;
+  } else {
+    dfCanvasWidth = ceil(dfOutWidth + (dfPad * 2.0));
+    dfCanvasHeight = ceil(dfOutHeight + (dfPad * 2.0));
+  }
 
   if (pdfCanvasHeight) {
     *pdfCanvasHeight = dfCanvasHeight;
   }
-
-  double dfOffset = dfPadding;
 
   char szFillColor[8] = "none";
   char szStrokeColor[8] = "none";
@@ -3717,28 +3738,45 @@ static char *msSLDGenerateSVGFromVectorSymbol(symbolObj *psSymbol,
            dfCanvasWidth, dfCanvasHeight, dfCanvasWidth, dfCanvasHeight);
   msStringBufferAppend(svgBuf, szTmp);
 
-  bStartNewSubpath = MS_TRUE;
-  for (i = 0; i < psSymbol->numpoints; i++) {
-    double x = psSymbol->points[i].x;
-    double y = psSymbol->points[i].y;
+  /* For a wrapped tile draw the symbol on the 3x3 grid of tiles around the
+     visible one; otherwise draw it once. */
+  int kFirst = bWrap ? -1 : 0;
+  int kLast = bWrap ? 1 : 0;
+  for (int ky = kFirst; ky <= kLast; ky++) {
+    for (int kx = kFirst; kx <= kLast; kx++) {
+      /* Shift a wrapped tile by half a tile so features lying on the tile
+         edge (e.g. a horizontal line at y=1) end up in the middle of the
+         bitmap to avoid tile boundary issues */
+      double dfShiftX =
+          kx * dfCanvasWidth + (bWrap ? dfCanvasWidth / 2.0 : 0.0);
+      double dfShiftY =
+          ky * dfCanvasHeight + (bWrap ? dfCanvasHeight / 2.0 : 0.0);
 
-    if (x == -99.0 && y == -99.0) {
       bStartNewSubpath = MS_TRUE;
-      continue;
-    }
+      for (i = 0; i < psSymbol->numpoints; i++) {
+        double x = psSymbol->points[i].x;
+        double y = psSymbol->points[i].y;
 
-    /* Translate into the 0-origin viewBox computed above. */
-    snprintf(szTmp, sizeof(szTmp), "%s%g,%g ", bStartNewSubpath ? "M " : "L ",
-             (x - dfMinX) * dfRenderScale + dfOffset,
-             (y - dfMinY) * dfRenderScale + dfOffset);
-    msStringBufferAppend(svgBuf, szTmp);
-    bStartNewSubpath = MS_FALSE;
+        if (x == -99.0 && y == -99.0) {
+          bStartNewSubpath = MS_TRUE;
+          continue;
+        }
+
+        /* Translate into the 0-origin viewBox computed above. */
+        snprintf(szTmp, sizeof(szTmp), "%s%g,%g ",
+                 bStartNewSubpath ? "M " : "L ",
+                 (x - dfMinX) * dfScaleX + dfPad + dfShiftX,
+                 (y - dfMinY) * dfScaleY + dfPad + dfShiftY);
+        msStringBufferAppend(svgBuf, szTmp);
+        bStartNewSubpath = MS_FALSE;
+      }
+    }
   }
 
   snprintf(szTmp, sizeof(szTmp),
-           "%s\" fill=\"%s\" stroke=\"%s\" stroke-width=\"%g\"/>\n</svg>\n",
+           "%s\" fill=\"%s\" stroke=\"%s\" stroke-width=\"%g\"%s%s/>\n</svg>\n",
            psSymbol->filled ? "Z" : "", szFillColor, szStrokeColor,
-           dfStrokeWidth);
+           dfStrokeWidth, szFillOpacity, szStrokeOpacity);
   msStringBufferAppend(svgBuf, szTmp);
 
   return msStringBufferReleaseStringAndFree(svgBuf);
@@ -3971,12 +4009,15 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
             /* No WellKnownName match — attempt to generate an ExternalGraphic
                SVG instead of fall back to a default symbol. */
             double dfCanvasHeight = 0;
+            /* Symbols on polygon layers are used as repeating fills, so
+               open paths must be generated to tile seamlessly. */
+            int bTile = (psLayer && psLayer->type == MS_LAYER_POLYGON);
             char *pszSVG =
                 // handle ELLIPSE as a special case
                 (psSymbol->type == MS_SYMBOL_ELLIPSE)
                     ? msSLDGenerateSVGFromEllipseSymbol(psSymbol, psStyle,
                                                         &dfCanvasHeight)
-                    : msSLDGenerateSVGFromVectorSymbol(psSymbol, psStyle,
+                    : msSLDGenerateSVGFromVectorSymbol(psSymbol, psStyle, bTile,
                                                        &dfCanvasHeight);
             if (pszSVG) {
               // encode as Base64 so it can be output to XML
