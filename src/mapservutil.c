@@ -170,7 +170,13 @@ mapObj *msCGILoadMap(mapservObj *mapserv, configObj *config) {
   int i;
   mapObj *map = NULL;
 
+#ifdef _WIN32
+  /* Allow UNC paths while rejecting root-relative and device paths. */
+  const char *ms_map_bad_pattern_default =
+      "^[/\\\\]([^/\\\\]|$)|^[/\\\\]{2}\\?[/\\\\]|.[/\\\\]{2}|[/\\\\]?\\.+[/\\\\]|,";
+#else
   const char *ms_map_bad_pattern_default = "[/\\\\]{2}|[/\\\\]?\\.+[/\\\\]|,";
+#endif
 
   int ms_mapfile_tainted = MS_TRUE;
   const char *ms_mapfile = CPLGetConfigOption("MS_MAPFILE", NULL);
