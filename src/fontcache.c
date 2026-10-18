@@ -156,6 +156,11 @@ ft_cache *msGetFontCache() {
 }
 
 void msFontCacheSetup() {
+#ifdef USE_THREAD
+  if (ft_caches)
+    msFontCacheCleanup();
+#endif
+
 #ifndef USE_THREAD
   ft_cache *c = msGetFontCache();
   msInitFontCache(c);
