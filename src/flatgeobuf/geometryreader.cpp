@@ -5,14 +5,21 @@ using namespace FlatGeobuf;
 
 void GeometryReader::readPoint(shapeObj *shape)
 {
+    if (m_offset >= m_xy_count) {
+        msSetError(MS_FGBERR,
+                   "Corrupt FlatGeobuf geometry: point offset out of bounds",
+                   "GeometryReader::readPoint");
+        return;
+    }
+
     lineObj *l = (lineObj *) malloc(sizeof(lineObj));
     pointObj *p = (pointObj *) malloc(sizeof(pointObj));
 
-	p->x = m_xy[m_offset + 0];
-	p->y = m_xy[m_offset + 1];
-    if (m_has_z)
+	p->x = m_xy[m_offset * 2 + 0];
+	p->y = m_xy[m_offset * 2 + 1];
+    if (m_has_z && m_geometry->z() != nullptr && m_offset < m_geometry->z()->size())
         p->z = m_geometry->z()->data()[m_offset];
-    if (m_has_m)
+    if (m_has_m && m_geometry->m() != nullptr && m_offset < m_geometry->m()->size())
         p->m = m_geometry->m()->data()[m_offset];
 
     l[0].numpoints = 1;
@@ -22,10 +29,46 @@ void GeometryReader::readPoint(shapeObj *shape)
     shape->type = MS_SHAPE_POINT;
 }
 
-void GeometryReader::readLineObj(lineObj *line)
+/* Reads the current m_offset/m_length coordinate range into line. Returns
+   false and leaves line untouched if that range is not entirely within the
+   xy array, in which case the caller must drop the part rather than keep an
+   empty one: shapeObj consumers such as msIsOuterRing() index point[0]
+   without looking at numpoints. */
+bool GeometryReader::readLineObj(lineObj *line)
 {
-    const double *z = m_has_z ? m_geometry->z()->data() : nullptr;
-    const double *m = m_has_m ? m_geometry->m()->data() : nullptr;
+    /* m_offset and m_length are derived from the geometry part "ends" taken
+       from the (untrusted) file and are not validated by the flatbuffer
+       accessors. Reject a range that does not fit the xy array before any
+       read, so a crafted end index cannot walk off the coordinate buffer. */
+    if (m_offset > m_xy_count || m_length > m_xy_count - m_offset) {
+        msSetError(MS_FGBERR,
+                   "Corrupt FlatGeobuf geometry: coordinate range out of bounds",
+                   "GeometryReader::readLineObj");
+        return false;
+    }
+
+    const double *z = nullptr;
+    const double *m = nullptr;
+    if (m_has_z) {
+        const auto zv = m_geometry->z();
+        if (zv == nullptr || m_offset + m_length > zv->size()) {
+            msSetError(MS_FGBERR,
+                       "Corrupt FlatGeobuf geometry: z range out of bounds",
+                       "GeometryReader::readLineObj");
+            return false;
+        }
+        z = zv->data();
+    }
+    if (m_has_m) {
+        const auto mv = m_geometry->m();
+        if (mv == nullptr || m_offset + m_length > mv->size()) {
+            msSetError(MS_FGBERR,
+                       "Corrupt FlatGeobuf geometry: m range out of bounds",
+                       "GeometryReader::readLineObj");
+            return false;
+        }
+        m = mv->data();
+    }
 
     line->point = (pointObj *) malloc(m_length * sizeof(pointObj));
     line->numpoints = m_length;
@@ -38,6 +81,8 @@ void GeometryReader::readLineObj(lineObj *line)
         if (m_has_m)
             point->m = m[i];
     }
+
+    return true;
 }
 
 void GeometryReader::readMultiPoint(shapeObj *shape)
@@ -49,8 +94,7 @@ void GeometryReader::readMultiPoint(shapeObj *shape)
 void GeometryReader::readLineString(shapeObj *shape)
 {
     lineObj *line = (lineObj *) malloc(sizeof(lineObj));
-    readLineObj(line);
-    shape->numlines = 1;
+    shape->numlines = readLineObj(line) ? 1 : 0;
     shape->line = line;
     shape->type = MS_SHAPE_LINE;
 }
@@ -70,17 +114,19 @@ void GeometryReader::readPolygon(shapeObj *shape)
         nrings = ends->size();
 
     lineObj *line = (lineObj *) malloc(nrings * sizeof(lineObj));
+    uint32_t numlines = 0;
     if (nrings > 1) {
         for (uint32_t i = 0; i < nrings; i++) {
             const auto e = ends->Get(i);
             m_length = e - m_offset;
-            readLineObj(&line[i]);
+            if (readLineObj(&line[numlines]))
+                numlines++;
             m_offset = e;
         }
-    } else {
-        readLineObj(line);
+    } else if (readLineObj(line)) {
+        numlines = 1;
     }
-    shape->numlines = nrings;
+    shape->numlines = numlines;
     shape->line = line;
     shape->type = MS_SHAPE_POLYGON;
 }
@@ -130,9 +176,12 @@ void GeometryReader::read(shapeObj *shape)
 
     // if not nested must have geometry data
     const auto pXy = m_geometry->xy();
+    if (pXy == nullptr)
+        return;
     const auto xySize = pXy->size();
     m_xy = pXy->data();
-    m_length = xySize / 2;
+    m_xy_count = xySize / 2;
+    m_length = m_xy_count;
 
     switch (m_geometry_type) {
         case GeometryType::Point: return readPoint(shape);
