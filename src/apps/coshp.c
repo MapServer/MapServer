@@ -143,6 +143,7 @@ int main(int argc, char *argv[]) {
   char fName[20];
   int fWidth, fnDecimals;
   char buffer[1024];
+  int n;
   int numFields;
   int i;
 
@@ -190,13 +191,20 @@ int main(int argc, char *argv[]) {
   /*       Setup the output .shp/.shx and .dbf files */
   /* -------------------------------------------------------------------------------
    */
+  /* Build the .dbf name up front so an over-long path is rejected before
+   * any output file is created. */
+  n = snprintf(buffer, sizeof(buffer), "%s.dbf", argv[2]);
+  if (n < 0 || (size_t)n >= sizeof(buffer)) {
+    fprintf(stderr, "Output file name '%s' is too long.\n", argv[2]);
+    exit(1);
+  }
+
   outSHP = msSHPCreate(argv[2], shpType);
   if (outSHP == NULL) {
     fprintf(stderr, "Failed to create file '%s'.\n", argv[2]);
     exit(1);
   }
 
-  sprintf(buffer, "%s.dbf", argv[2]);
   outDBF = msDBFCreate(buffer);
   if (outDBF == NULL) {
     fprintf(stderr, "Failed to create dbf file '%s'.\n", buffer);
