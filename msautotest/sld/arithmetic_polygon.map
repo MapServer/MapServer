@@ -68,7 +68,10 @@
 #
 # RUN_PARMS: sld_polygon_propertyname_fill.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpolygon</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FF00FF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22><PropertyName>cyan</PropertyName></SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
 #
-
+# --- Polygon with a repeated "fill": text value then <PropertyName> (last one wins)
+#
+# RUN_PARMS: sld_polygon_repeated_fill.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3&REQUEST=GetMap&CRS=EPSG:4326&BBOX=42,-5,52,9&FORMAT=image/png&WIDTH=200&HEIGHT=200&LAYERS=lline,lpolygon,lpoint&SLD_BODY=<StyledLayerDescriptor version=%221.1.0%22><NamedLayer><Name>lpolygon</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Stroke><SvgParameter name=%22stroke-width%22>1</SvgParameter><SvgParameter name=%22stroke-opacity%22>0.5</SvgParameter><SvgParameter name=%22stroke%22>#FF00FF</SvgParameter></Stroke><Fill><SvgParameter name=%22fill-opacity%22>0.5</SvgParameter><SvgParameter name=%22fill%22>#FF0000</SvgParameter><SvgParameter name=%22fill%22><PropertyName>cyan</PropertyName></SvgParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
 
 
 MAP
