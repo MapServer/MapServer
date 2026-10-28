@@ -2,7 +2,7 @@ name: mapserver
 channels:
   - conda-forge
 dependencies:
-  - python
+  - python<3.15
   - pip
   - cairo
   - fribidi
