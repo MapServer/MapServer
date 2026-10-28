@@ -743,7 +743,8 @@ void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode) {
       free(psFilterNode->pszSRS);
 
     if (psFilterNode->pOther) {
-      if (psFilterNode->pszValue != NULL &&
+      if (psFilterNode->eType == FILTER_NODE_TYPE_COMPARISON &&
+          psFilterNode->pszValue != NULL &&
           strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0) {
         FEPropertyIsLike *propIsLike = (FEPropertyIsLike *)psFilterNode->pOther;
         if (propIsLike->pszWildCard)
