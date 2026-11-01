@@ -76,7 +76,7 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
 }
 
 
-%typemap(in,numinputs=0) (double** argout, int* pnListSize) ( double* argout, int nListSize ) {
+%typemap(in,numinputs=0) (double** argout, int* pnListSize) ( double* argout = NULL, int nListSize = 0 ) {
   /* %typemap(python,in,numinputs=0) (double *val, int*hasval) */
   $1 = &argout;
   $2 = &nListSize;
@@ -87,12 +87,17 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
    /* %typemap(argout) (double* argout, int* pnListSize)  */
   PyObject *r;
   r = CreateTupleFromDoubleArray(*$1, *$2);
-  free(*$1);
   %#if SWIG_VERSION >= 0x040300
     $result = SWIG_Python_AppendOutput($result, r, $isvoid);
   %#else
     $result = SWIG_Python_AppendOutput($result, r);
   %#endif
+}
+
+%typemap(freearg) (double** argout, int* pnListSize)
+{
+  /* %typemap(freearg) (double** argout, int* pnListSize) */
+  free(argout$argnum);
 }
 
 /*
@@ -252,7 +257,7 @@ static void _raise_ms_exception() {
             default:
                 _raise_ms_exception();
                 msResetErrorList();
-                return NULL;
+                SWIG_fail;
         }
                 
     }
