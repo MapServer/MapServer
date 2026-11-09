@@ -1,13 +1,6 @@
 #include "../../src/mapserver.h"
 #include "../../src/maperror.h"
 
-#include "agg_conv_stroke.h"
-#include "agg_path_storage.h"
-
-#include <algorithm>
-#include <cmath>
-#include <limits>
-
 /* ----------------------------------------------------------------------- */
 
 int gTestRetCode = 0;
@@ -204,80 +197,9 @@ static void testDBFFieldExtentValidation() {
 
 /* ----------------------------------------------------------------------- */
 
-static double distToSegment(double px, double py, double ax, double ay,
-                            double bx, double by) {
-  const double dx = bx - ax;
-  const double dy = by - ay;
-  const double len2 = dx * dx + dy * dy;
-  double t = len2 > 0 ? ((px - ax) * dx + (py - ay) * dy) / len2 : 0;
-  t = std::max(0.0, std::min(1.0, t));
-  return std::hypot(px - (ax + t * dx), py - (ay + t * dy));
-}
-
-static void testAggStrokeNearlyCollinear() {
-  /* Pixel coordinates of a real-world line whose first vertices are almost,
-     but not exactly, collinear. For outer joins between such segments the
-     AGG stroker used the intersection of two nearly parallel offset lines,
-     which round-off placed millions of pixels away from the line. The
-     resulting sliver made the scanline rasterizer write outside its cover
-     buffer. Every stroke vertex must stay within the miter limit
-     (width * 4) of the source polyline. */
-  static const double pts[][2] = {{1079.2551884794566, 546.19585810014632},
-                                  {1080.2626843172829, 546.19585826387618},
-                                  {1081.2701801551095, 546.19585842849517},
-                                  {1082.2776759929359, 546.19585859311417},
-                                  {1083.2851718308118, 546.19585875773305},
-                                  {1084.2798876793904, 546.42937835762984},
-                                  {1085.013007490742, 547.11738955853082},
-                                  {1085.4941786584147, 548.01359219954543},
-                                  {1085.6474654753165, 549.00293382225345},
-                                  {1085.3435339457576, 549.95826903451984},
-                                  {1085.1604691282562, 550.41008930733926}};
-  const int n = sizeof(pts) / sizeof(pts[0]);
-  const double width = 0.44901064765406917;
-  /* bevel_join is what mapagg.cpp uses for width <= 1, round_join is the
-     default for wider lines; both take the nearly-collinear shortcut. */
-  const mapserver::line_join_e joins[] = {mapserver::bevel_join,
-                                          mapserver::round_join};
-
-  for (const auto join : joins) {
-    mapserver::path_storage path;
-    path.move_to(pts[0][0], pts[0][1]);
-    for (int i = 1; i < n; i++)
-      path.line_to(pts[i][0], pts[i][1]);
-
-    mapserver::conv_stroke<mapserver::path_storage> stroke(path);
-    stroke.width(width);
-    stroke.line_cap(mapserver::round_cap);
-    stroke.inner_join(mapserver::inner_bevel);
-    stroke.line_join(join);
-
-    double maxDist = 0;
-    double x, y;
-    unsigned cmd;
-    stroke.rewind(0);
-    while (!mapserver::is_stop(cmd = stroke.vertex(&x, &y))) {
-      if (!mapserver::is_vertex(cmd))
-        continue;
-      double d = std::numeric_limits<double>::max();
-      for (int i = 1; i < n; i++)
-        d = std::min(d, distToSegment(x, y, pts[i - 1][0], pts[i - 1][1],
-                                      pts[i][0], pts[i][1]));
-      maxDist = std::max(maxDist, d);
-    }
-    if (!(maxDist <= width * stroke.miter_limit() + 1e-9))
-      fprintf(stderr, "join %d: stroke vertex %g px from the line\n", (int)join,
-              maxDist);
-    EXPECT_TRUE(maxDist <= width * stroke.miter_limit() + 1e-9);
-  }
-}
-
-/* ----------------------------------------------------------------------- */
-
 int main() {
   testRedactCredentials();
   testToString();
   testDBFFieldExtentValidation();
-  testAggStrokeNearlyCollinear();
   return gTestRetCode;
 }

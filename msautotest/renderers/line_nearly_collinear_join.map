@@ -1,0 +1,54 @@
+# RUN_PARMS: line_nearly_collinear_join.png [MAP2IMG] -m [MAPFILE] -i png -o [RESULT]
+#
+# Outer joins between nearly collinear segments must not produce a stroke
+# spike. The AGG stroker used to intersect the two almost parallel offset
+# lines, and round-off placed that point millions of pixels from the line.
+#
+# The trigger depends on the exact pixel coordinates reaching AGG. EXTENT and
+# SIZE give a cellsize of exactly 1 with the origin at 0, so the world to
+# image transform is exact (image y = 1263 - world y). Do not change them, or
+# the coordinates no longer reproduce the issue.
+#
+MAP
+  NAME "line_nearly_collinear_join"
+  SIZE 1264 1264
+  EXTENT 0 0 1263 1263
+  IMAGETYPE png
+
+  OUTPUTFORMAT
+    NAME "png"
+    DRIVER AGG/PNG
+    MIMETYPE "image/png"
+    IMAGEMODE RGBA
+    EXTENSION "png"
+    TRANSPARENT ON
+  END
+
+  LAYER
+    NAME "line"
+    TYPE LINE
+    STATUS ON
+    FEATURE
+      POINTS
+        1079.2551884794566 716.80414189985368
+        1080.2626843172829 716.80414173612382
+        1081.2701801551095 716.80414157150483
+        1082.2776759929359 716.80414140688583
+        1083.2851718308118 716.80414124226695
+        1084.2798876793904 716.57062164237016
+        1085.013007490742 715.88261044146918
+        1085.4941786584147 714.98640780045457
+        1085.6474654753165 713.99706617774655
+        1085.3435339457576 713.04173096548016
+        1085.1604691282562 712.58991069266074
+      END
+    END
+    CLASS
+      STYLE
+        COLOR 210 112 0
+        # Below 1, so mapagg.cpp strokes with bevel joins
+        WIDTH 0.44901064765406917
+      END
+    END
+  END
+END
