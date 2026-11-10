@@ -89,7 +89,7 @@ extern "C" {
  * add a new string in ms_errorCodes[] */
 #define MS_NUMERRORCODES 46
 
-#define MESSAGELENGTH 2048
+#define MESSAGELENGTH 4096
 #define ROUTINELENGTH 64
 #define HTTPSTATUSLENGTH 128
 
