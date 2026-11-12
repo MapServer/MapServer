@@ -672,16 +672,30 @@ layerObj *msSLDParseSLD(mapObj *map, const char *psSLDXML, int *pnLayers) {
   /* -------------------------------------------------------------------- */
   LOOP_ON_CHILD_ELEMENT(psSLD, psNamedLayer, "NamedLayer") { nLayers++; }
 
-  if (nLayers > 0)
+  if (nLayers > 0) {
     pasLayers = (layerObj *)malloc(sizeof(layerObj) * nLayers);
-  else {
+    if (pasLayers == NULL) {
+      msSetError(MS_MEMERR, "Failed to allocate layers", "msSLDParseSLD()");
+      CPLDestroyXMLNode(psRoot);
+      return NULL;
+    }
+  } else {
     CPLDestroyXMLNode(psRoot);
     return NULL;
   }
 
   LOOP_ON_CHILD_ELEMENT(psSLD, psNamedLayer, "NamedLayer") {
     CPLXMLNode *psName = CPLGetXMLNode(psNamedLayer, "Name");
-    initLayer(&pasLayers[iLayer], map);
+    if (initLayer(&pasLayers[iLayer], map) == -1) {
+      for (int i = 0; i < iLayer; i++)
+        freeLayer(&pasLayers[i]);
+      msFree(pasLayers);
+      CPLDestroyXMLNode(psRoot);
+      return NULL;
+    }
+    /* initLayer() sets type to -1 an invalid MS_LAYER_TYPE so default to
+     * MS_LAYER_POINT for SLD rules. */
+    pasLayers[iLayer].type = MS_LAYER_POINT;
 
     if (psName && psName->psChild && psName->psChild->pszValue)
       pasLayers[iLayer].name = msStrdup(psName->psChild->pszValue);
