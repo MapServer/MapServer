@@ -4,7 +4,7 @@ set -eu
 export CC="ccache gcc"
 export CXX="ccache g++"
 
-# Turn CMake warnings as errors and ignore absolute paths in install() commands
+# Turn CMake author warnings as errors and disable non-target-directive & absolute-install-destination checks
 EXTRA_CMAKEFLAGS="-Werror=author -Wno-non-target-directive -Wno-install-absolute-destination"
 
 if [ "${WITH_ASAN:-}" = "true" ]; then
