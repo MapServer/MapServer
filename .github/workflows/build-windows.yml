@@ -1,0 +1,57 @@
+name: Build Windows
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  SDK: release-1944-x64
+  VS_VER: Visual Studio 18 2026
+
+jobs:
+  windows:
+    name: Windows, MSSQL tests
+    runs-on: windows-2025 # Windows Server 2025 with Visual Studio 2026
+
+    steps:
+      - name: Keep LF line endings on checkout
+        run: git config --global core.autocrlf false
+
+      - name: Checkout repository contents
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install SQL Server
+        uses: potatoqualitee/mssqlsuite@v1.8
+        with:
+          install: sqlengine
+          version: 2022
+          sa-password: Password12!
+
+      - name: Download SDK
+        shell: pwsh
+        run: ./ci/windows/download-sdk.ps1 -SDK $env:SDK
+
+      - name: Build
+        shell: pwsh
+        run: ./ci/windows/build.ps1 -SDK $env:SDK -VS_VER $env:VS_VER
+
+      - name: Run MSSQL tests
+        shell: pwsh
+        run: ./ci/windows/test-mssql.ps1 -SDK $env:SDK
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mssql-results
+          path: msautotest/mssql/result
