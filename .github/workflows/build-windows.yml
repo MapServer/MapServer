@@ -31,7 +31,7 @@ jobs:
           python-version: "3.13"
 
       - name: Install SQL Server
-        uses: potatoqualitee/mssqlsuite@v1.8
+        uses: potatoqualitee/mssqlsuite@v1.12
         with:
           install: sqlengine
           version: 2022
