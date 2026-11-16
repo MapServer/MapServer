@@ -37,7 +37,15 @@ shallow_clone: false
 clone_depth: 5
 
 init:
-  - net start MSSQL$SQL2019
+  - choco install sqlserver-odbcdriver-18 -y --no-progress
+  - ps: if (-not (Get-OdbcDriver -Name "ODBC Driver 18*")) { throw "ODBC Driver 18 for SQL Server not installed" }
+  - ps: |
+      # make the SQL2019 instance available as localhost on port 1433
+      $tcp = 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL15.SQL2019\MSSQLServer\SuperSocketNetLib\Tcp'
+      Set-ItemProperty -Path $tcp -Name Enabled -Value 1
+      Set-ItemProperty -Path "$tcp\IPAll" -Name TcpDynamicPorts -Value ''
+      Set-ItemProperty -Path "$tcp\IPAll" -Name TcpPort -Value 1433
+      Restart-Service 'MSSQL$SQL2019' -Force
 
 build_script:
   - ps: Write-Host "Build tags - $env:APPVEYOR_REPO_TAG $env:APPVEYOR_REPO_TAG_NAME"
@@ -77,7 +85,7 @@ build_script:
   - cd build
   - set PATH=%BUILD_FOLDER%/build/Release;%SDK_BIN%;%PATH%
   - set "PROJECT_BINARY_DIR=%BUILD_FOLDER%/build"
-  - cmake -G "%VS_FULL%" -A %VS_ARCH% .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=%SDK_PREFIX% -DPNG_LIBRARY=%SDK_LIB%/libpng16_static.lib -DHARFBUZZ_INCLUDE_DIR=%SDK_INC%/harfbuzz -DICONV_DLL=%SDK_BIN%/iconv.dll -DFRIBIDI_INCLUDE_DIR=%SDK_INC%/fribidi -DMS_EXTERNAL_LIBS=%SDK_LIB%/harfbuzz.lib;%SDK_LIB%/uriparser.lib -DSVG_LIBRARY=%SDK_LIB%/libsvg.lib -DSVGCAIRO_LIBRARY=%SDK_LIB%/libsvg-cairo.lib -DREGEX_DIR=%REGEX_DIR% -DSWIG_EXECUTABLE=%SWIG_EXECUTABLE% -DPROTOBUFC_COMPILER=%SDK_BIN%/protoc.exe -DPROTOBUFC_LIBRARY=%SDK_LIB%/protobuf-c.lib -DPROTOBUFC_INCLUDE_DIR=%SDK_INC%/protobuf-c -DWITH_CURL=1 -DWITH_KML=1 -DWITH_SVGCAIRO=1 -DWITH_THREAD_SAFETY=1 -DWITH_SOS=1 -DWITH_CLIENT_WFS=1 -DWITH_CLIENT_WMS=1-DWITH_CSHARP=1 -DWITH_PROTOBUFC=1 -DWITH_POSTGIS=0 -DWITH_PERL=0 -DWITH_MSSQL2008=1 -DWITH_PYTHON=1 -DWITH_PHPNG=0 -DWITH_HARFBUZZ=1 -DWITH_PYMAPSCRIPT_ANNOTATIONS=1 -DPROJ_INCLUDE_DIR=%SDK_INC%/proj9 -DPROJ_LIBRARY=%SDK_LIB%/proj9.lib
+  - cmake -G "%VS_FULL%" -A %VS_ARCH% .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=%SDK_PREFIX% -DPNG_LIBRARY=%SDK_LIB%/libpng16_static.lib -DHARFBUZZ_INCLUDE_DIR=%SDK_INC%/harfbuzz -DICONV_DLL=%SDK_BIN%/iconv.dll -DFRIBIDI_INCLUDE_DIR=%SDK_INC%/fribidi -DMS_EXTERNAL_LIBS=%SDK_LIB%/harfbuzz.lib;%SDK_LIB%/uriparser.lib -DSVG_LIBRARY=%SDK_LIB%/libsvg.lib -DSVGCAIRO_LIBRARY=%SDK_LIB%/libsvg-cairo.lib -DREGEX_DIR=%REGEX_DIR% -DSWIG_EXECUTABLE=%SWIG_EXECUTABLE% -DPROTOBUFC_COMPILER=%SDK_BIN%/protoc.exe -DPROTOBUFC_LIBRARY=%SDK_LIB%/protobuf-c.lib -DPROTOBUFC_INCLUDE_DIR=%SDK_INC%/protobuf-c -DWITH_CURL=1 -DWITH_KML=1 -DWITH_SVGCAIRO=1 -DWITH_THREAD_SAFETY=1 -DWITH_SOS=1 -DWITH_CLIENT_WFS=1 -DWITH_CLIENT_WMS=1 -DWITH_CSHARP=1 -DWITH_PROTOBUFC=1 -DWITH_POSTGIS=0 -DWITH_PERL=0 -DWITH_MSSQL2008=1 -DWITH_PYTHON=1 -DWITH_PHPNG=0 -DWITH_HARFBUZZ=1 -DWITH_PYMAPSCRIPT_ANNOTATIONS=1 -DPROJ_INCLUDE_DIR=%SDK_INC%/proj9 -DPROJ_LIBRARY=%SDK_LIB%/proj9.lib
   - cmake --build . --config Release
   - cd %BUILD_FOLDER%/build
   # set the MapScript custom environment variable for python 3.8+
@@ -94,7 +102,7 @@ before_test:
   - set PATH=%SDK_BIN%/gdal/apps;%PATH%;
   - cd %BUILD_FOLDER%/msautotest
   - set PIP_NO_PYTHON_VERSION_WARNING=1
-  - "./mssql/create_mssql_db.bat"
+  - ps: ./mssql/create_mssql_db.ps1
   # copy custom projection to the PROJ_DATA folder
   - echo %PROJ_DATA%
   - copy .\wxs\data\epsg2 "%PROJ_DATA%"

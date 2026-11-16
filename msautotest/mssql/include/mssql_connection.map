@@ -1,4 +1,4 @@
   CONNECTIONTYPE PLUGIN
   PLUGIN "mssql"
-  CONNECTION "SERVER=(local)\SQL2019;DATABASE=msautotest;uid=sa;pwd=Password12!;"
+  CONNECTION "DRIVER={ODBC Driver 18 for SQL Server};SERVER=localhost;DATABASE=msautotest;UID=sa;PWD=Password12!;TrustServerCertificate=yes;"
   STATUS OFF
