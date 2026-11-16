@@ -2,17 +2,16 @@
 # homepage: https://github.com/marketplace/actions/notify-irc
 
 name: "IRC Push Notification"
-on: 
+on:
   push:
     branches:
       - main
   pull_request:
+    types: [opened]
     branches:
       - main
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
-  cancel-in-progress: true
+  # run on tag creation
+  create:
 
 permissions:
   contents: read
@@ -20,7 +19,9 @@ permissions:
 jobs:
   irc_notify:
     runs-on: ubuntu-latest
-    #if: github.repository == 'MapServer/MapServer'
+    if: ${{ !github.event.repository.private }}
+    continue-on-error: true
+    timeout-minutes: 5
     steps:
       - name: irc push
         uses: rectalogic/notify-irc@v2
@@ -51,3 +52,6 @@ jobs:
           nickname: mapserver-github-notifier
           message: |
             ${{ github.actor }} tagged ${{ github.repository }} ${{ github.event.ref }}
+      - name: Report IRC failure
+        if: failure()
+        run: echo "::warning::IRC notification to #mapserver failed"
