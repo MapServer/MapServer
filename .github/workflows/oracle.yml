@@ -1,0 +1,40 @@
+name: Oracle
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  oracle:
+    runs-on: ubuntu-latest
+    name: Oracle Spatial
+
+    steps:
+      - name: Checkout repository contents
+        uses: actions/checkout@v7
+
+      - name: Start Oracle and load the test data
+        run: |
+          cd msautotest/msoracle
+          docker compose up -d
+          echo "Waiting for the database..."
+          timeout 600 sh -c 'until docker compose logs oracle 2>&1 | grep -q "DATABASE IS READY TO USE"; do sleep 10; done'
+          docker compose exec -T oracle bash -c \
+            "export TNS_ADMIN=/opt/oracle/oradata/dbconfig/XE; /opt/oracle/product/18c/dbhomeXE/bin/sqlplus -L SYSTEM/adminpass@XE" \
+            < sample-data.sql
+
+      - name: Build and test
+        run: |
+            docker run \
+            --network host \
+            -e WORK_DIR="$PWD" \
+            -v $PWD:$PWD ubuntu:24.04 $PWD/ci/ubuntu/oracle.sh
+
+      - name: Database log
+        if: failure()
+        run: docker compose -f msautotest/msoracle/docker-compose.yaml logs oracle
