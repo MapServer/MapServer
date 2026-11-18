@@ -5,33 +5,32 @@
 
 set -e
 
-apt-get update -y
-
-export PYTHON_VERSION=system
-
+export DEBIAN_FRONTEND=noninteractive
 LANG=en_US.UTF-8
 export LANG
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    sudo locales tzdata software-properties-common python3-dev python3-venv python3-pip python3-setuptools git curl \
-    apt-transport-https ca-certificates gnupg wget unzip
+
+apt-get update -y
+apt-get install -y --no-install-recommends \
+    locales software-properties-common ca-certificates gnupg curl unzip \
+    python3 python3-pip python-is-python3
 echo "$LANG UTF-8" > /etc/locale.gen
 dpkg-reconfigure --frontend=noninteractive locales
 update-locale LANG=$LANG
 
-USER=root
-export USER
-
-# Install pyenv (as in .github/workflows/start.sh)
-curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
-export PATH="/root/.pyenv/bin:$PATH"
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
-ln -s /usr/bin/python3 /usr/bin/python
-pyenv global $PYTHON_VERSION
+# install only the libraries needed to build MapServer for these tests
+add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
+apt-get update -y
+apt-get install -y --no-install-recommends \
+    build-essential cmake bison flex \
+    libgdal-dev libproj-dev libgeos-dev \
+    libpng-dev libjpeg-dev libgif-dev libfreetype6-dev libfribidi-dev libharfbuzz-dev \
+    libcairo2-dev libcurl4-gnutls-dev libxml2-dev libfcgi-dev libpcre2-dev \
+    libprotobuf-c-dev protobuf-c-compiler libaio1t64
 
 cd "$WORK_DIR"
 
-ci/ubuntu/setup.sh
+# Python packages for msautotest
+python -m pip install --break-system-packages -r msautotest/requirements.txt
 
 # Oracle Instant Client (as in GDAL's Dockerfile.ci)
 curl -L -O https://download.oracle.com/otn_software/linux/instantclient/199000/instantclient-basic-linux.x64-19.9.0.0.0dbru.zip
@@ -39,7 +38,6 @@ curl -L -O https://download.oracle.com/otn_software/linux/instantclient/199000/i
 unzip -q instantclient-basic-linux.x64-19.9.0.0.0dbru.zip -d /opt
 unzip -q instantclient-sdk-linux.x64-19.9.0.0.0dbru.zip -d /opt
 rm instantclient-*.zip
-apt-get install -y libaio1t64
 ln -sf /usr/lib/x86_64-linux-gnu/libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1
 
 export ORACLE_HOME=/opt/instantclient_19_9
