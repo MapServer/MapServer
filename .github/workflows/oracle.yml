@@ -18,12 +18,23 @@ jobs:
       - name: Checkout repository contents
         uses: actions/checkout@v7
 
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+            /opt/hostedtoolcache /usr/local/share/boost /usr/share/swift \
+            /usr/local/lib/node_modules
+          docker image prune -af
+          df -h /
+
       - name: Start Oracle and load the test data
         run: |
           cd msautotest/msoracle
           docker compose up -d
           echo "Waiting for the database..."
-          timeout 600 sh -c 'until docker compose logs oracle 2>&1 | grep -q "DATABASE IS READY TO USE"; do sleep 10; done'
+          timeout 600 sh -c 'until docker compose logs oracle 2>&1 | grep -q "DATABASE IS READY TO USE"; do
+            if docker compose logs oracle 2>&1 | grep -q "DATABASE SETUP WAS NOT SUCCESSFUL"; then exit 1; fi
+            sleep 10
+          done'
           docker compose exec -T oracle bash -c \
             "export TNS_ADMIN=/opt/oracle/oradata/dbconfig/XE; /opt/oracle/product/18c/dbhomeXE/bin/sqlplus -L SYSTEM/adminpass@XE" \
             < sample-data.sql
