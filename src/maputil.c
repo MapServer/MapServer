@@ -2621,11 +2621,13 @@ char *msBuildOnlineResource(const mapObj *map, const cgiRequestObj *req) {
    */
 
   const char *mapparam = NULL;
+  size_t mapparam_len = 0;
   if (req->type == MS_GET_REQUEST) {
     int i;
     for (i = 0; i < req->NumParams; i++) {
       if (strcasecmp(req->ParamNames[i], "map") == 0) {
         mapparam = req->ParamValues[i];
+        mapparam_len = strlen(mapparam) + 5; // 5 from 'map=' + '&'
         break;
       }
     }
@@ -2649,14 +2651,9 @@ char *msBuildOnlineResource(const mapObj *map, const cgiRequestObj *req) {
     }
 
     size_t path_len = strlen(path);
-    size_t map_len = 0;
-
-    if (mapparam) {
-      map_len = strlen(mapparam) + 5; /* "map=" + "&" */
-    }
 
     // add 2 to buffer_size for '?' and '\0'
-    size_t buffer_size = config_len + path_len + map_len + 2;
+    size_t buffer_size = config_len + path_len + mapparam_len + 2;
 
     char *result = (char *)msSmallMalloc(buffer_size);
     if (!result) {
@@ -2678,7 +2675,7 @@ char *msBuildOnlineResource(const mapObj *map, const cgiRequestObj *req) {
   char *online_resource = NULL;
   const char *value, *protocol = "http";
   char **hostname_array = NULL;
-  int mapparam_len = 0, hostname_array_len = 0;
+  int hostname_array_len = 0;
   const char *hostname = getenv("HTTP_X_FORWARDED_HOST");
   if (!hostname)
     hostname = getenv("SERVER_NAME");
@@ -2704,6 +2701,7 @@ char *msBuildOnlineResource(const mapObj *map, const cgiRequestObj *req) {
   if ((value = getenv("HTTP_X_FORWARDED_PROTO"))) {
     protocol = value;
   }
+  printf("h: %s, s:%s p:%s", hostname, script, port);
 
   if (hostname && port && script) {
     size_t buffer_size;
