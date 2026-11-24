@@ -2701,7 +2701,6 @@ char *msBuildOnlineResource(const mapObj *map, const cgiRequestObj *req) {
   if ((value = getenv("HTTP_X_FORWARDED_PROTO"))) {
     protocol = value;
   }
-  printf("h: %s, s:%s p:%s", hostname, script, port);
 
   if (hostname && port && script) {
     size_t buffer_size;

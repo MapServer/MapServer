@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding="UTF-8" standalone="no" ?>
-<WMS_Capabilities version="1.3.0"  xmlns="http://www.opengis.net/wms"   xmlns:sld="http://www.opengis.net/sld"   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"   xsi:schemaLocation="http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd  http://www.opengis.net/sld http://schemas.opengis.net/sld/1.1.0/sld_capabilities.xsd  http://mapserver.gis.umn.edu/mapserver https://maps.example.com/mapserver/?map=onlineresource.map&amp;service=WMS&amp;version=1.3.0&amp;request=GetSchemaExtension">
+<WMS_Capabilities version="1.3.0"  xmlns="http://www.opengis.net/wms"   xmlns:sld="http://www.opengis.net/sld"   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"   xsi:schemaLocation="http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd  http://www.opengis.net/sld http://schemas.opengis.net/sld/1.1.0/sld_capabilities.xsd  http://mapserver.gis.umn.edu/mapserver http://example.org/mapserver/?map=onlineresource.map&amp;service=WMS&amp;version=1.3.0&amp;request=GetSchemaExtension">
 <Service>
   <Name>WMS</Name>
   <Title>Example Map</Title>
-  <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://maps.example.com/mapserver/?map=onlineresource.map&amp;"/>
+  <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://example.org/mapserver/?map=onlineresource.map&amp;"/>
   <ContactInformation>
   </ContactInformation>
   <MaxWidth>4096</MaxWidth>
@@ -16,8 +16,8 @@
       <Format>text/xml</Format>
       <DCPType>
         <HTTP>
-          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://maps.example.com/mapserver/?map=onlineresource.map&amp;"/></Get>
-          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://maps.example.com/mapserver/?map=onlineresource.map&amp;"/></Post>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://example.org/mapserver/?map=onlineresource.map&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://example.org/mapserver/?map=onlineresource.map&amp;"/></Post>
         </HTTP>
       </DCPType>
     </GetCapabilities>
@@ -37,8 +37,8 @@
       <Format>application/json</Format>
       <DCPType>
         <HTTP>
-          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://maps.example.com/mapserver/?map=onlineresource.map&amp;"/></Get>
-          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://maps.example.com/mapserver/?map=onlineresource.map&amp;"/></Post>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://example.org/mapserver/?map=onlineresource.map&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://example.org/mapserver/?map=onlineresource.map&amp;"/></Post>
         </HTTP>
       </DCPType>
     </GetMap>
@@ -47,8 +47,8 @@
       <Format>application/vnd.ogc.gml</Format>
       <DCPType>
         <HTTP>
-          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://maps.example.com/mapserver/?map=onlineresource.map&amp;"/></Get>
-          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://maps.example.com/mapserver/?map=onlineresource.map&amp;"/></Post>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://example.org/mapserver/?map=onlineresource.map&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://example.org/mapserver/?map=onlineresource.map&amp;"/></Post>
         </HTTP>
       </DCPType>
     </GetFeatureInfo>
@@ -56,8 +56,8 @@
       <Format>text/xml</Format>
       <DCPType>
         <HTTP>
-          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://maps.example.com/mapserver/?map=onlineresource.map&amp;"/></Get>
-          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://maps.example.com/mapserver/?map=onlineresource.map&amp;"/></Post>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://example.org/mapserver/?map=onlineresource.map&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://example.org/mapserver/?map=onlineresource.map&amp;"/></Post>
         </HTTP>
       </DCPType>
     </sld:DescribeLayer>
@@ -69,8 +69,8 @@
       <Format>image/vnd.jpeg-png8</Format>
       <DCPType>
         <HTTP>
-          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://maps.example.com/mapserver/?map=onlineresource.map&amp;"/></Get>
-          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://maps.example.com/mapserver/?map=onlineresource.map&amp;"/></Post>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://example.org/mapserver/?map=onlineresource.map&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://example.org/mapserver/?map=onlineresource.map&amp;"/></Post>
         </HTTP>
       </DCPType>
     </sld:GetLegendGraphic>
@@ -78,8 +78,8 @@
       <Format>text/xml</Format>
       <DCPType>
         <HTTP>
-          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://maps.example.com/mapserver/?map=onlineresource.map&amp;"/></Get>
-          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://maps.example.com/mapserver/?map=onlineresource.map&amp;"/></Post>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://example.org/mapserver/?map=onlineresource.map&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://example.org/mapserver/?map=onlineresource.map&amp;"/></Post>
         </HTTP>
       </DCPType>
     </ms:GetStyles>
@@ -116,14 +116,14 @@
                   minx="-90.000000" miny="-180.000000" maxx="83.645130" maxy="180.000000" />
       <MetadataURL type="TC211">
         <Format>text/xml</Format>
-        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://maps.example.com/mapserver/?map=onlineresource.map&amp;request=GetMetadata&amp;layer=ne_110m_land"/>
+        <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://example.org/mapserver/?map=onlineresource.map&amp;request=GetMetadata&amp;layer=ne_110m_land"/>
       </MetadataURL>
         <Style>
           <Name>default</Name>
           <Title>default</Title>
           <LegendURL width="60" height="20">
              <Format>image/png</Format>
-             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="https://maps.example.com/mapserver/?map=onlineresource.map&amp;version=1.3.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=ne_110m_land&amp;format=image/png&amp;STYLE=default"/>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://example.org/mapserver/?map=onlineresource.map&amp;version=1.3.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=ne_110m_land&amp;format=image/png&amp;STYLE=default"/>
           </LegendURL>
         </Style>
     </Layer>
