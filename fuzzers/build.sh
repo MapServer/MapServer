@@ -74,7 +74,7 @@ cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_STATIC=ON \
 make -j$(nproc) mapserver_static
 
 #Fuzzers
-for fuzzer in mapfuzzer shapefuzzer configfuzzer owsfuzzer sldfuzzer; do
+for fuzzer in mapfuzzer shapefuzzer configfuzzer owsfuzzer sldfuzzer shapequeryfuzzer; do
     $CC $CFLAGS -Wall -Wextra -I. -I.. -I/usr/include/gdal/. -I/usr/local/include/libxml2 -I/usr/include/libxml2 -DPROJ_VERSION_MAJOR=6 -c ../fuzzers/${fuzzer}.c
 
     $CXX $CXXFLAGS $LIB_FUZZING_ENGINE ${fuzzer}.o -o ${fuzzer} \
@@ -83,6 +83,18 @@ for fuzzer in mapfuzzer shapefuzzer configfuzzer owsfuzzer sldfuzzer; do
         -Wl,-Bdynamic  -lpthread -ldl -lc++ -lclang_rt.builtins
 
     cp ${fuzzer} $OUT/
+done
+
+# build the .qix generator used by the shapequeryfuzzer seed step (runs
+# against the freshly built static library, still inside the build dir)
+$CXX $CXXFLAGS -Wall -Wextra -I. -I.. -I/usr/include/gdal/. ../fuzzers/make_qix.c -o make_qix \
+    -L. -lmapserver_static -lgdal \
+    -Wl,-Bstatic -lpng -ljpeg -lfreetype -lproj -lxml2 -lz -lsqlite3 -llzma \
+    -Wl,-Bdynamic  -lpthread -ldl -lc++ -lclang_rt.builtins
+
+mkdir -p /tmp/sq_seed_dir
+for base in point line polygon; do
+    ./make_qix tests/$base /tmp/sq_seed_dir/$base || true
 done
 
 cd ..
@@ -117,3 +129,30 @@ cat > /tmp/sld_seed2 <<'EOF'
 </Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>
 EOF
 zip -j $OUT/sldfuzzer_seed_corpus.zip /tmp/sld_seed1 /tmp/sld_seed2
+
+# shapequeryfuzzer: shp | "deadbeef" | shx | "deadbeef" | dbf | "deadbeef" |
+# qix | "deadbeef" | 32-byte query rect (4 little-endian doubles). Real
+# shapefiles from tests/ paired with generated .qix indexes; one no-qix
+# variant per shapefile exercises the in-memory tree fallback.
+python3 - <<'SQEOF'
+import os, struct
+
+seed_dir = "/tmp/sq_seed_dir"
+corpus_dir = "/tmp/sq_corpus"
+os.makedirs(corpus_dir, exist_ok=True)
+seps = b"deadbeef"
+rects = [(-1.0, -1.0, 1.0, 1.0), (0.0, 0.0, 100.0, 100.0), (-180.0, -90.0, 180.0, 90.0)]
+for name in ("point", "line", "polygon"):
+    paths = [f"tests/{name}.shp", f"tests/{name}.shx", f"tests/{name}.dbf"]
+    if not all(os.path.exists(p) for p in paths):
+        continue
+    parts = [open(p, "rb").read() for p in paths]
+    qix_path = os.path.join(seed_dir, f"{name}.qix")
+    qdata = open(qix_path, "rb").read() if os.path.exists(qix_path) else b""
+    for ri, r in enumerate(rects):
+        blob = seps.join(parts + [qdata]) + seps + struct.pack("<4d", *r)
+        open(os.path.join(corpus_dir, f"{name}_{ri}"), "wb").write(blob)
+    blob = seps.join(parts + [b""]) + seps + struct.pack("<4d", -1.0, -1.0, 1.0, 1.0)
+    open(os.path.join(corpus_dir, f"{name}_noqix"), "wb").write(blob)
+SQEOF
+zip -j -q $OUT/shapequeryfuzzer_seed_corpus.zip /tmp/sq_corpus/*
