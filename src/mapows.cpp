@@ -916,7 +916,9 @@ int msOWSParseRequestMetadata(const char *metadata, const char *request,
         disableFlag = MS_FALSE;
         bufferPtr = requestBuffer;
       }
-    } else {
+    } else if (bufferPtr <
+               requestBuffer + sizeof(requestBuffer) - 1) { /* avoid overflow
+                                     on words longer than the buffer */
       *bufferPtr = *ptr;
       ++bufferPtr;
     }
