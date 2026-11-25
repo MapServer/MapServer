@@ -524,6 +524,8 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs,
     if (nTmp != 0) {
       msSetError(MS_WFSERR, "msLoadProjectionString() failed",
                  "msWFSGetFeature()");
+      msFree(pszOutputSRS);
+      msFree(pszMapSRS);
       return MS_FAILURE;
     }
 

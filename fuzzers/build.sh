@@ -74,7 +74,7 @@ cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_STATIC=ON \
 make -j$(nproc) mapserver_static
 
 #Fuzzers
-for fuzzer in mapfuzzer shapefuzzer configfuzzer owsfuzzer sldfuzzer; do
+for fuzzer in mapfuzzer shapefuzzer configfuzzer owsfuzzer sldfuzzer owsmapfuzzer; do
     $CC $CFLAGS -Wall -Wextra -I. -I.. -I/usr/include/gdal/. -I/usr/local/include/libxml2 -I/usr/include/libxml2 -DPROJ_VERSION_MAJOR=6 -c ../fuzzers/${fuzzer}.c
 
     $CXX $CXXFLAGS $LIB_FUZZING_ENGINE ${fuzzer}.o -o ${fuzzer} \
@@ -117,3 +117,198 @@ cat > /tmp/sld_seed2 <<'EOF'
 </Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>
 EOF
 zip -j $OUT/sldfuzzer_seed_corpus.zip /tmp/sld_seed1 /tmp/sld_seed2
+
+# OWS dispatch over a full mapfile: input = mapfile text, "deadbeef"
+# separator, CGI query string (see fuzzers/owsmapfuzzer.c). Seeds pair a
+# handful of representative inline-feature mapfiles with the request types
+# that drive the layer-driven code paths (rendering, feature info templating,
+# legend, WFS/GML, OAPIF/CQL2, SLD apply).
+mkdir -p /tmp/oms_seed_dir
+cat > /tmp/oms_seed_dir/map_a.map <<'OMSEOF'
+MAP
+NAME "fuzz"
+IMAGETYPE "png"
+SIZE 32 32
+EXTENT -180 -90 180 90
+UNITS DD
+IMAGECOLOR 220 220 220
+PROJECTION "init=epsg:4326" END
+WEB
+  METADATA
+    "ows_enable_request" "*"
+    "wms_enable_request" "*"
+    "wfs_enable_request" "*"
+    "ows_srs" "EPSG:4326 EPSG:3857"
+    "ows_title" "fuzz"
+    "wfs_title" "fuzz"
+    "wfs_getfeature_formatlist" "gml2"
+  END
+END
+OUTPUTFORMAT
+  NAME "png"
+  DRIVER "AGG/PNG"
+  MIMETYPE "image/png"
+  IMAGEMODE RGBA
+  EXTENSION "png"
+END
+OUTPUTFORMAT
+  NAME "gml2"
+  DRIVER "TEMPLATE"
+  MIMETYPE "text/xml; subtype=gml/2.1.2"
+  IMAGEMODE FEATURE
+END
+LAYER
+  NAME "poly"
+  TYPE POLYGON
+  STATUS ON
+  TEMPLATE "fuzz_tmpl.html"
+  PROJECTION "init=epsg:4326" END
+  PROCESSING "ITEMS=id;name"
+  FEATURE
+    POINTS -10 -10 10 -10 10 10 -10 10 -10 -10 END
+    ITEMS "1;abc"
+  END
+  CLASSITEM "id"
+  CLASS
+    NAME "one"
+    EXPRESSION "1"
+    STYLE
+      COLOR 255 0 0
+      OUTLINECOLOR 0 0 0
+      WIDTH 1
+    END
+  END
+END
+LAYER
+  NAME "pts"
+  TYPE POINT
+  STATUS ON
+  TEMPLATE "fuzz_tmpl.html"
+  PROJECTION "init=epsg:4326" END
+  PROCESSING "ITEMS=id;name"
+  FEATURE
+    POINTS 0 0 5 5 -5 5 END
+    ITEMS "2;xyz"
+  END
+  CLASS
+    STYLE
+      COLOR 0 0 255
+      SIZE 3
+    END
+  END
+END
+END
+OMSEOF
+cat > /tmp/oms_seed_dir/map_b.map <<'OMSEOF'
+MAP
+NAME "fancy"
+IMAGETYPE "png"
+SIZE 32 32
+EXTENT 0 0 100 100
+UNITS METERS
+IMAGECOLOR 255 255 255
+WEB
+  METADATA
+    "ows_enable_request" "*"
+    "wms_enable_request" "*"
+    "ows_srs" "EPSG:4326 EPSG:3857"
+    "ows_title" "fancy"
+  END
+END
+PROJECTION "init=epsg:4326" END
+OUTPUTFORMAT
+  NAME "png"
+  DRIVER "AGG/PNG"
+  MIMETYPE "image/png"
+  IMAGEMODE RGBA
+  EXTENSION "png"
+END
+SYMBOL
+  NAME "square"
+  TYPE VECTOR
+  FILLED TRUE
+  POINTS 0 0 1 0 1 1 0 1 0 0 END
+END
+LAYER
+  NAME "clustered"
+  TYPE POINT
+  STATUS ON
+  CLUSTER
+    MAXDISTANCE 20
+    REGION "ellipse"
+  END
+  PROCESSING "ITEMS=id"
+  FEATURE
+    POINTS 1 1 2 2 50 50 51 51 END
+    ITEMS "1;2;3;4"
+  END
+  CLASS
+    STYLE
+      SYMBOL "square"
+      COLOR 200 0 200
+      SIZE 5
+    END
+    LABEL
+      TEXT "[cluster:num_features]"
+      SIZE 6
+      COLOR 0 0 0
+    END
+  END
+END
+LAYER
+  NAME "grid"
+  TYPE LINE
+  STATUS ON
+  PROJECTION "init=epsg:4326" END
+  GRATICULE
+    INTERVALS 5 5
+    LABELFORMAT "DDMM"
+  END
+  CLASS
+    STYLE
+      COLOR 0 0 255
+      WIDTH 1
+    END
+    LABEL
+      SIZE 6
+      COLOR 0 0 0
+    END
+  END
+END
+LAYER
+  NAME "heat"
+  TYPE POINT
+  STATUS ON
+  PROCESSING "HEATMAP_RADIUS=10"
+  FEATURE
+    POINTS 10 10 20 20 30 30 20 25 END
+  END
+  CLASS
+    STYLE
+      COLOR 255 0 0
+    END
+  END
+END
+END
+OMSEOF
+printf 'SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=poly,pts&STYLES=&CRS=EPSG:4326&BBOX=-180,-90,180,90&WIDTH=32&HEIGHT=32&FORMAT=image/png' > /tmp/oms_seed_dir/s1
+printf 'SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&LAYERS=poly&QUERY_LAYERS=poly&STYLES=&CRS=EPSG:4326&BBOX=-180,-90,180,90&WIDTH=32&HEIGHT=32&FORMAT=image/png&INFO_FORMAT=text/html&I=5&J=5&FEATURE_COUNT=10' > /tmp/oms_seed_dir/s2
+printf 'SERVICE=WMS&VERSION=1.1.1&REQUEST=GetLegendGraphic&LAYERS=poly&FORMAT=image/png&WIDTH=20&HEIGHT=20&SRS=EPSG:4326&BBOX=-180,-90,180,90' > /tmp/oms_seed_dir/s3
+printf 'SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities' > /tmp/oms_seed_dir/s4
+printf 'SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=poly&OUTPUTFORMAT=gml2' > /tmp/oms_seed_dir/s5
+printf 'SERVICE=OAPIF&REQUEST=GetCollections' > /tmp/oms_seed_dir/s6
+printf 'SERVICE=OAPIF&REQUEST=GetItems&COLLECTION=poly&FILTER="id = 1"&LIMIT=10' > /tmp/oms_seed_dir/s7
+printf 'SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=poly&STYLES=&CRS=EPSG:4326&BBOX=-180,-90,180,90&WIDTH=32&HEIGHT=32&FORMAT=image/png&SLD_BODY=<StyledLayerDescriptor version="1.0.0"><NamedLayer><Name>poly</Name><UserStyle><FeatureTypeStyle><Rule><PolygonSymbolizer><Fill><CssParameter name="fill">#00ff00</CssParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>' > /tmp/oms_seed_dir/s8
+printf 'SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=clustered,grid,heat&STYLES=&CRS=EPSG:4326&BBOX=0,0,100,100&WIDTH=32&HEIGHT=32&FORMAT=image/png' > /tmp/oms_seed_dir/s9
+printf 'SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=poly&FILTER=<Filter><PropertyIsEqualTo><PropertyName>id</PropertyName><Literal>1</Literal></PropertyIsEqualTo></Filter>' > /tmp/oms_seed_dir/s10
+for q in s1 s2 s3 s4 s5 s6 s7 s8 s9 s10; do
+  for m in map_a map_b; do
+    case "$q" in s9) m=map_b;; esac
+    case "$q" in s5|s6|s7|s10) m=map_a;; esac
+    cat "/tmp/oms_seed_dir/$m.map" > "/tmp/oms_seed_dir/${q}_${m}"
+    printf 'deadbeef' >> "/tmp/oms_seed_dir/${q}_${m}"
+    cat "/tmp/oms_seed_dir/$q" >> "/tmp/oms_seed_dir/${q}_${m}"
+  done
+done
+find /tmp/oms_seed_dir -maxdepth 1 -name 's*_map_*' -exec zip -j -q $OUT/owsmapfuzzer_seed_corpus.zip {} \;
+cp fuzzers/owsmapfuzzer.dict $OUT/owsmapfuzzer.dict 2>/dev/null || cp $SRC/MapServer/fuzzers/owsmapfuzzer.dict $OUT/owsmapfuzzer.dict
